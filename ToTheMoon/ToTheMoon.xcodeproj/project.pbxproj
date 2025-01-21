@@ -6,6 +6,13 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		9935C76C2D3FDD4500722D84 /* SnapKit in Frameworks */ = {isa = PBXBuildFile; productRef = 9935C76B2D3FDD4500722D84 /* SnapKit */; };
+		9935C76F2D3FDD6000722D84 /* RxCocoa in Frameworks */ = {isa = PBXBuildFile; productRef = 9935C76E2D3FDD6000722D84 /* RxCocoa */; };
+		9935C7712D3FDD6000722D84 /* RxRelay in Frameworks */ = {isa = PBXBuildFile; productRef = 9935C7702D3FDD6000722D84 /* RxRelay */; };
+		9935C7732D3FDD6000722D84 /* RxSwift in Frameworks */ = {isa = PBXBuildFile; productRef = 9935C7722D3FDD6000722D84 /* RxSwift */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXFileReference section */
 		9935C6D02D3FDC5E00722D84 /* ToTheMoon.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = ToTheMoon.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
@@ -36,6 +43,10 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				9935C7712D3FDD6000722D84 /* RxRelay in Frameworks */,
+				9935C76F2D3FDD6000722D84 /* RxCocoa in Frameworks */,
+				9935C7732D3FDD6000722D84 /* RxSwift in Frameworks */,
+				9935C76C2D3FDD4500722D84 /* SnapKit in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -78,6 +89,10 @@
 			);
 			name = ToTheMoon;
 			packageProductDependencies = (
+				9935C76B2D3FDD4500722D84 /* SnapKit */,
+				9935C76E2D3FDD6000722D84 /* RxCocoa */,
+				9935C7702D3FDD6000722D84 /* RxRelay */,
+				9935C7722D3FDD6000722D84 /* RxSwift */,
 			);
 			productName = ToTheMoon;
 			productReference = 9935C6D02D3FDC5E00722D84 /* ToTheMoon.app */;
@@ -107,6 +122,10 @@
 			);
 			mainGroup = 9935C6C72D3FDC5E00722D84;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				9935C76A2D3FDD4500722D84 /* XCRemoteSwiftPackageReference "SnapKit" */,
+				9935C76D2D3FDD6000722D84 /* XCRemoteSwiftPackageReference "RxSwift" */,
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 9935C6D12D3FDC5E00722D84 /* Products */;
 			projectDirPath = "";
@@ -150,9 +169,9 @@
 				INFOPLIST_FILE = ToTheMoon/Info.plist;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchStoryboardName = LaunchScreen;
-				INFOPLIST_KEY_UIMainStoryboardFile = Main;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				IPHONEOS_DEPLOYMENT_TARGET = 16.6;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -178,9 +197,9 @@
 				INFOPLIST_FILE = ToTheMoon/Info.plist;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchStoryboardName = LaunchScreen;
-				INFOPLIST_KEY_UIMainStoryboardFile = Main;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				IPHONEOS_DEPLOYMENT_TARGET = 16.6;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -335,6 +354,48 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		9935C76A2D3FDD4500722D84 /* XCRemoteSwiftPackageReference "SnapKit" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/SnapKit/SnapKit.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 5.7.1;
+			};
+		};
+		9935C76D2D3FDD6000722D84 /* XCRemoteSwiftPackageReference "RxSwift" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/ReactiveX/RxSwift.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 6.8.0;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		9935C76B2D3FDD4500722D84 /* SnapKit */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 9935C76A2D3FDD4500722D84 /* XCRemoteSwiftPackageReference "SnapKit" */;
+			productName = SnapKit;
+		};
+		9935C76E2D3FDD6000722D84 /* RxCocoa */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 9935C76D2D3FDD6000722D84 /* XCRemoteSwiftPackageReference "RxSwift" */;
+			productName = RxCocoa;
+		};
+		9935C7702D3FDD6000722D84 /* RxRelay */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 9935C76D2D3FDD6000722D84 /* XCRemoteSwiftPackageReference "RxSwift" */;
+			productName = RxRelay;
+		};
+		9935C7722D3FDD6000722D84 /* RxSwift */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 9935C76D2D3FDD6000722D84 /* XCRemoteSwiftPackageReference "RxSwift" */;
+			productName = RxSwift;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = 9935C6C82D3FDC5E00722D84 /* Project object */;
 }
