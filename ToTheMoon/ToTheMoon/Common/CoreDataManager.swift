@@ -6,3 +6,9 @@
 //  Created by 황석범 on 1/21/25.
 //
 
+import CoreData
+import RxSwift
+
+class CoreDataManager {
+    
+}
