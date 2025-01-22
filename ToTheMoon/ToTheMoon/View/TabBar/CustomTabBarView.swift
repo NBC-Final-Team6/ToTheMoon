@@ -101,9 +101,3 @@ class CustomTabBarView: UIView {
         }
     }
 }
-
-// SwiftUI Preview
-//@available(iOS 17.0, *)
-//#Preview {
-//    CustomTabBarView()
-//}

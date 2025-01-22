@@ -6,6 +6,7 @@
 //
 
 import UIKit
+import SnapKit
 
 class CustomTabBarViewController: UIViewController {
     private let customTabBar = CustomTabBarView()
