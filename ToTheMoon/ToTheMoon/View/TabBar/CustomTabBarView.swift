@@ -11,7 +11,7 @@ import SnapKit
 class CustomTabBarView: UIView {
     private var buttons: [UIButton] = []
     private let titles = ["관심 목록", "코인 시세", "앱 설정"]
-    private let icons = ["cart.fill", "chart.bar.fill", "gearshape.fill"]
+    private let icons = ["cart.fill", "chart.line.uptrend.xyaxis", "gearshape.fill"]
 
     var onTabSelected: ((Int) -> Void)?
 
@@ -30,14 +30,15 @@ class CustomTabBarView: UIView {
         self.clipsToBounds = true
 
         for (index, iconName) in icons.enumerated() {
-            // 버튼 생성
             let button = UIButton(type: .system)
+            button.tag = index
             
             // 스택뷰 (아이콘 + 텍스트)
             let stackView = UIStackView()
             stackView.axis = .vertical
             stackView.alignment = .center
             stackView.spacing = 4
+            stackView.isUserInteractionEnabled = false
 
             // 아이콘
             let imageView = UIImageView(image: UIImage(systemName: iconName))
@@ -79,18 +80,17 @@ class CustomTabBarView: UIView {
         for (index, button) in buttons.enumerated() {
             button.snp.makeConstraints { make in
                 make.leading.equalToSuperview().offset(CGFloat(index) * buttonWidth)
-                make.top.bottom.equalToSuperview().inset(15)
+                make.top.bottom.equalToSuperview()
                 make.width.equalTo(buttonWidth)
             }
         }
     }
 
     @objc private func buttonTapped(_ sender: UIButton) {
-        updateButtonSelection(selectedIndex: sender.tag)
         onTabSelected?(sender.tag)
     }
 
-    private func updateButtonSelection(selectedIndex: Int) {
+    public func updateButtonSelection(selectedIndex: Int) {
         for (index, button) in buttons.enumerated() {
             let stackView = button.subviews.first(where: { $0 is UIStackView }) as? UIStackView
             let imageView = stackView?.arrangedSubviews.first as? UIImageView
@@ -103,7 +103,7 @@ class CustomTabBarView: UIView {
 }
 
 // SwiftUI Preview
-@available(iOS 17.0, *)
-#Preview {
-    CustomTabBarView()
-}
+//@available(iOS 17.0, *)
+//#Preview {
+//    CustomTabBarView()
+//}
