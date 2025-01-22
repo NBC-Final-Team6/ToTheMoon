@@ -6,14 +6,7 @@
 //
 
 import Foundation
-import UIKit
 import RxSwift
-
-enum NetworkError: Error {
-    case invalidUrl
-    case dataFetchFail
-    case decodingFail
-}
 
 final class NetworkManager {
     static let shared = NetworkManager()
