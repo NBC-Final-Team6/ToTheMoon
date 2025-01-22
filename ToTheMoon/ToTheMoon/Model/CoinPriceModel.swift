@@ -19,3 +19,12 @@ struct MarketModel {
         MarketModel(title: "고팍스", imageName: <#T##String#>)
     ]
 }
+
+struct CoinPrice {
+    let coinName: String
+    let marketName: String
+    let price: Double
+    let priceChange: Double
+//    let logoUrl: String?
+//    let graphUrl: 
+}

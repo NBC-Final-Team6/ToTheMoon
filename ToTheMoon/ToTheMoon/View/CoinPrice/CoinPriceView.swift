@@ -30,6 +30,14 @@ class CoinPriceView: UIView {
         return stackview
     }()
     
+    var coinPrice: UITableView = {
+        let tableview = UITableView()
+        tableview.register(CoinPriceTableViewCell.self, forCellReuseIdentifier: CoinPriceTableViewCell.identifier)
+        tableview.backgroundColor = UIColor(named: "ContainerColor")
+//        tableview = UITableView(frame: .zero, style: .plain)
+        return tableview
+    }()
+    
     
     override init(frame: CGRect) {
         super.init(frame: frame)
@@ -67,9 +75,5 @@ class CoinPriceView: UIView {
                 make.height.equalTo(150)
             }
         }
-        
     }
-    
-    
-    
 }
