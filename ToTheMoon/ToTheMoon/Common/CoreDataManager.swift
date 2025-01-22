@@ -102,3 +102,4 @@ class CoreDataManager {
         }
     }
 }
+//테스트
