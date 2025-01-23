@@ -13,8 +13,9 @@ class MarketView: UIView {
     private let marketImage: UIImageView = {
         let image = UIImageView()
         image.contentMode = .scaleAspectFit
-        image.layer.cornerRadius = 60
+        image.layer.cornerRadius = 30
         image.clipsToBounds = true
+        image.backgroundColor = .red
         return image
     }()
     
@@ -31,6 +32,7 @@ class MarketView: UIView {
         let stackView = UIStackView()
         stackView.axis = .vertical
         stackView.alignment = .center
+        stackView.spacing = 2
         return stackView
     }()
     
@@ -49,11 +51,10 @@ class MarketView: UIView {
         addSubview(stackView)
         
         marketImage.snp.makeConstraints { make in
-            make.width.height.equalTo(120)
+            make.width.height.equalTo(60)
         }
         
         marketLabel.snp.makeConstraints { make in
-            make.top.equalTo(marketImage.snp.bottom).offset(2)
             make.centerX.equalTo(marketImage.snp.centerX)
         }
         
@@ -64,7 +65,8 @@ class MarketView: UIView {
     
     // 데이터 불러오기
     func configure(with item: MarketModel) {
-        marketImage.image = UIImage(named: item.imageName)
+//        marketImage.image = UIImage(named: item.imageName)
+        marketImage.image = UIImage(systemName: item.imageName)
         marketLabel.text = item.title
     }
 }
