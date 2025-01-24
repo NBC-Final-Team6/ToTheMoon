@@ -26,14 +26,15 @@ class CoinPriceView: UIView {
         stackview.axis = .horizontal
         stackview.distribution = .equalSpacing
         stackview.alignment = .center
-        stackview.spacing = 10
+        stackview.spacing = 20
         return stackview
     }()
     
-    var coinPrice: UITableView = {
-        var tableview = UITableView()
+    let coinPriceTableView: UITableView = {
+        let tableview = UITableView()
         tableview.register(CoinPriceTableViewCell.self, forCellReuseIdentifier: CoinPriceTableViewCell.identifier)
         tableview.backgroundColor = UIColor(named: "ContainerColor")
+        tableview.separatorStyle = .singleLine
         return tableview
     }()
     
@@ -52,7 +53,7 @@ class CoinPriceView: UIView {
         
         addSubview(titleLabel)
         addSubview(stackView)
-        addSubview(coinPrice)
+        addSubview(coinPriceTableView)
         
         titleLabel.snp.makeConstraints { make in
             make.top.equalTo(safeAreaLayoutGuide)
@@ -65,8 +66,8 @@ class CoinPriceView: UIView {
             make.height.equalTo(100)
         }
         
-        coinPrice.snp.makeConstraints { make in
-            make.top.equalTo(stackView.snp.bottom).offset(10)
+        coinPriceTableView.snp.makeConstraints { make in
+            make.top.equalTo(stackView.snp.bottom).offset(20)
             make.horizontalEdges.equalToSuperview().inset(10)
             make.bottom.equalTo(safeAreaLayoutGuide)
         }
@@ -75,10 +76,6 @@ class CoinPriceView: UIView {
             let marketView = MarketView()
             marketView.configure(with: market)
             stackView.addArrangedSubview(marketView)
-            
-            marketView.snp.makeConstraints { make in
-                make.width.equalTo(60)
-            }
         }
     }
 }

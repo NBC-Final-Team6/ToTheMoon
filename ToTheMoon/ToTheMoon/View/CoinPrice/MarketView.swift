@@ -13,7 +13,7 @@ class MarketView: UIView {
     private let marketImage: UIImageView = {
         let image = UIImageView()
         image.contentMode = .scaleAspectFit
-        image.layer.cornerRadius = 30
+        image.layer.cornerRadius = (UIScreen.main.bounds.width - 90) / 8
         image.clipsToBounds = true
         image.backgroundColor = .red
         return image
@@ -32,7 +32,7 @@ class MarketView: UIView {
         let stackView = UIStackView()
         stackView.axis = .vertical
         stackView.alignment = .center
-        stackView.spacing = 2
+        stackView.spacing = 5
         return stackView
     }()
     
@@ -51,7 +51,7 @@ class MarketView: UIView {
         addSubview(stackView)
         
         marketImage.snp.makeConstraints { make in
-            make.width.height.equalTo(60)
+            make.width.height.equalTo((UIScreen.main.bounds.width - 90) / 4)
         }
         
         marketLabel.snp.makeConstraints { make in
