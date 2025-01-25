@@ -2,61 +2,54 @@ import UIKit
 import SnapKit
 
 class FavoritesView: UIView {
-    // UI Components
+   
     let logoLabel: UILabel = {
         let label = UILabel()
         label.text = "ToTheMoon"
         label.textColor = .text
-        label.font = UIFont.systemFont(ofSize: 24, weight: .bold)
+        label.font = .large
         return label
     }()
     
     let searchButton: UIButton = {
         let button = UIButton(type: .system)
         button.setImage(UIImage(systemName: "magnifyingglass"), for: .normal)
-        button.tintColor = .white
+        button.tintColor = .text
         return button
     }()
     
     let segmentedControl: UISegmentedControl = {
         let control = UISegmentedControl(items: ["인기 화폐", "관심 목록"])
-        control.selectedSegmentIndex = 1 // 기본 선택된 탭 (관심 목록)
-        control.backgroundColor = .darkGray
-        control.selectedSegmentTintColor = .systemTeal
-        control.setTitleTextAttributes([.foregroundColor: UIColor.white], for: .normal)
-        control.setTitleTextAttributes([.foregroundColor: UIColor.black], for: .selected)
+        control.selectedSegmentIndex = 1
+        control.backgroundColor = .container
+        control.selectedSegmentTintColor = .personel
+        control.setTitleTextAttributes([.foregroundColor: UIColor(named: "TextColor") ?? UIColor.white], for: .normal)
+        control.setTitleTextAttributes([.foregroundColor: UIColor(named: "TextColor") ?? UIColor.white], for: .selected)
         return control
     }()
     
     let imageView: UIImageView = {
-        let imageView = UIImageView(image: UIImage(named: "rocketImage"))
+        let imageView = UIImageView(image: UIImage(systemName: "moon.fill"))
+        imageView.tintColor = .personel
         imageView.contentMode = .scaleAspectFit
         return imageView
     }()
     
     let noFavoritesLabel: UILabel = {
         let label = UILabel()
-        label.text = "현재 관심 등록된 코인이 없습니다."
-        label.textColor = .white
-        label.font = UIFont.systemFont(ofSize: 16, weight: .medium)
+        label.text = "현재 관심 등록된 코인이 없습니다. \n현재 시세에서 관심있는 코인을 추가해 보세요."
+        label.textColor = .text
+        label.font = .medium
         label.textAlignment = .center
-        return label
-    }()
-    
-    let suggestionLabel: UILabel = {
-        let label = UILabel()
-        label.text = "현재 시세에서 관심있는 코인을 추가해 보세요."
-        label.textColor = .gray
-        label.font = UIFont.systemFont(ofSize: 14)
-        label.textAlignment = .center
+        label.numberOfLines = 0
         return label
     }()
     
     let addButton: UIButton = {
         let button = UIButton(type: .system)
         button.setTitle("코인 추가하기", for: .normal)
-        button.setTitleColor(.white, for: .normal)
-        button.backgroundColor = .systemTeal
+        button.setTitleColor(.text, for: .normal)
+        button.backgroundColor = .personel
         button.layer.cornerRadius = 10
         return button
     }()
@@ -71,7 +64,7 @@ class FavoritesView: UIView {
     }
     
     private func setupUI() {
-        backgroundColor = .black
+        backgroundColor = .background
         
         // Add subviews
         addSubview(logoLabel)
@@ -79,13 +72,12 @@ class FavoritesView: UIView {
         addSubview(segmentedControl)
         addSubview(imageView)
         addSubview(noFavoritesLabel)
-        addSubview(suggestionLabel)
         addSubview(addButton)
         
         // Layout using SnapKit
         logoLabel.snp.makeConstraints { make in
             make.top.equalTo(safeAreaLayoutGuide).offset(10)
-            make.leading.equalToSuperview().offset(16)
+            make.centerX.equalToSuperview()
         }
         
         searchButton.snp.makeConstraints { make in
@@ -110,13 +102,8 @@ class FavoritesView: UIView {
             make.centerX.equalToSuperview()
         }
         
-        suggestionLabel.snp.makeConstraints { make in
-            make.top.equalTo(noFavoritesLabel.snp.bottom).offset(10)
-            make.centerX.equalToSuperview()
-        }
-        
         addButton.snp.makeConstraints { make in
-            make.top.equalTo(suggestionLabel.snp.bottom).offset(30)
+            make.top.equalTo(noFavoritesLabel.snp.bottom).offset(30)
             make.centerX.equalToSuperview()
             make.width.equalTo(200)
             make.height.equalTo(50)
