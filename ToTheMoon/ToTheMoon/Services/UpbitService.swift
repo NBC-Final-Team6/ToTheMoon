@@ -36,7 +36,7 @@ final class UpbitService {
     
     func fetchCandles(symbol: String, interval: CandleInterval, count: Int) -> Single<[Candle]> {
         let intervalPath = interval.upbitAndBithumbRawValue
-        let baseURL = ExchangeEndpoint.upbit.baseURL
+        let baseURL = Exchange.upbit.baseURL
         
         // `symbol`을 업비트 형식으로 변환 (예: "BTC" -> "KRW-BTC")
         let marketSymbol = "KRW-\(symbol.uppercased())"

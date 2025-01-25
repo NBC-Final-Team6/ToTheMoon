@@ -68,7 +68,7 @@ final class BithumbService {
     
     func fetchCandles(symbol: String, interval: CandleInterval, count: Int) -> Single<[Candle]> {
         let intervalPath = interval.upbitAndBithumbRawValue
-        let baseURL = ExchangeEndpoint.bithumb.baseURL
+        let baseURL = Exchange.bithumb.baseURL
         
         // `symbol`을 업비트 형식으로 변환 (예: "BTC" -> "KRW-BTC")
         let marketSymbol = "KRW-\(symbol.uppercased())"

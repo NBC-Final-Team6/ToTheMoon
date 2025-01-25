@@ -5,14 +5,17 @@
 //  Created by 황석범 on 1/22/25.
 //
 
-enum NetworkError: Error {
+import Foundation
+
+enum NetworkError: Error, LocalizedError {
     case invalidUrl
     case dataFetchFail
     case decodingFail
     case unknownError
     case invalidData
     
-    var description: String {
+    // LocalizedError의 errorDescription 제공
+    var errorDescription: String? {
         switch self {
         case .invalidUrl:
             return "잘못된 URL!"

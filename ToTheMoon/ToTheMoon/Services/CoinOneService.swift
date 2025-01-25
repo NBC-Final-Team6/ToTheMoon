@@ -58,7 +58,7 @@ final class CoinOneService {
     }
     
     func fetchCandles(symbol: String, interval: CandleInterval, count: Int) -> Single<[Candle]> {
-        let baseURL = ExchangeEndpoint.coinone.baseURL
+        let baseURL = Exchange.coinone.baseURL
         let intervalPath = interval.coinOneRawValue // 코인원에서 지원하는 `1m`, `1d` 등
         let quoteCurrency = "KRW" // 코인원 기준 통화
         let targetCurrency = symbol // 종목 심볼 (예: BTC)

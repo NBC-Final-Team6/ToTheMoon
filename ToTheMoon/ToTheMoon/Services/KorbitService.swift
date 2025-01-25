@@ -10,7 +10,7 @@ import RxSwift
 
 final class KorbitService {
     let exchange: Exchange = .korbit
-    private let baseURL = ExchangeEndpoint.korbit.baseURL
+    private let baseURL = Exchange.korbit.baseURL
     
     func fetchMarketPrices() -> Single<[MarketPrice]> {
         let endpoint = "\(baseURL)/v2/tickers"

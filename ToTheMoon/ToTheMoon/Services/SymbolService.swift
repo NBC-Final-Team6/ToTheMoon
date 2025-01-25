@@ -9,9 +9,9 @@ import Foundation
 import RxSwift
 import UIKit
 
-final class CoinService {
+final class SymbolService {
     private let networkManager = NetworkManager.shared
-    private let baseURL = ExchangeEndpoint.CoinGecko.baseURL
+    private let baseURL = APIEndpoint.coinGecko.baseURL
     
     
     func fetchCoinData(coinSymbol: String) -> Single<Symbol> {
