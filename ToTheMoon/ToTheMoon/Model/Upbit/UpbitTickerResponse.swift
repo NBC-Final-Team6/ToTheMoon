@@ -1,11 +1,11 @@
 //
-//  BithumbTickerResponse.swift
+//  Untitled.swift
 //  ToTheMoon
 //
-//  Created by 황석범 on 1/23/25.
+//  Created by 황석범 on 1/22/25.
 //
 
-struct BithumbTickerResponse: Decodable {
+struct UpbitTickerResponse: Decodable {
     let market: String
     let tradePrice: Double
     let change: String
@@ -23,8 +23,4 @@ struct BithumbTickerResponse: Decodable {
         case highPrice = "high_price"
         case lowPrice = "low_price"
     }
-}
-
-struct BithumbTickerResponses: Decodable {
-    let results: [BithumbTickerResponse]
 }

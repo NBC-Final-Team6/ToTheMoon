@@ -5,7 +5,7 @@
 //  Created by 황석범 on 1/22/25.
 //
 
-struct Market: Decodable {
+struct BithumbMarketResponse: Decodable {
     let market: String
     let koreanName: String
     let englishName: String

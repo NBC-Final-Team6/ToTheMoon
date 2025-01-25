@@ -13,6 +13,7 @@ enum ExchangeEndpoint: String {
     case coinone = "https://api.coinone.co.kr"
     case korbit = "https://api.korbit.co.kr"
     case gopax = "https://api.gopax.co.kr"
+    case CoinGecko = "https://api.coingecko.com/api/v3/coins"
 
     var baseURL: String {
         return self.rawValue
