@@ -23,10 +23,51 @@ class FavoritesView: UIView {
         control.selectedSegmentIndex = 1
         control.backgroundColor = .container
         control.selectedSegmentTintColor = .personel
-        control.setTitleTextAttributes([.foregroundColor: UIColor(named: "TextColor") ?? UIColor.white], for: .normal)
-        control.setTitleTextAttributes([.foregroundColor: UIColor(named: "TextColor") ?? UIColor.white], for: .selected)
+        let normalAttributes: [NSAttributedString.Key: Any] = [
+            .foregroundColor: UIColor.text,
+            .font: UIFont.medium
+        ]
+        let selectedAttributes: [NSAttributedString.Key: Any] = [
+            .foregroundColor: UIColor.text,
+            .font: UIFont.medium
+        ]
+        control.setTitleTextAttributes(normalAttributes, for: .normal)
+        control.setTitleTextAttributes(selectedAttributes, for: .selected)
         return control
     }()
+    
+    let sortStackView: UIStackView = {
+        let stackView = UIStackView()
+        stackView.axis = .horizontal
+        stackView.distribution = .equalSpacing
+        stackView.alignment = .center
+        stackView.spacing = 8
+        return stackView
+    }()
+
+    let sortLabel: UILabel = {
+        let label = UILabel()
+        label.text = "전체 0"
+        label.textColor = .text
+        label.font = .medium
+        return label
+    }()
+
+    let sortToggleButton: UIButton = {
+        let button = UIButton(type: .system)
+        button.setTitle("인기순 ▼", for: .normal)
+        button.setTitleColor(.text, for: .normal)
+        button.titleLabel?.font = .medium
+        return button
+    }()
+
+    @objc private func toggleDropdown() {
+        if sortToggleButton.title(for: .normal) == "인기순 ▼" {
+            sortToggleButton.setTitle("인기순 ▲", for: .normal)
+        } else {
+            sortToggleButton.setTitle("인기순 ▼", for: .normal)
+        }
+    }
     
     let imageView: UIImageView = {
         let imageView = UIImageView(image: UIImage(systemName: "moon.fill"))
@@ -70,6 +111,9 @@ class FavoritesView: UIView {
         addSubview(logoLabel)
         addSubview(searchButton)
         addSubview(segmentedControl)
+        addSubview(sortStackView)
+        sortStackView.addArrangedSubview(sortLabel)
+        sortStackView.addArrangedSubview(sortToggleButton)
         addSubview(imageView)
         addSubview(noFavoritesLabel)
         addSubview(addButton)
@@ -91,9 +135,16 @@ class FavoritesView: UIView {
             make.height.equalTo(40)
         }
         
+        sortStackView.snp.makeConstraints { make in
+            make.top.equalTo(segmentedControl.snp.bottom).offset(16)
+            make.leading.trailing.equalToSuperview().inset(16)
+        }
+        // Add action to toggle button
+        sortToggleButton.addTarget(self, action: #selector(toggleDropdown), for: .touchUpInside)
+        
         imageView.snp.makeConstraints { make in
             make.centerX.equalToSuperview()
-            make.top.equalTo(segmentedControl.snp.bottom).offset(30)
+            make.top.equalTo(sortStackView.snp.bottom).offset(30)
             make.width.height.equalTo(150)
         }
         
