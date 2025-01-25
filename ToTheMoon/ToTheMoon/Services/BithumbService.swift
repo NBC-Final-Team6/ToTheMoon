@@ -10,7 +10,7 @@ import RxSwift
 
 final class BithumbService {
     let exchange: Exchange = .bithumb
-    private let baseURL = ExchangeEndpoint.bithumb.baseURL
+    private let baseURL = Exchange.bithumb.baseURL
     
     func fetchMarketPrices() -> Single<[MarketPrice]> {
         return fetchAllMarkets()

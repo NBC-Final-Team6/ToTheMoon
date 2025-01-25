@@ -14,7 +14,7 @@ final class CoinService {
     private let baseURL = ExchangeEndpoint.CoinGecko.baseURL
     
     
-    func fetchCoinData(coinSymbol: String) -> Single<Coin> {
+    func fetchCoinData(coinSymbol: String) -> Single<Symbol> {
         let endpoint = "\(baseURL)/\(coinSymbol)"
         guard let url = URL(string: endpoint) else {
             return Single.error(NetworkError.invalidUrl)

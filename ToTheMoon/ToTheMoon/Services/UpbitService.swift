@@ -10,7 +10,7 @@ import RxSwift
 
 final class UpbitService {
     let exchange: Exchange = .upbit
-    private let baseURL = ExchangeEndpoint.upbit.baseURL
+    private let baseURL = Exchange.upbit.baseURL
     
     func fetchMarketPrices() -> Single<[MarketPrice]> {
         let endpoint = "\(baseURL)/v1/ticker/all?quote_currencies=KRW"

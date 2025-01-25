@@ -16,7 +16,7 @@ enum ChangeState: String {
 
 final class CoinOneService {
     let exchange: Exchange = .coinone
-    lazy var baseURL = ExchangeEndpoint.coinone.baseURL
+    lazy var baseURL = Exchange.coinone.baseURL
     
     func fetchMarketPrices() -> Single<[MarketPrice]> {
         let endpoint = "\(baseURL)/public/v2/ticker_new/KRW?additional_data=true"
