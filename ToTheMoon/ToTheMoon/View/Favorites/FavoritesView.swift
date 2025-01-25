@@ -1,8 +1,14 @@
+//
+//  FavoritesViewController.swift
+//  ToTheMoon
+//
+//  Created by 황석범 on 1/21/25.
+//
+
 import UIKit
 import SnapKit
 
-class FavoritesView: UIView {
-   
+final class FavoritesView: UIView {
     let logoLabel: UILabel = {
         let label = UILabel()
         label.text = "ToTheMoon"
@@ -41,7 +47,6 @@ class FavoritesView: UIView {
         stackView.axis = .horizontal
         stackView.distribution = .equalSpacing
         stackView.alignment = .center
-        stackView.spacing = 8
         return stackView
     }()
 
@@ -61,13 +66,13 @@ class FavoritesView: UIView {
         return button
     }()
 
-    @objc private func toggleDropdown() {
-        if sortToggleButton.title(for: .normal) == "인기순 ▼" {
-            sortToggleButton.setTitle("인기순 ▲", for: .normal)
-        } else {
-            sortToggleButton.setTitle("인기순 ▼", for: .normal)
-        }
-    }
+    let verticalStackView: UIStackView = {
+        let stackView = UIStackView()
+        stackView.axis = .vertical
+        stackView.alignment = .center
+        stackView.spacing = 20
+        return stackView
+    }()
     
     let imageView: UIImageView = {
         let imageView = UIImageView(image: UIImage(systemName: "moon.fill"))
@@ -95,6 +100,13 @@ class FavoritesView: UIView {
         return button
     }()
     
+    lazy var tableView: UITableView = {
+        let tableView = UITableView()
+        tableView.backgroundColor = .background
+        tableView.isHidden = true
+        return tableView
+    }()
+    
     override init(frame: CGRect) {
         super.init(frame: frame)
         setupUI()
@@ -106,7 +118,7 @@ class FavoritesView: UIView {
     
     private func setupUI() {
         backgroundColor = .background
-        
+
         // Add subviews
         addSubview(logoLabel)
         addSubview(searchButton)
@@ -114,48 +126,51 @@ class FavoritesView: UIView {
         addSubview(sortStackView)
         sortStackView.addArrangedSubview(sortLabel)
         sortStackView.addArrangedSubview(sortToggleButton)
-        addSubview(imageView)
-        addSubview(noFavoritesLabel)
-        addSubview(addButton)
-        
+        addSubview(verticalStackView)
+        addSubview(tableView)
+
+        // Add elements to verticalStackView
+        verticalStackView.addArrangedSubview(imageView)
+        verticalStackView.addArrangedSubview(noFavoritesLabel)
+        verticalStackView.addArrangedSubview(addButton)
+
         // Layout using SnapKit
         logoLabel.snp.makeConstraints { make in
             make.top.equalTo(safeAreaLayoutGuide).offset(10)
             make.centerX.equalToSuperview()
         }
-        
+
         searchButton.snp.makeConstraints { make in
             make.centerY.equalTo(logoLabel)
             make.trailing.equalToSuperview().offset(-16)
         }
-        
+
         segmentedControl.snp.makeConstraints { make in
             make.top.equalTo(logoLabel.snp.bottom).offset(20)
             make.leading.trailing.equalToSuperview().inset(16)
             make.height.equalTo(40)
         }
-        
+
         sortStackView.snp.makeConstraints { make in
             make.top.equalTo(segmentedControl.snp.bottom).offset(16)
             make.leading.trailing.equalToSuperview().inset(16)
         }
-        // Add action to toggle button
-        sortToggleButton.addTarget(self, action: #selector(toggleDropdown), for: .touchUpInside)
-        
-        imageView.snp.makeConstraints { make in
-            make.centerX.equalToSuperview()
+
+        verticalStackView.snp.makeConstraints { make in
             make.top.equalTo(sortStackView.snp.bottom).offset(30)
-            make.width.height.equalTo(150)
+            make.leading.trailing.equalToSuperview().inset(16)
         }
         
-        noFavoritesLabel.snp.makeConstraints { make in
-            make.top.equalTo(imageView.snp.bottom).offset(20)
-            make.centerX.equalToSuperview()
+        tableView.snp.makeConstraints { make in
+            make.top.equalTo(sortStackView.snp.bottom).offset(30)
+            make.leading.trailing.bottom.equalToSuperview()
         }
-        
+
+        imageView.snp.makeConstraints { make in
+            make.width.height.equalTo(300)
+        }
+
         addButton.snp.makeConstraints { make in
-            make.top.equalTo(noFavoritesLabel.snp.bottom).offset(30)
-            make.centerX.equalToSuperview()
             make.width.equalTo(200)
             make.height.equalTo(50)
         }
