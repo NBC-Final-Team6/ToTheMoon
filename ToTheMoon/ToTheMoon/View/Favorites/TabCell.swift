@@ -14,7 +14,7 @@ class TabCell: UICollectionViewCell {
         super.init(frame: frame)
         contentView.addSubview(titleLabel)
         titleLabel.textAlignment = .center
-        titleLabel.font = UIFont.systemFont(ofSize: 14, weight: .medium)
+        titleLabel.font = .medium
         titleLabel.snp.makeConstraints { make in
             make.edges.equalToSuperview()
         }
