@@ -13,7 +13,7 @@ final class FavoritesView: UIView {
         let label = UILabel()
         label.text = "ToTheMoon"
         label.textColor = .text
-        label.font = .large
+        label.font = .large.regular()
         return label
     }()
     
@@ -24,12 +24,11 @@ final class FavoritesView: UIView {
         return button
     }()
     
-    // 커스텀 UICollectionView
     let tabCollectionView: UICollectionView = {
         let layout = UICollectionViewFlowLayout()
         layout.scrollDirection = .horizontal
-        layout.minimumLineSpacing = 0 // 셀 간격 0으로 설정
-        layout.minimumInteritemSpacing = 0 // 같은 줄의 셀 간격 0으로 설정
+        layout.minimumLineSpacing = 0
+        layout.minimumInteritemSpacing = 0
 
         let collectionView = UICollectionView(frame: .zero, collectionViewLayout: layout)
         collectionView.showsHorizontalScrollIndicator = false
@@ -56,7 +55,7 @@ final class FavoritesView: UIView {
         let label = UILabel()
         label.text = "전체 0"
         label.textColor = .text
-        label.font = .medium
+        label.font = .medium.regular()
         return label
     }()
 
@@ -64,7 +63,7 @@ final class FavoritesView: UIView {
         let button = UIButton(type: .system)
         button.setTitle("인기순 ▼", for: .normal)
         button.setTitleColor(.text, for: .normal)
-        button.titleLabel?.font = .medium
+        button.titleLabel?.font = .medium.regular()
         return button
     }()
 
@@ -87,7 +86,7 @@ final class FavoritesView: UIView {
         let label = UILabel()
         label.text = "현재 관심 등록된 코인이 없습니다. \n현재 시세에서 관심있는 코인을 추가해 보세요."
         label.textColor = .text
-        label.font = .medium
+        label.font = .medium.regular()
         label.textAlignment = .center
         label.numberOfLines = 0
         return label
@@ -161,8 +160,8 @@ final class FavoritesView: UIView {
         underlineView.snp.makeConstraints { make in
             make.bottom.equalTo(tabCollectionView)
             make.height.equalTo(2)
-            make.leading.equalToSuperview() // 초기 위치
-            make.width.equalTo(0) // 초기에는 선택된 탭의 크기로 설정
+            make.leading.equalToSuperview()
+            make.width.equalTo(0)
         }
 
         sortStackView.snp.makeConstraints { make in

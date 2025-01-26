@@ -14,7 +14,7 @@ class TabCell: UICollectionViewCell {
         super.init(frame: frame)
         contentView.addSubview(titleLabel)
         titleLabel.textAlignment = .center
-        titleLabel.font = .medium
+        titleLabel.font = .medium.regular()
         titleLabel.snp.makeConstraints { make in
             make.edges.equalToSuperview()
         }
@@ -30,8 +30,7 @@ class TabCell: UICollectionViewCell {
         UIView.transition(with: titleLabel, duration: 0.3, options: .transitionCrossDissolve) {
             self.titleLabel.textColor = isSelected ? .text : .lightGray
             self.titleLabel.font = isSelected
-                ? UIFont.boldSystemFont(ofSize: 16) // 선택된 경우 굵은 폰트
-                : UIFont.systemFont(ofSize: 14, weight: .medium) // 기본 폰트
+            ? UIFont.medium.bold() : UIFont.medium.regular()
         }
     }
 }

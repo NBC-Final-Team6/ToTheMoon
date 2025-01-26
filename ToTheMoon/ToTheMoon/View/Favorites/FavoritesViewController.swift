@@ -14,6 +14,14 @@ final class FavoritesViewController: UIViewController {
     private let disposeBag = DisposeBag()
     private let viewModel = FavoritesViewModel()
 
+    private let tabs = ["인기 화폐", "관심 목록"]
+    private let selectedSegment = BehaviorRelay<SegmentType>(value: .favoriteList)
+
+    enum SegmentType: Int {
+        case popularCurrency = 0
+        case favoriteList
+    }
+
     override func loadView() {
         self.view = favoritesView
     }
@@ -21,8 +29,8 @@ final class FavoritesViewController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         bindTabCollectionView()
-        bindViewModel()
         setupTableView()
+        bindViewModel()
     }
     
     override func viewDidLayoutSubviews() {
@@ -31,98 +39,99 @@ final class FavoritesViewController: UIViewController {
         setupInitialUnderlinePosition()
         favoritesView.tabCollectionView.collectionViewLayout.invalidateLayout()
     }
-    
+
     private func setupTabCollectionViewLayout() {
         guard let layout = favoritesView.tabCollectionView.collectionViewLayout as? UICollectionViewFlowLayout else { return }
         
-        let tabCount = CGFloat(viewModel.tabs.value.count)
+        let tabCount = CGFloat(tabs.count)
         let collectionViewWidth = favoritesView.tabCollectionView.bounds.width
         let tabWidth = collectionViewWidth / tabCount
         
-        layout.itemSize = CGSize(
-            width: tabWidth, // 각 탭의 너비를 정확히 계산
-            height: 40 // 고정된 높이
-        )
+        layout.itemSize = CGSize(width: tabWidth, height: 40)
     }
     
-    private func setupInitialUnderlinePosition() {
-        // tabCollectionView의 inset 반영
-        let collectionViewInsets: CGFloat = 16
-        let tabWidth = (UIScreen.main.bounds.width - (collectionViewInsets * 2)) / CGFloat(viewModel.tabs.value.count)
-        let selectedIndex = viewModel.selectedSegment.value.rawValue
-        
-        UIView.animate(withDuration: 0.0) { [weak self] in
-            guard let self = self else { return }
+    private func updateUnderlinePosition(index: Int, animated: Bool) {
+        let tabWidth = favoritesView.tabCollectionView.bounds.width / CGFloat(tabs.count)
+        let leadingOffset = tabWidth * CGFloat(index)
+
+        UIView.animate(withDuration: animated ? 0.3 : 0.0) {
             self.favoritesView.underlineView.snp.remakeConstraints { make in
                 make.bottom.equalTo(self.favoritesView.tabCollectionView)
                 make.height.equalTo(2)
-                make.leading.equalTo(self.favoritesView.tabCollectionView.snp.leading).offset(tabWidth * CGFloat(selectedIndex)) // 수정된 위치
-                make.width.equalTo(tabWidth) // 수정된 너비
+                make.leading.equalTo(leadingOffset)
+                make.width.equalTo(tabWidth)
             }
             self.favoritesView.layoutIfNeeded()
         }
     }
 
-    // UICollectionView Rx 바인딩 설정
+    private func setupInitialUnderlinePosition() {
+        let selectedIndex = selectedSegment.value.rawValue
+        updateUnderlinePosition(index: selectedIndex, animated: false)
+    }
+
+    private func animateUnderline(to indexPath: IndexPath) {
+        let selectedIndex = indexPath.item
+        updateUnderlinePosition(index: selectedIndex, animated: true)
+    }
+
     private func bindTabCollectionView() {
-        viewModel.tabs
+        // 탭 데이터 바인딩
+        Observable.just(tabs)
             .bind(to: favoritesView.tabCollectionView.rx.items(cellIdentifier: "TabCell", cellType: TabCell.self)) { index, title, cell in
-                let isSelected = index == self.viewModel.selectedSegment.value.rawValue
+                let isSelected = index == self.selectedSegment.value.rawValue
                 cell.configure(with: title, isSelected: isSelected)
             }
             .disposed(by: disposeBag)
 
-        // 탭 선택 이벤트 바인딩
+        // 탭 선택 이벤트
         favoritesView.tabCollectionView.rx.itemSelected
             .subscribe(onNext: { [weak self] indexPath in
                 guard let self = self else { return }
-                // 상태 먼저 업데이트
-                self.viewModel.selectedSegment.accept(FavoritesViewModel.SegmentType(rawValue: indexPath.item) ?? .favoriteList)
-                // 언더라인 애니메이션
+                self.selectedSegment.accept(SegmentType(rawValue: indexPath.item) ?? .favoriteList)
                 self.animateUnderline(to: indexPath)
-                // 탭 컬렉션 뷰 리로드
                 self.favoritesView.tabCollectionView.reloadData()
             })
             .disposed(by: disposeBag)
     }
 
-    private func animateUnderline(to indexPath: IndexPath) {
-        guard let cell = favoritesView.tabCollectionView.cellForItem(at: indexPath) else { return }
-        // 레이아웃 강제 동기화
-        favoritesView.tabCollectionView.layoutIfNeeded()
-        UIView.animate(withDuration: 0.3) {
-            self.favoritesView.underlineView.snp.remakeConstraints { make in
-                make.bottom.equalTo(self.favoritesView.tabCollectionView)
-                make.height.equalTo(2)
-                // contentOffset을 고려한 leading 위치 계산
-                let adjustedLeading = cell.frame.origin.x - self.favoritesView.tabCollectionView.contentOffset.x
-                make.leading.equalTo(adjustedLeading)
-                // 셀 너비로 언더라인 너비 설정
-                make.width.equalTo(cell.frame.width)
-            }
-            self.favoritesView.layoutIfNeeded()
-        }
-    }
-
     private func bindViewModel() {
-        // 뷰 상태 업데이트
-        viewModel.selectedSegment
-            .flatMapLatest { [unowned self] segment in
-                self.viewModel.viewState(for: segment)
-            }
-            .observe(on: MainScheduler.instance)
-            .subscribe(onNext: { [weak self] viewState in
-                self?.favoritesView.updateViewStates(
-                    isSearchButtonHidden: viewState.isSearchButtonHidden,
-                    isTableViewHidden: viewState.isTableViewHidden,
-                    isVerticalStackHidden: viewState.isVerticalStackHidden,
-                    isButtonStackHidden: viewState.isButtonStackHidden
-                )
+        // 세그먼트 상태에 따른 UI 업데이트
+        selectedSegment
+            .subscribe(onNext: { [weak self] segment in
+                guard let self = self else { return }
+                self.updateViewState(for: segment)
+            })
+            .disposed(by: disposeBag)
+        
+        // 관심 목록 데이터 변경 시 UI 업데이트
+        viewModel.favoriteCoins
+            .subscribe(onNext: { [weak self] _ in
+                guard let self = self else { return }
+                self.updateViewState(for: self.selectedSegment.value)
             })
             .disposed(by: disposeBag)
     }
 
-    // 테이블 뷰 등록
+    private func updateViewState(for segment: SegmentType) {
+        switch segment {
+        case .popularCurrency:
+            // 인기 화폐 상태
+            favoritesView.searchButton.isHidden = false
+            favoritesView.tableView.isHidden = false
+            favoritesView.verticalStackView.isHidden = true
+            favoritesView.buttonStackView.isHidden = true
+
+        case .favoriteList:
+            // 관심 목록 상태
+            let isEmpty = viewModel.favoriteCoins.value.isEmpty
+            favoritesView.searchButton.isHidden = true
+            favoritesView.tableView.isHidden = isEmpty
+            favoritesView.verticalStackView.isHidden = !isEmpty
+            favoritesView.buttonStackView.isHidden = false
+        }
+    }
+
     private func setupTableView() {
         favoritesView.tableView.register(UITableViewCell.self, forCellReuseIdentifier: "FavoriteCell")
     }
