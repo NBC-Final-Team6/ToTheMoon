@@ -91,6 +91,14 @@ final class FavoritesView: UIView {
         return label
     }()
     
+    let buttonStackView: UIStackView = {
+        let stackView = UIStackView()
+        stackView.axis = .horizontal
+        stackView.distribution = .equalSpacing
+        stackView.alignment = .center
+        return stackView
+    }()
+    
     let addButton: UIButton = {
         let button = UIButton(type: .system)
         button.setTitle("코인 추가하기", for: .normal)
@@ -118,23 +126,19 @@ final class FavoritesView: UIView {
     
     private func setupUI() {
         backgroundColor = .background
+        
+        [ sortLabel, sortToggleButton ].forEach{ sortStackView.addArrangedSubview($0) }
+        [ imageView, noFavoritesLabel ].forEach{ verticalStackView.addArrangedSubview($0) }
+        buttonStackView.addArrangedSubview(addButton)
+        
+        [ logoLabel,
+          searchButton,
+          segmentedControl,
+          sortStackView,
+          verticalStackView,
+          tableView,
+          buttonStackView ].forEach{ addSubview($0) }
 
-        // Add subviews
-        addSubview(logoLabel)
-        addSubview(searchButton)
-        addSubview(segmentedControl)
-        addSubview(sortStackView)
-        sortStackView.addArrangedSubview(sortLabel)
-        sortStackView.addArrangedSubview(sortToggleButton)
-        addSubview(verticalStackView)
-        addSubview(tableView)
-
-        // Add elements to verticalStackView
-        verticalStackView.addArrangedSubview(imageView)
-        verticalStackView.addArrangedSubview(noFavoritesLabel)
-        verticalStackView.addArrangedSubview(addButton)
-
-        // Layout using SnapKit
         logoLabel.snp.makeConstraints { make in
             make.top.equalTo(safeAreaLayoutGuide).offset(10)
             make.centerX.equalToSuperview()
@@ -162,17 +166,35 @@ final class FavoritesView: UIView {
         }
         
         tableView.snp.makeConstraints { make in
-            make.top.equalTo(sortStackView.snp.bottom).offset(30)
+            make.top.equalTo(sortStackView.snp.bottom).offset(16)
             make.leading.trailing.bottom.equalToSuperview()
         }
 
         imageView.snp.makeConstraints { make in
-            make.width.height.equalTo(300)
+            let screenHeight = UIScreen.main.bounds.height
+            make.height.equalTo(screenHeight * 0.3) // 화면 높이의 50%
+            make.width.equalTo(imageView.snp.height) // 정사각형 유지
+        }
+        
+        buttonStackView.snp.makeConstraints { make in
+            make.top.equalTo(verticalStackView.snp.bottom).offset(92)
+            make.leading.trailing.equalToSuperview().inset(16)
         }
 
         addButton.snp.makeConstraints { make in
-            make.width.equalTo(200)
             make.height.equalTo(50)
         }
+    }
+    
+    // 뷰 업데이트 메서드 추가
+    func updateViewStates(isSearchButtonHidden: Bool, isTableViewHidden: Bool, isVerticalStackHidden: Bool, isButtonStackHidden: Bool) {
+        searchButton.isHidden = isSearchButtonHidden
+        tableView.isHidden = isTableViewHidden
+        verticalStackView.isHidden = isVerticalStackHidden
+        buttonStackView.isHidden = isButtonStackHidden
+    }
+    
+    func updateSortLabel(with count: Int) {
+        sortLabel.text = "전체 \(count)"
     }
 }
