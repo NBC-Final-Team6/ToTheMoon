@@ -76,31 +76,27 @@ final class FavoritesViewController: UIViewController {
         favoritesView.tabCollectionView.rx.itemSelected
             .subscribe(onNext: { [weak self] indexPath in
                 guard let self = self else { return }
-
                 // 상태 먼저 업데이트
                 self.viewModel.selectedSegment.accept(FavoritesViewModel.SegmentType(rawValue: indexPath.item) ?? .favoriteList)
-
                 // 언더라인 애니메이션
                 self.animateUnderline(to: indexPath)
+                // 탭 컬렉션 뷰 리로드
+                self.favoritesView.tabCollectionView.reloadData()
             })
             .disposed(by: disposeBag)
     }
 
     private func animateUnderline(to indexPath: IndexPath) {
         guard let cell = favoritesView.tabCollectionView.cellForItem(at: indexPath) else { return }
-
         // 레이아웃 강제 동기화
         favoritesView.tabCollectionView.layoutIfNeeded()
-
         UIView.animate(withDuration: 0.3) {
             self.favoritesView.underlineView.snp.remakeConstraints { make in
                 make.bottom.equalTo(self.favoritesView.tabCollectionView)
                 make.height.equalTo(2)
-                
                 // contentOffset을 고려한 leading 위치 계산
                 let adjustedLeading = cell.frame.origin.x - self.favoritesView.tabCollectionView.contentOffset.x
                 make.leading.equalTo(adjustedLeading)
-                
                 // 셀 너비로 언더라인 너비 설정
                 make.width.equalTo(cell.frame.width)
             }
