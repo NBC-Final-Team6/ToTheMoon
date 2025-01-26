@@ -19,6 +19,9 @@ final class FavoritesViewModel {
         case favoriteList
     }
 
+    // 탭 데이터
+    let tabs = BehaviorRelay<[String]>(value: ["인기 화폐", "관심 목록"])
+
     // 뷰 상태 생성
     func viewState(for segment: SegmentType) -> Observable<ViewState> {
         favoriteCoins.map { coins in

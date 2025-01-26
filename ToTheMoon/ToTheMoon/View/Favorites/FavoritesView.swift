@@ -24,22 +24,24 @@ final class FavoritesView: UIView {
         return button
     }()
     
-    let segmentedControl: UISegmentedControl = {
-        let control = UISegmentedControl(items: ["인기 화폐", "관심 목록"])
-        control.selectedSegmentIndex = 1
-        control.backgroundColor = .container
-        control.selectedSegmentTintColor = .personel
-        let normalAttributes: [NSAttributedString.Key: Any] = [
-            .foregroundColor: UIColor.text,
-            .font: UIFont.medium
-        ]
-        let selectedAttributes: [NSAttributedString.Key: Any] = [
-            .foregroundColor: UIColor.text,
-            .font: UIFont.medium
-        ]
-        control.setTitleTextAttributes(normalAttributes, for: .normal)
-        control.setTitleTextAttributes(selectedAttributes, for: .selected)
-        return control
+    // 커스텀 UICollectionView
+    let tabCollectionView: UICollectionView = {
+        let layout = UICollectionViewFlowLayout()
+        layout.scrollDirection = .horizontal
+        layout.minimumLineSpacing = 0 // 셀 간격 0으로 설정
+        layout.minimumInteritemSpacing = 0 // 같은 줄의 셀 간격 0으로 설정
+
+        let collectionView = UICollectionView(frame: .zero, collectionViewLayout: layout)
+        collectionView.showsHorizontalScrollIndicator = false
+        collectionView.backgroundColor = .clear
+        collectionView.register(TabCell.self, forCellWithReuseIdentifier: "TabCell")
+        return collectionView
+    }()
+    
+    let underlineView: UIView = {
+        let view = UIView()
+        view.backgroundColor = .personel
+        return view
     }()
     
     let sortStackView: UIStackView = {
@@ -127,17 +129,18 @@ final class FavoritesView: UIView {
     private func setupUI() {
         backgroundColor = .background
         
-        [ sortLabel, sortToggleButton ].forEach{ sortStackView.addArrangedSubview($0) }
-        [ imageView, noFavoritesLabel ].forEach{ verticalStackView.addArrangedSubview($0) }
+        [sortLabel, sortToggleButton].forEach { sortStackView.addArrangedSubview($0) }
+        [imageView, noFavoritesLabel].forEach { verticalStackView.addArrangedSubview($0) }
         buttonStackView.addArrangedSubview(addButton)
         
-        [ logoLabel,
-          searchButton,
-          segmentedControl,
-          sortStackView,
-          verticalStackView,
-          tableView,
-          buttonStackView ].forEach{ addSubview($0) }
+        [logoLabel,
+         searchButton,
+         tabCollectionView,
+         underlineView,
+         sortStackView,
+         verticalStackView,
+         tableView,
+         buttonStackView].forEach { addSubview($0) }
 
         logoLabel.snp.makeConstraints { make in
             make.top.equalTo(safeAreaLayoutGuide).offset(10)
@@ -149,14 +152,21 @@ final class FavoritesView: UIView {
             make.trailing.equalToSuperview().offset(-16)
         }
 
-        segmentedControl.snp.makeConstraints { make in
+        tabCollectionView.snp.makeConstraints { make in
             make.top.equalTo(logoLabel.snp.bottom).offset(20)
             make.leading.trailing.equalToSuperview().inset(16)
             make.height.equalTo(40)
         }
+        
+        underlineView.snp.makeConstraints { make in
+            make.bottom.equalTo(tabCollectionView)
+            make.height.equalTo(2)
+            make.leading.equalToSuperview() // 초기 위치
+            make.width.equalTo(0) // 초기에는 선택된 탭의 크기로 설정
+        }
 
         sortStackView.snp.makeConstraints { make in
-            make.top.equalTo(segmentedControl.snp.bottom).offset(16)
+            make.top.equalTo(tabCollectionView.snp.bottom).offset(16)
             make.leading.trailing.equalToSuperview().inset(16)
         }
 
@@ -164,18 +174,18 @@ final class FavoritesView: UIView {
             make.top.equalTo(sortStackView.snp.bottom).offset(30)
             make.leading.trailing.equalToSuperview().inset(16)
         }
-        
+
         tableView.snp.makeConstraints { make in
             make.top.equalTo(sortStackView.snp.bottom).offset(16)
             make.leading.trailing.bottom.equalToSuperview()
         }
-
+        
         imageView.snp.makeConstraints { make in
             let screenHeight = UIScreen.main.bounds.height
-            make.height.equalTo(screenHeight * 0.3) // 화면 높이의 50%
-            make.width.equalTo(imageView.snp.height) // 정사각형 유지
+            make.height.equalTo(screenHeight * 0.3)
+            make.width.equalTo(imageView.snp.height)
         }
-        
+
         buttonStackView.snp.makeConstraints { make in
             make.top.equalTo(verticalStackView.snp.bottom).offset(92)
             make.leading.trailing.equalToSuperview().inset(16)
@@ -186,7 +196,6 @@ final class FavoritesView: UIView {
         }
     }
     
-    // 뷰 업데이트 메서드 추가
     func updateViewStates(isSearchButtonHidden: Bool, isTableViewHidden: Bool, isVerticalStackHidden: Bool, isButtonStackHidden: Bool) {
         searchButton.isHidden = isSearchButtonHidden
         tableView.isHidden = isTableViewHidden

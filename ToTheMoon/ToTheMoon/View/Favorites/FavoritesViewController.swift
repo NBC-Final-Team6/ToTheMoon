@@ -13,28 +13,69 @@ final class FavoritesViewController: UIViewController {
     private let favoritesView = FavoritesView()
     private let disposeBag = DisposeBag()
     private let viewModel = FavoritesViewModel()
-    
+
     override func loadView() {
         self.view = favoritesView
     }
-    
+
     override func viewDidLoad() {
         super.viewDidLoad()
+        setupTabCollectionViewLayout()
+        bindTabCollectionView()
         bindViewModel()
         setupTableView()
     }
     
-    override func viewWillAppear(_ animated: Bool) {
-        navigationController?.navigationBar.isHidden = true
-    }
-    
-    private func bindViewModel() {
-        // 세그먼트 선택 상태와 UI 업데이트 바인딩
-        favoritesView.segmentedControl.rx.selectedSegmentIndex
-            .compactMap { FavoritesViewModel.SegmentType(rawValue: $0) }
-            .bind(to: viewModel.selectedSegment)
-            .disposed(by: disposeBag)
+    private func setupTabCollectionViewLayout() {
+        guard let layout = favoritesView.tabCollectionView.collectionViewLayout as? UICollectionViewFlowLayout else { return }
         
+        layout.itemSize = CGSize(
+            width: UIScreen.main.bounds.width / CGFloat(viewModel.tabs.value.count), // 탭 개수에 따라 셀 크기 조정
+            height: 40 // 고정된 높이
+        )
+    }
+
+    // UICollectionView Rx 바인딩 설정
+    private func bindTabCollectionView() {
+            // Rx 데이터 바인딩
+            viewModel.tabs
+                .bind(to: favoritesView.tabCollectionView.rx.items(cellIdentifier: "TabCell", cellType: TabCell.self)) { index, title, cell in
+                    let isSelected = index == self.viewModel.selectedSegment.value.rawValue
+                    cell.configure(with: title, isSelected: isSelected)
+                }
+                .disposed(by: disposeBag)
+
+            // 탭 선택 이벤트 바인딩
+            favoritesView.tabCollectionView.rx.itemSelected
+                .subscribe(onNext: { [weak self] indexPath in
+                    guard let self = self else { return }
+                    self.animateUnderline(to: indexPath)
+                    self.viewModel.selectedSegment.accept(FavoritesViewModel.SegmentType(rawValue: indexPath.item) ?? .favoriteList)
+                })
+                .disposed(by: disposeBag)
+
+            // 탭 상태 업데이트
+            viewModel.selectedSegment
+                .subscribe(onNext: { [weak self] _ in
+                    self?.favoritesView.tabCollectionView.reloadData()
+                })
+                .disposed(by: disposeBag)
+        }
+
+        private func animateUnderline(to indexPath: IndexPath) {
+            guard let cell = favoritesView.tabCollectionView.cellForItem(at: indexPath) else { return }
+            UIView.animate(withDuration: 0.3) {
+                self.favoritesView.underlineView.snp.remakeConstraints { make in
+                    make.bottom.equalTo(self.favoritesView.tabCollectionView)
+                    make.height.equalTo(2)
+                    make.leading.equalTo(cell.frame.origin.x)
+                    make.width.equalTo(cell.frame.width)
+                }
+                self.favoritesView.layoutIfNeeded()
+            }
+        }
+
+    private func bindViewModel() {
         // 뷰 상태 업데이트
         viewModel.selectedSegment
             .flatMapLatest { [unowned self] segment in
@@ -50,24 +91,9 @@ final class FavoritesViewController: UIViewController {
                 )
             })
             .disposed(by: disposeBag)
-        
-        // 테이블뷰 데이터 바인딩
-        viewModel.favoriteCoins
-            .bind(to: favoritesView.tableView.rx.items(cellIdentifier: "FavoriteCell")) { _, coin, cell in
-                cell.textLabel?.text = coin
-            }
-            .disposed(by: disposeBag)
-        
-        // 관심 목록 개수 업데이트
-        viewModel.favoriteCoins
-            .map { $0.count }
-            .observe(on: MainScheduler.instance)
-            .subscribe(onNext: { [weak self] count in
-                self?.favoritesView.updateSortLabel(with: count)
-            })
-            .disposed(by: disposeBag)
     }
-    
+
+    // 테이블 뷰 등록
     private func setupTableView() {
         favoritesView.tableView.register(UITableViewCell.self, forCellReuseIdentifier: "FavoriteCell")
     }
