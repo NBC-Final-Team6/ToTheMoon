@@ -21,6 +21,7 @@ final class FavoritesContainerViewController: UIViewController {
 
     override func loadView() {
         self.view = favoritesView
+        
     }
 
     override func viewDidLoad() {

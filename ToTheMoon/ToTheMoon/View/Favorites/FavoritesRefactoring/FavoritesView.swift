@@ -9,6 +9,7 @@ import UIKit
 import SnapKit
 
 final class FavoritesView: UIView {
+    
     let logoLabel: UILabel = {
         let label = UILabel()
         label.text = "ToTheMoon"
@@ -79,7 +80,8 @@ final class FavoritesView: UIView {
         
         tabCollectionView.snp.makeConstraints { make in
             make.top.equalTo(logoLabel.snp.bottom).offset(20)
-            make.leading.trailing.equalToSuperview().inset(16)
+            make.leading.equalToSuperview().offset(16)
+            make.trailing.equalToSuperview().offset(-16)
             make.height.equalTo(40)
         }
         

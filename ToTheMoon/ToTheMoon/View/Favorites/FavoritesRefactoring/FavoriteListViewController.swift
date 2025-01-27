@@ -7,16 +7,33 @@
 
 import UIKit
 import SnapKit
-import RxSwift
-import RxCocoa
 
 final class FavoriteListViewController: UIViewController {
-    private let tableView = UITableView()
+    private let noFavoritesView = NoFavoritesView()
 
     override func viewDidLoad() {
         super.viewDidLoad()
-        view.addSubview(tableView)
-        tableView.frame = view.bounds // AutoLayout으로 교체 가능
-        tableView.register(UITableViewCell.self, forCellReuseIdentifier: "FavoriteListCell")
+        setupUI()
+    }
+
+    private func setupUI() {
+        // 배경색 설정
+        view.backgroundColor = .background
+
+        // NoFavoritesView 추가
+        view.addSubview(noFavoritesView)
+
+        // NoFavoritesView를 부모 뷰에 맞게 레이아웃 설정
+        noFavoritesView.snp.makeConstraints { make in
+            make.edges.equalToSuperview()
+        }
+
+        // NoFavoritesView 초기 상태 설정
+        updateNoFavoritesView(isHidden: false)
+    }
+
+    // NoFavoritesView의 표시 상태를 업데이트하는 메서드
+    func updateNoFavoritesView(isHidden: Bool) {
+        noFavoritesView.isHidden = isHidden
     }
 }
