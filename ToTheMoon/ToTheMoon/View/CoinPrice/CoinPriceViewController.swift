@@ -7,8 +7,12 @@
 
 import UIKit
 import RxSwift
+import RxCocoa
 
 class CoinPriceViewController: UIViewController {
+    
+    private let disposeBag = DisposeBag()
+    private let viewModel = CoinPriceViewModel()
     
     private let coinPriceView = CoinPriceView()
     
