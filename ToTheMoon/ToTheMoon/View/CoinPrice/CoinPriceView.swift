@@ -51,9 +51,8 @@ class CoinPriceView: UIView {
     private func setupView() {
         backgroundColor = UIColor(named: "BackgroundColor")
         
-        addSubview(titleLabel)
-        addSubview(stackView)
-        addSubview(coinPriceTableView)
+        [titleLabel, stackView, coinPriceTableView]
+            .forEach { addSubview($0) }
         
         titleLabel.snp.makeConstraints { make in
             make.top.equalTo(safeAreaLayoutGuide)

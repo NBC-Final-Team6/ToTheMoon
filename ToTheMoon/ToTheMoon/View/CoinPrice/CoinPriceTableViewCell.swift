@@ -73,9 +73,7 @@ class CoinPriceTableViewCell: UITableViewCell {
         backgroundColor = UIColor(named: "ContainerColor")
         
         [logoImageView, coinNameLabel, marketNameLabel, priceLabel, priceChangeLabel, graphView]
-            .forEach {
-            contentView.addSubview($0)
-        }
+            .forEach { contentView.addSubview($0) }
         
         logoImageView.snp.makeConstraints { make in
             make.leading.equalToSuperview().offset(10)
