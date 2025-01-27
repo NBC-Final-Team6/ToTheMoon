@@ -158,10 +158,7 @@ final class FavoritesView: UIView {
         }
         
         underlineView.snp.makeConstraints { make in
-            //make.bottom.equalTo(tabCollectionView)
             make.height.equalTo(2)
-            //make.leading.equalToSuperview()
-            //make.width.equalTo(0)
         }
 
         sortStackView.snp.makeConstraints { make in
