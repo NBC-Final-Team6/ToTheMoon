@@ -12,7 +12,11 @@ import RxCocoa
 class CoinPriceViewModel {
     
     private let disposeBag = DisposeBag()
+    
     private let upbitService = UpbitService()
+    private let bithumbService = BithumbService()
+    private let coinoneService = CoinOneService()
+    private let korbitService = KorbitService()
     
     private var currentExchange: Exchange = .upbit
     private var timer: Disposable?
@@ -54,10 +58,40 @@ class CoinPriceViewModel {
         timer?.disposed(by: disposeBag)
     }
     
+    // 코인명만 보이게(KRW 글자 제외)
+    private func extractCoinSymbol(_ symbol: String) -> String {
+        let components = symbol.uppercased()
+            .replacingOccurrences(of: "_", with: "-")
+            .components(separatedBy: "-")
+        
+        return components.first { $0 != "KRW" } ?? symbol
+    }
+    
     // 코인 가격 데이터 가져오기
     private func fetchCoinPrices() {
         
-        upbitService.fetchMarketPrices()
+        let service: Single<[MarketPrice]>
+        
+        switch currentExchange {
+        case .upbit:
+            service = upbitService.fetchMarketPrices()
+        case .bithumb:
+            service = bithumbService.fetchMarketPrices()
+        case .coinone:
+            service = coinoneService.fetchMarketPrices()
+        case .korbit:
+            service = korbitService.fetchMarketPrices()
+        }
+        
+        service
+            .map { marketPrices -> [MarketPrice] in
+                marketPrices.map { price in
+                    var modifiedPrice = price
+                    modifiedPrice.symbol = self.extractCoinSymbol(price.symbol)
+                    return modifiedPrice
+                }
+                .sorted { $0.quoteVolume > $1.quoteVolume }
+            }
             .observe(on: MainScheduler.instance)
             .subscribe(onSuccess: { [weak self] marketPrices in
                 self?.coinPrices.accept(marketPrices)
