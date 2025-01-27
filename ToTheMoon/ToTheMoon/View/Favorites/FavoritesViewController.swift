@@ -28,6 +28,7 @@ final class FavoritesViewController: UIViewController {
 
     override func viewDidLoad() {
         super.viewDidLoad()
+        navigationController?.navigationBar.isHidden = true
         bindTabCollectionView()
         setupTableView()
         bindViewModel()
@@ -45,7 +46,6 @@ final class FavoritesViewController: UIViewController {
         
         let tabCount = CGFloat(tabs.count)
         let collectionViewWidth = favoritesView.tabCollectionView.bounds.width
-        print("CollectionView Width: \(collectionViewWidth)")
         let tabWidth = collectionViewWidth / tabCount
         
         layout.itemSize = CGSize(width: tabWidth, height: 40)
@@ -54,7 +54,6 @@ final class FavoritesViewController: UIViewController {
     private func updateUnderlinePosition(index: Int, animated: Bool) {
         let tabWidth = favoritesView.tabCollectionView.bounds.width / CGFloat(tabs.count)
         let leadingOffset = 16 + tabWidth * CGFloat(index)
-        print("Tab Width: \(tabWidth), Leading Offset: \(leadingOffset)")
         UIView.animate(withDuration: animated ? 0.3 : 0.0) {
             self.favoritesView.underlineView.snp.remakeConstraints { make in
                 make.bottom.equalTo(self.favoritesView.tabCollectionView)
