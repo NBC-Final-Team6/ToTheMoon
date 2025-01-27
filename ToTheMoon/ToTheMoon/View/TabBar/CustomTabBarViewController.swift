@@ -10,11 +10,19 @@ import SnapKit
 
 class CustomTabBarViewController: UIViewController {
     private let customTabBar = CustomTabBarView()
+    private let favoritesNavVC = UINavigationController(rootViewController: FavoritesViewController())
+    private let coinPricesNavVC = UINavigationController(rootViewController: CoinPriceViewController())
+    private let settingsNavVC = UINavigationController(rootViewController: SettingViewController())
+
+    private var currentViewController: UIViewController?
+
 
     override func viewDidLoad() {
         super.viewDidLoad()
         setupUI()
         setupTabBarActions()
+        selectTab(at: 0)
+        navigationController?.navigationBar.isHidden = true
     }
 
     private func setupUI() {
@@ -32,7 +40,35 @@ class CustomTabBarViewController: UIViewController {
     }
 
     private func handleTabSelection(selectedIndex: Int) {
-        print("Selected Tab: \(selectedIndex)")
         customTabBar.updateButtonSelection(selectedIndex: selectedIndex)
+        selectTab(at: selectedIndex)
+    }
+    
+    private func selectTab(at index: Int) {
+        currentViewController?.view.removeFromSuperview()
+        currentViewController?.removeFromParent()
+
+        var selectedViewController: UIViewController?
+
+        switch index {
+        case 0:
+            selectedViewController = favoritesNavVC
+        case 1:
+            selectedViewController = coinPricesNavVC
+        case 2:
+            selectedViewController = settingsNavVC
+        default:
+            break
+        }
+
+        if let selectedVC = selectedViewController {
+            addChild(selectedVC)
+            view.insertSubview(selectedVC.view, belowSubview: customTabBar)
+            selectedVC.view.snp.makeConstraints { make in
+                make.top.leading.trailing.equalToSuperview()
+                make.bottom.equalTo(customTabBar.snp.top)
+            }
+            currentViewController = selectedVC
+        }
     }
 }
