@@ -22,6 +22,7 @@ class CustomTabBarViewController: UIViewController {
         setupUI()
         setupTabBarActions()
         selectTab(at: 0)
+        navigationController?.navigationBar.isHidden = true
     }
 
     private func setupUI() {
