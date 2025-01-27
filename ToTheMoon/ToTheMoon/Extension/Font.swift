@@ -26,32 +26,38 @@ extension UIFont {
             }
         }
         
-        /// 각 타입에 맞는 폰트 반환
-        var font: UIFont {
-            return UIFont.systemFont(ofSize: self.size) // 시스템 기본 폰트 사용
+        /// 일반 폰트 반환
+        func regular() -> UIFont {
+            return UIFont.systemFont(ofSize: self.size)
+        }
+        
+        /// 굵은 폰트 반환
+        func bold() -> UIFont {
+            return UIFont.systemFont(ofSize: self.size, weight: .bold)
         }
     }
 }
 
 // UIFont의 커스텀 속성 추가
 extension UIFont {
-    static var extraLarge: UIFont {
-        return FontType.extraLarge.font
+    static var extraLarge: FontType {
+        return .extraLarge
     }
     
-    static var large: UIFont {
-        return FontType.large.font
+    static var large: FontType {
+        return .large
     }
     
-    static var medium: UIFont {
-        return FontType.medium.font
+    static var medium: FontType {
+        return .medium
     }
     
-    static var small: UIFont {
-        return FontType.small.font
+    static var small: FontType {
+        return .small
     }
     
-    static var extraSmall: UIFont {
-        return FontType.extraSmall.font
+    static var extraSmall: FontType {
+        return .extraSmall
     }
 }
+
