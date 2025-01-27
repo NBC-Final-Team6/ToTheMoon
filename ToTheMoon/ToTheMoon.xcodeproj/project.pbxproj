@@ -11,6 +11,7 @@
 		9935C76F2D3FDD6000722D84 /* RxCocoa in Frameworks */ = {isa = PBXBuildFile; productRef = 9935C76E2D3FDD6000722D84 /* RxCocoa */; };
 		9935C7712D3FDD6000722D84 /* RxRelay in Frameworks */ = {isa = PBXBuildFile; productRef = 9935C7702D3FDD6000722D84 /* RxRelay */; };
 		9935C7732D3FDD6000722D84 /* RxSwift in Frameworks */ = {isa = PBXBuildFile; productRef = 9935C7722D3FDD6000722D84 /* RxSwift */; };
+		CC0C7F892D41E0DE005F2AA4 /* DGCharts in Frameworks */ = {isa = PBXBuildFile; productRef = CC0C7F882D41E0DE005F2AA4 /* DGCharts */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -45,6 +46,7 @@
 			files = (
 				9935C7712D3FDD6000722D84 /* RxRelay in Frameworks */,
 				9935C76F2D3FDD6000722D84 /* RxCocoa in Frameworks */,
+				CC0C7F892D41E0DE005F2AA4 /* DGCharts in Frameworks */,
 				9935C7732D3FDD6000722D84 /* RxSwift in Frameworks */,
 				9935C76C2D3FDD4500722D84 /* SnapKit in Frameworks */,
 			);
@@ -93,6 +95,7 @@
 				9935C76E2D3FDD6000722D84 /* RxCocoa */,
 				9935C7702D3FDD6000722D84 /* RxRelay */,
 				9935C7722D3FDD6000722D84 /* RxSwift */,
+				CC0C7F882D41E0DE005F2AA4 /* DGCharts */,
 			);
 			productName = ToTheMoon;
 			productReference = 9935C6D02D3FDC5E00722D84 /* ToTheMoon.app */;
@@ -125,6 +128,7 @@
 			packageReferences = (
 				9935C76A2D3FDD4500722D84 /* XCRemoteSwiftPackageReference "SnapKit" */,
 				9935C76D2D3FDD6000722D84 /* XCRemoteSwiftPackageReference "RxSwift" */,
+				CC0C7F872D41E0DE005F2AA4 /* XCRemoteSwiftPackageReference "Charts" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 9935C6D12D3FDC5E00722D84 /* Products */;
@@ -372,6 +376,14 @@
 				minimumVersion = 6.8.0;
 			};
 		};
+		CC0C7F872D41E0DE005F2AA4 /* XCRemoteSwiftPackageReference "Charts" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/danielgindi/Charts";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 5.1.0;
+			};
+		};
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
@@ -394,6 +406,11 @@
 			isa = XCSwiftPackageProductDependency;
 			package = 9935C76D2D3FDD6000722D84 /* XCRemoteSwiftPackageReference "RxSwift" */;
 			productName = RxSwift;
+		};
+		CC0C7F882D41E0DE005F2AA4 /* DGCharts */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = CC0C7F872D41E0DE005F2AA4 /* XCRemoteSwiftPackageReference "Charts" */;
+			productName = DGCharts;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};
