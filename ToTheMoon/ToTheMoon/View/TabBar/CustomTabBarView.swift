@@ -25,7 +25,7 @@ class CustomTabBarView: UIView {
     }
 
     private func setupUI() {
-        self.backgroundColor = UIColor(red: 11/255, green: 11/255, blue: 40/255, alpha: 1)
+        self.backgroundColor = UIColor(named: "BackgroundColor")
         self.layer.masksToBounds = false
         self.clipsToBounds = true
 
@@ -51,7 +51,7 @@ class CustomTabBarView: UIView {
             // 텍스트
             let label = UILabel()
             label.text = titles[index]
-            label.font = UIFont.systemFont(ofSize: 10, weight: .medium)
+            label.font = UIFont.systemFont(ofSize: 14, weight: .bold)
             label.textColor = index == 0 ? UIColor(named: "PersonelColor") : UIColor(named: "TabBarTextColor")
 
             // 스택뷰에 추가
