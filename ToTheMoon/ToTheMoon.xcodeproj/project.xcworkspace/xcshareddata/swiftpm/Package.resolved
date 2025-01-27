@@ -1,6 +1,16 @@
 {
-  "originHash" : "77d97d8ce1ad894d79ef4a4ea8c12776c8480dae971dc27122cfd8e0fd4b33fd",
+  "originHash" : "2151b0c12fd86ca7575fc68e29faa15ed251253e7c16dc7371e4b28dd49f8b06",
+
   "pins" : [
+    {
+      "identity" : "charts",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/danielgindi/Charts",
+      "state" : {
+        "revision" : "dd9c72e3d7e751e769971092a6bd72d39198ae63",
+        "version" : "5.1.0"
+      }
+    },
     {
       "identity" : "rxswift",
       "kind" : "remoteSourceControl",
