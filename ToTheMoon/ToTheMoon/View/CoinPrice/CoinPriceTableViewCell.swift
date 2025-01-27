@@ -110,17 +110,17 @@ class CoinPriceTableViewCell: UITableViewCell {
         
     }
     
-    func configure(with item: CoinPrice) {
+    func configure(with item: MarketPrice) {
         // TODO: 로고, 그래프 뷰
-        coinNameLabel.text = item.coinName
-        marketNameLabel.text = item.marketName
+        coinNameLabel.text = item.symbol
+        marketNameLabel.text = item.exchange
         priceLabel.text = "₩\(formatPrice(item.price))"
         
-        if item.priceChange >= 0 {
-            priceChangeLabel.text = "▲ \(String(format: "%.2f%%", item.priceChange))"
+        if item.change == "RISE" {
+            priceChangeLabel.text = "▲ \(String(format: "%.2f%%", item.changeRate))"
             priceChangeLabel.textColor = UIColor(named: "NumbersGreenColor")
         } else {
-            priceChangeLabel.text = "▼ \(String(format: "%.2f%%", abs(item.priceChange)))"  // abs()함수: 절대값을 구하는 함수
+            priceChangeLabel.text = "▼ \(String(format: "%.2f%%", abs(item.changeRate)))"  // abs()함수: 절대값을 구하는 함수
             priceChangeLabel.textColor = UIColor(named: "NumbersRedColor")
         }
     }

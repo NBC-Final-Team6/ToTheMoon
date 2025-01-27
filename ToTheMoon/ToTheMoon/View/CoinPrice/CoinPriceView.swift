@@ -35,6 +35,7 @@ class CoinPriceView: UIView {
         tableview.register(CoinPriceTableViewCell.self, forCellReuseIdentifier: CoinPriceTableViewCell.identifier)
         tableview.backgroundColor = UIColor(named: "ContainerColor")
         tableview.separatorStyle = .singleLine
+        tableview.layer.cornerRadius = 30
         return tableview
     }()
     
@@ -76,5 +77,15 @@ class CoinPriceView: UIView {
             marketView.configure(with: market)
             stackView.addArrangedSubview(marketView)
         }
+    }
+}
+
+extension CoinPriceView {
+    func getMarketViews() -> [MarketView] {
+        return stackView.arrangedSubviews.compactMap { $0 as? MarketView }
+    }
+    
+    func resetMarketViews() {
+        getMarketViews().forEach { $0.resetState() }
     }
 }
