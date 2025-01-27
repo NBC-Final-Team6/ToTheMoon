@@ -35,6 +35,7 @@ class CoinPriceView: UIView {
         tableview.register(CoinPriceTableViewCell.self, forCellReuseIdentifier: CoinPriceTableViewCell.identifier)
         tableview.backgroundColor = UIColor(named: "ContainerColor")
         tableview.separatorStyle = .singleLine
+        tableview.layer.cornerRadius = 30
         return tableview
     }()
     
