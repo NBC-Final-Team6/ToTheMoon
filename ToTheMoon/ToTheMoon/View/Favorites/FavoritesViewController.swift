@@ -10,7 +10,7 @@ import RxSwift
 import RxCocoa
 
 final class FavoritesViewController: UIViewController {
-    private let favoritesView = FavoritesView()
+    private let favoritesView = fffView()
     private let disposeBag = DisposeBag()
     private let viewModel = FavoritesViewModel()
 
