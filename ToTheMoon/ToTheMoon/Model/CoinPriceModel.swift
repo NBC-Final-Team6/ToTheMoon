@@ -18,12 +18,3 @@ struct MarketModel {
         MarketModel(title: "코빗", imageName: "4.circle")
     ]
 }
-
-struct CoinPrice {
-    let coinName: String
-    let marketName: String
-    let price: Double
-    let priceChange: Double
-//    let logoUrl: String?
-//    let graphUrl: 
-}

@@ -78,3 +78,13 @@ class CoinPriceView: UIView {
         }
     }
 }
+
+extension CoinPriceView {
+    func getMarketViews() -> [MarketView] {
+        return stackView.arrangedSubviews.compactMap { $0 as? MarketView }
+    }
+    
+    func resetMarketViews() {
+        getMarketViews().forEach { $0.resetState() }
+    }
+}
