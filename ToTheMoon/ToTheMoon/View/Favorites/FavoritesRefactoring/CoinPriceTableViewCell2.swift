@@ -2,7 +2,7 @@
 //  Untitled.swift
 //  ToTheMoon
 //
-//  Created by 황석범 on 1/27/25.
+//  Created by 황석범 on 1/28/25.
 //
 
 import UIKit
@@ -10,10 +10,10 @@ import SnapKit
 
 class CoinPriceTableViewCell2: UITableViewCell {
     
-    static let identifier = "CoinPriceTableViewCell"
+    static let cellIdentifier = "CoinPriceTableViewCell2" // 이름 변경
     
     private let logoImageView: UIImageView = {
-       let imageView = UIImageView()
+        let imageView = UIImageView()
         imageView.contentMode = .scaleAspectFit
         imageView.clipsToBounds = true
         imageView.layer.cornerRadius = 20
@@ -25,7 +25,6 @@ class CoinPriceTableViewCell2: UITableViewCell {
         let label = UILabel()
         label.textColor = UIColor(named: "TextColor")
         label.font = .systemFont(ofSize: 15, weight: .bold)
-        label.textAlignment = .left
         return label
     }()
     
@@ -33,7 +32,6 @@ class CoinPriceTableViewCell2: UITableViewCell {
         let label = UILabel()
         label.textColor = UIColor(named: "TextColor")
         label.font = .systemFont(ofSize: 13)
-        label.textAlignment = .left
         return label
     }()
     
@@ -54,10 +52,8 @@ class CoinPriceTableViewCell2: UITableViewCell {
     
     private let graphView: UIView = {
         let view = UIView()
-        // TODO: 그래프 뷰
         return view
     }()
-    
     
     override init(style: UITableViewCell.CellStyle, reuseIdentifier: String?) {
         super.init(style: style, reuseIdentifier: reuseIdentifier)
@@ -69,7 +65,6 @@ class CoinPriceTableViewCell2: UITableViewCell {
     }
     
     private func setupUI() {
-        
         backgroundColor = UIColor(named: "ContainerColor")
         
         [logoImageView, coinNameLabel, marketNameLabel, priceLabel, priceChangeLabel, graphView]
@@ -84,6 +79,7 @@ class CoinPriceTableViewCell2: UITableViewCell {
         coinNameLabel.snp.makeConstraints { make in
             make.leading.equalTo(logoImageView.snp.trailing).offset(10)
             make.top.equalToSuperview().offset(10)
+            make.trailing.lessThanOrEqualTo(priceLabel.snp.leading).offset(-10)
         }
         
         marketNameLabel.snp.makeConstraints { make in
@@ -92,7 +88,7 @@ class CoinPriceTableViewCell2: UITableViewCell {
         }
         
         priceLabel.snp.makeConstraints { make in
-            make.trailing.equalTo(graphView.snp.leading).inset(10)
+            make.trailing.equalTo(graphView.snp.leading).offset(-10)
             make.top.equalToSuperview().offset(10)
         }
         
@@ -107,27 +103,22 @@ class CoinPriceTableViewCell2: UITableViewCell {
             make.width.equalTo(80)
             make.height.equalTo(45)
         }
-        
     }
     
-    func configure(with item: CoinPrice) {
-        // TODO: 로고, 그래프 뷰
-        coinNameLabel.text = item.coinName
-        marketNameLabel.text = item.marketName
+    func configure(with item: MarketPrice) {
+        coinNameLabel.text = item.symbol
+        marketNameLabel.text = item.exchange
         priceLabel.text = "₩\(formatPrice(item.price))"
         
-        if item.priceChange >= 0 {
-            priceChangeLabel.text = "▲ \(String(format: "%.2f%%", item.priceChange))"
-            priceChangeLabel.textColor = UIColor(named: "NumbersGreenColor")
-        } else {
-            priceChangeLabel.text = "▼ \(String(format: "%.2f%%", abs(item.priceChange)))"  // abs()함수: 절대값을 구하는 함수
-            priceChangeLabel.textColor = UIColor(named: "NumbersRedColor")
-        }
+        priceChangeLabel.text = item.change == "RISE"
+            ? "▲ \(String(format: "%.2f%%", item.changeRate))"
+            : "▼ \(String(format: "%.2f%%", abs(item.changeRate)))"
+        priceChangeLabel.textColor = UIColor(named: item.change == "RISE" ? "NumbersGreenColor" : "NumbersRedColor")
     }
     
     private func formatPrice(_ price: Double) -> String {
         let numberFormatter = NumberFormatter()
-        numberFormatter.numberStyle = .decimal  // 천 단위로 쉼표 찍어줌
+        numberFormatter.numberStyle = .decimal
         return numberFormatter.string(from: NSNumber(value: price)) ?? "0"
     }
 }

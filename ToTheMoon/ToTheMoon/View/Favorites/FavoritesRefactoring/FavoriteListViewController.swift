@@ -19,7 +19,6 @@ final class FavoriteListViewController: UIViewController {
     private func setupUI() {
         // 배경색 설정
         view.backgroundColor = .background
-
         // NoFavoritesView 추가
         view.addSubview(noFavoritesView)
 

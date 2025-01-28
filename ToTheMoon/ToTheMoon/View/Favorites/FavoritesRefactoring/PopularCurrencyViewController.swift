@@ -1,22 +1,45 @@
 //
-//  PopularCurrencyViewCon.swift
+//  Untitled.swift
 //  ToTheMoon
 //
-//  Created by 황석범 on 1/27/25.
+//  Created by 황석범 on 1/28/25.
 //
 
 import UIKit
-import SnapKit
 import RxSwift
 import RxCocoa
 
 final class PopularCurrencyViewController: UIViewController {
-    private let tableView = UITableView()
+    private let contentView = CustomTableView()
+    private let viewModel = FavoritesViewModel()
+    private let disposeBag = DisposeBag()
+
+    override func loadView() {
+        view = contentView
+    }
 
     override func viewDidLoad() {
         super.viewDidLoad()
-        view.addSubview(tableView)
-        tableView.frame = view.bounds // AutoLayout으로 교체 가능
-        tableView.register(UITableViewCell.self, forCellReuseIdentifier: "PopularCurrencyCell")
+        bindViewModel()
+        viewModel.fetchPopularCoins()
+        contentView.tableView.delegate = self
+    }
+
+    private func bindViewModel() {
+        viewModel.popularCoins
+            .bind(to: contentView.tableView.rx.items(cellIdentifier: CoinPriceTableViewCell2.cellIdentifier, cellType: CoinPriceTableViewCell2.self)) { _, coin, cell in
+                cell.configure(with: coin)
+            }
+            .disposed(by: disposeBag)
+        
+        contentView.tableView.rx.modelSelected(MarketPrice.self)
+            .subscribe(onNext: { print("Selected coin: \($0.symbol)") })
+            .disposed(by: disposeBag)
+    }
+}
+
+extension PopularCurrencyViewController: UITableViewDelegate {
+    func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
+        return 60
     }
 }
