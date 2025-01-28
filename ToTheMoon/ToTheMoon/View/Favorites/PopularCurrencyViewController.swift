@@ -11,7 +11,7 @@ import RxCocoa
 
 final class PopularCurrencyViewController: UIViewController {
     private let contentView = CustomTableView()
-    private let viewModel = FavoritesViewModel()
+    private let viewModel = PopularCurrencyViewModel()
     private let disposeBag = DisposeBag()
 
     override func loadView() {

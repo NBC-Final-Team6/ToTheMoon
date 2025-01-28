@@ -8,13 +8,12 @@
 import RxSwift
 import RxCocoa
 
-final class FavoritesViewModel {
+final class PopularCurrencyViewModel {
     private let upbitService = UpbitService()
     private let disposeBag = DisposeBag()
     
     // 인기 화폐 데이터
     let popularCoins = BehaviorRelay<[MarketPrice]>(value: [])
-    let favoritesCoins = BehaviorRelay<[MarketPrice]>(value: [])
     
     func fetchPopularCoins() {
         upbitService.fetchMarketPrices()
