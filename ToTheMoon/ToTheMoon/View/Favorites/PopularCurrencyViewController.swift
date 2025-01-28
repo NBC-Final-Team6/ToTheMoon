@@ -1,5 +1,5 @@
 //
-//  Untitled.swift
+//  PopularCurrencyViewController.swift
 //  ToTheMoon
 //
 //  Created by 황석범 on 1/28/25.
@@ -27,7 +27,7 @@ final class PopularCurrencyViewController: UIViewController {
 
     private func bindViewModel() {
         viewModel.popularCoins
-            .bind(to: contentView.tableView.rx.items(cellIdentifier: CoinPriceTableViewCell2.cellIdentifier, cellType: CoinPriceTableViewCell2.self)) { _, coin, cell in
+            .bind(to: contentView.tableView.rx.items(cellIdentifier: CoinPriceTableViewCell.identifier, cellType: CoinPriceTableViewCell.self)) { _, coin, cell in
                 cell.configure(with: coin)
             }
             .disposed(by: disposeBag)

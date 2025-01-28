@@ -8,7 +8,7 @@
 import UIKit
 import SnapKit
 
-final class FavoritesView: UIView {
+final class TopFavoritesView: UIView {
     
     let logoLabel: UILabel = {
         let label = UILabel()
