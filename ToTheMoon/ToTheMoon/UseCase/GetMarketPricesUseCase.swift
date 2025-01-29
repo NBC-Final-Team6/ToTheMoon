@@ -47,6 +47,8 @@ final class GetMarketPricesUseCase {
                 let imageRequests = allPrices.map { marketPrice in
                     let normalizedSymbol = symbolFormatter.format(symbol: marketPrice.symbol)
                     
+                    //print(normalizedSymbol)
+                    
                     // 1. 기본 이미지 먼저 적용
                     var updatedMarketPrice = marketPrice
                     updatedMarketPrice.image = ImageRepository.getImage(for: normalizedSymbol)

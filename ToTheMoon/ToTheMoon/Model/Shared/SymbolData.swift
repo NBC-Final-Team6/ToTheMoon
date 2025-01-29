@@ -8,6 +8,11 @@
 import Foundation
 import UIKit
 
+struct SymbolID: Decodable {
+    let id: String
+    let symbol: String
+}
+
 struct SymbolData: Decodable {
     let id: String
     let symbol: String

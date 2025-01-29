@@ -18,7 +18,7 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
         let searchViewModel = SearchViewModel(getMarketPricesUseCase: getMarketPricesUseCase)
         let searchViewController = SearchViewController(viewModel: searchViewModel)
 
-        let navigationController = UINavigationController(rootViewController: searchViewController)
+        let navigationController = UINavigationController(rootViewController: test())
 
         let window = UIWindow(windowScene: windowScene)
         window.rootViewController = navigationController
