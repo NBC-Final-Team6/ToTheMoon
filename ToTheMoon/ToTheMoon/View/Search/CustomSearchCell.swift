@@ -5,12 +5,27 @@
 //  Created by 황석범 on 1/28/25.
 //
 
+//
+//  CustomSearchCell.swift
+//  ToTheMoon
+//
+//  Created by 황석범 on 1/28/25.
+//
+
 import UIKit
 import SnapKit
 
 final class CustomSearchCell: UITableViewCell {
     
     static let identifier = "CustomSearchCell"
+
+    private let iconImageView: UIImageView = {
+        let imageView = UIImageView()
+        imageView.contentMode = .scaleAspectFit
+        imageView.clipsToBounds = true
+        imageView.layer.cornerRadius = 8
+        return imageView
+    }()
 
     private let titleLabel: UILabel = {
         let label = UILabel()
@@ -40,11 +55,16 @@ final class CustomSearchCell: UITableViewCell {
         backgroundColor = .clear
         selectionStyle = .none
 
-        [titleLabel, dateLabel].forEach { contentView.addSubview($0) }
+        [iconImageView, titleLabel, dateLabel].forEach { contentView.addSubview($0) }
 
-        // 레이아웃 설정
-        titleLabel.snp.makeConstraints { make in
+        iconImageView.snp.makeConstraints { make in
             make.leading.equalToSuperview().offset(16)
+            make.centerY.equalToSuperview()
+            make.width.height.equalTo(24) // 아이콘 크기 설정
+        }
+
+        titleLabel.snp.makeConstraints { make in
+            make.leading.equalTo(iconImageView.snp.trailing).offset(12)
             make.centerY.equalToSuperview()
         }
 
@@ -54,8 +74,9 @@ final class CustomSearchCell: UITableViewCell {
         }
     }
 
-    func configure(with title: String, date: String) {
+    func configure(with title: String, date: String, image: UIImage?) {
         titleLabel.text = title
         dateLabel.text = date
+        iconImageView.image = image
     }
 }
