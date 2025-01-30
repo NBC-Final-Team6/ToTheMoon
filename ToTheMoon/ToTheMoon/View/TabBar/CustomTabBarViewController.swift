@@ -12,7 +12,7 @@ class CustomTabBarViewController: UIViewController {
     private let customTabBar = CustomTabBarView()
     private let favoritesNavVC = UINavigationController(rootViewController: FavoritesViewController())
     private let coinPricesNavVC = UINavigationController(rootViewController: CoinPriceViewController())
-    private let settingsNavVC = UINavigationController(rootViewController: SettingViewController())
+    private let settingsNavVC = UINavigationController(rootViewController: CoinPriceViewController())
 
     private var currentViewController: UIViewController?
 

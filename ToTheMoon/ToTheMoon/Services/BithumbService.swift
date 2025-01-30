@@ -36,7 +36,7 @@ final class BithumbService {
                                     price: response.tradePrice,
                                     exchange: self.exchange.rawValue,
                                     change: response.change,
-                                    changeRate: response.changeRate,
+                                    changeRate: response.changeRate * 100,
                                     quoteVolume: response.tradeVolume,
                                     highPrice: response.highPrice,
                                     lowPrice: response.lowPrice
