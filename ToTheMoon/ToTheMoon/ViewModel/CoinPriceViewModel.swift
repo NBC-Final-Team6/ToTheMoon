@@ -60,11 +60,8 @@ class CoinPriceViewModel {
     
     // 코인명만 보이게(KRW 글자 제외)
     private func extractCoinSymbol(_ symbol: String) -> String {
-        let components = symbol.uppercased()
-            .replacingOccurrences(of: "_", with: "-")
-            .components(separatedBy: "-")
-        
-        return components.first { $0 != "KRW" } ?? symbol
+        let formatter = SymbolFormatter()
+        return formatter.format(symbol: symbol)
     }
     
     // 코인 가격 데이터 가져오기

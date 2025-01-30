@@ -23,31 +23,31 @@ class CoinPriceTableViewCell: UITableViewCell {
     
     private let coinNameLabel: UILabel = {
         let label = UILabel()
-        label.textColor = UIColor(named: "TextColor")
-        label.font = .systemFont(ofSize: 15, weight: .bold)
+        label.textColor = .text
+        label.font = UIFont.medium.bold()
         label.textAlignment = .left
         return label
     }()
     
     private let marketNameLabel: UILabel = {
         let label = UILabel()
-        label.textColor = UIColor(named: "TextColor")
-        label.font = .systemFont(ofSize: 13)
+        label.textColor = .text
+        label.font = UIFont.small.regular()
         label.textAlignment = .left
         return label
     }()
     
     private let priceLabel: UILabel = {
         let label = UILabel()
-        label.textColor = UIColor(named: "TextColor")
-        label.font = .systemFont(ofSize: 15, weight: .semibold)
+        label.textColor = .text
+        label.font = UIFont.medium.bold()
         label.textAlignment = .right
         return label
     }()
     
     private let priceChangeLabel: UILabel = {
         let label = UILabel()
-        label.font = .systemFont(ofSize: 13)
+        label.font = UIFont.small.bold()
         label.textAlignment = .right
         return label
     }()
@@ -76,33 +76,33 @@ class CoinPriceTableViewCell: UITableViewCell {
             .forEach { contentView.addSubview($0) }
         
         logoImageView.snp.makeConstraints { make in
-            make.leading.equalToSuperview().offset(10)
+            make.leading.equalToSuperview().offset(15)
             make.centerY.equalToSuperview()
             make.width.height.equalTo(40)
         }
         
         coinNameLabel.snp.makeConstraints { make in
             make.leading.equalTo(logoImageView.snp.trailing).offset(10)
-            make.top.equalToSuperview().offset(10)
+            make.top.equalToSuperview().offset(15)
         }
         
         marketNameLabel.snp.makeConstraints { make in
             make.leading.equalTo(coinNameLabel)
-            make.bottom.equalToSuperview().inset(10)
+            make.bottom.equalToSuperview().inset(15)
         }
         
         priceLabel.snp.makeConstraints { make in
             make.trailing.equalTo(graphView.snp.leading).inset(10)
-            make.top.equalToSuperview().offset(10)
+            make.top.equalToSuperview().offset(15)
         }
         
         priceChangeLabel.snp.makeConstraints { make in
             make.trailing.equalTo(priceLabel)
-            make.bottom.equalToSuperview().inset(10)
+            make.bottom.equalToSuperview().inset(15)
         }
         
         graphView.snp.makeConstraints { make in
-            make.trailing.equalToSuperview().inset(10)
+            make.trailing.equalToSuperview().inset(15)
             make.centerY.equalToSuperview()
             make.width.equalTo(80)
             make.height.equalTo(45)
