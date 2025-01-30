@@ -42,6 +42,8 @@ final class SearchViewController: UIViewController {
         super.viewDidLoad()
         setupBindings()
         setupTableView()
+        
+        searchView.searchBar.delegate = self
     }
     
     private func setupBindings() {
@@ -189,6 +191,28 @@ extension SearchViewController: UITableViewDelegate, UITableViewDataSource {
     func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
         return searchMode == .recent ? UITableView.automaticDimension : 60
     }
+    
+    // MARK: - 최근 검색 기록을 클릭하면 해당 검색어로 검색 수행
+    func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
+        guard searchMode == .recent else { return }
+        
+        let selectedSearch = recentSearches[indexPath.row]
+        let searchQuery = selectedSearch.0 // 심볼 (BTC, ETH 등)
+        
+        // 검색바에 검색어 설정
+        searchView.searchBar.text = searchQuery
+        
+        // 검색 수행
+        viewModel.search(query: searchQuery)
+        
+        // 키보드 내리기
+        searchView.searchBar.resignFirstResponder()
+    }
 }
 
+extension SearchViewController: UISearchBarDelegate {
+    func searchBarSearchButtonClicked(_ searchBar: UISearchBar) {
+        searchBar.resignFirstResponder() // 키보드 내리기
+    }
+}
 
