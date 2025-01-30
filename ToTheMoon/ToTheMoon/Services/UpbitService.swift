@@ -25,7 +25,7 @@ final class UpbitService {
                         price: ticker.tradePrice,
                         exchange: self.exchange.rawValue,
                         change: ticker.change,
-                        changeRate: ticker.changeRate,
+                        changeRate: ticker.changeRate * 100,
                         quoteVolume: ticker.tradeVolume,
                         highPrice: ticker.highPrice,
                         lowPrice: ticker.lowPrice
