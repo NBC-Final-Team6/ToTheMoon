@@ -44,7 +44,7 @@ class test: UIViewController {
     private func test() {
         print("🔍 [TEST] 비트코인 이미지 요청 시작...")
         
-        symbolService.fetchCoinThumbImage(coinSymbol: "mpl")
+        symbolService.fetchCoinThumbImage(coinSymbol: "MEW")
             .observe(on: MainScheduler.instance) // ✅ UI 업데이트를 메인 스레드에서 실행
             .subscribe(onSuccess: { [weak self] image in
                 guard let self = self else { return }

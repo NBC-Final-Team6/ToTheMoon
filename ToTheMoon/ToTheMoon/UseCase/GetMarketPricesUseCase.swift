@@ -44,28 +44,58 @@ final class GetMarketPricesUseCase {
                 
                 let allPrices = bithumb + coinOne + korbit + upbit
                 
-                let imageRequests = allPrices.map { marketPrice in
+                // ✅ 중복 요청 방지를 위한 Dictionary
+                var imageRequests: [String: Single<UIImage?>] = [:]
+                
+                let updatedMarketPrices = allPrices.map { marketPrice -> Single<MarketPrice> in
+                    // ✅ 심볼 정규화 적용
                     let normalizedSymbol = symbolFormatter.format(symbol: marketPrice.symbol)
                     
-                    //print(normalizedSymbol)
+                    // ✅ 정규화된 심볼을 기반으로 새로운 MarketPrice 객체 생성
+                    var updatedMarketPrice = MarketPrice(
+                        symbol: normalizedSymbol.uppercased(),
+                        price: marketPrice.price,
+                        exchange: marketPrice.exchange,
+                        change: marketPrice.change,
+                        changeRate: marketPrice.changeRate,
+                        quoteVolume: marketPrice.quoteVolume ,
+                        highPrice: marketPrice.highPrice,
+                        lowPrice: marketPrice.lowPrice,
+                        image: nil // 초기 이미지 없음
+                    )
                     
-                    // 1. 기본 이미지 먼저 적용
-                    var updatedMarketPrice = marketPrice
-                    updatedMarketPrice.image = ImageRepository.getImage(for: normalizedSymbol)
+                    // 1. 이미지 캐시 확인
+                    if let defaultImage = ImageRepository.getImage(for: normalizedSymbol) {
+                        updatedMarketPrice.image = defaultImage
+                        return Single.just(updatedMarketPrice)
+                    }
                     
-                    // 2. 기본 이미지가 없는 경우에만 네트워크 요청
-                    return self.symbolService.fetchCoinThumbImage(coinSymbol: normalizedSymbol)
-                        .map { image in
-                            if let image = image {
-                                updatedMarketPrice.image = image
-                                CoinImageCache.shared.setImage(for: normalizedSymbol, image: image) // 캐시에 저장
-                            }
+                    // 2. 같은 심볼에 대한 요청이 이미 생성되었는지 확인
+                    if let existingRequest = imageRequests[normalizedSymbol] {
+                        return existingRequest.map { image in
+                            updatedMarketPrice.image = image
                             return updatedMarketPrice
                         }
-                        .catchAndReturn(updatedMarketPrice) // 에러 발생 시 변경 없이 반환
+                    }
+                    
+                    // 3. 새로운 네트워크 요청 생성
+                    let imageRequest = self.symbolService.fetchCoinThumbImage(coinSymbol: normalizedSymbol)
+                        .do(onSuccess: { image in
+                            if let image = image {
+                                CoinImageCache.shared.setImage(for: normalizedSymbol, image: image)
+                            }
+                        })
+                        .catchAndReturn(nil)
+                    
+                    imageRequests[normalizedSymbol] = imageRequest
+                    
+                    return imageRequest.map { image in
+                        updatedMarketPrice.image = image
+                        return updatedMarketPrice
+                    }
                 }
                 
-                return Single.zip(imageRequests)
+                return Single.zip(updatedMarketPrices)
             }
     }
 }

@@ -14,8 +14,16 @@ final class SearchViewController: UIViewController {
     private let viewModel: SearchViewModel
     private let disposeBag = DisposeBag()
     
+    // 검색 모드를 구분하기 위한 enum
+    private enum SearchMode {
+        case recent
+        case result
+    }
+    
+    private var searchMode: SearchMode = .recent
+    private var searchResults: [MarketPrice] = [] // 검색 결과 저장
     private var recentSearches: [(String, String, String)] = [] // (심볼, 거래소, 날짜)
-
+    
     // ViewModel 의존성 주입
     init(viewModel: SearchViewModel) {
         self.viewModel = viewModel
@@ -25,18 +33,19 @@ final class SearchViewController: UIViewController {
     required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }
-
+    
     override func loadView() {
         view = searchView
     }
-
+    
     override func viewDidLoad() {
         super.viewDidLoad()
         setupBindings()
         setupTableView()
     }
-
+    
     private func setupBindings() {
+        // 검색어 입력 이벤트 처리
         searchView.searchBar.searchTextField.rx.text
             .orEmpty
             .debounce(.milliseconds(300), scheduler: MainScheduler.instance)
@@ -45,31 +54,47 @@ final class SearchViewController: UIViewController {
                 self?.viewModel.search(query: query)
             })
             .disposed(by: disposeBag)
-
+        
+        // 검색 완료 시 검색어 저장
         searchView.searchBar.searchTextField.rx.controlEvent(.editingDidEndOnExit)
             .withLatestFrom(searchView.searchBar.searchTextField.rx.text.orEmpty)
             .subscribe(onNext: { [weak self] query in
                 self?.viewModel.saveSearchHistory(query: query)
             })
             .disposed(by: disposeBag)
-
-        viewModel.filteredSearches
+        
+        // 검색 결과 바인딩
+        viewModel.filteredSearchResults
             .observe(on: MainScheduler.instance)
-            .subscribe(onNext: { [weak self] searches in
-                self?.recentSearches = searches
+            .subscribe(onNext: { [weak self] results in
+                self?.searchResults = results
+                self?.searchMode = results.isEmpty ? .recent : .result
                 self?.searchView.tableView.reloadData()
             })
             .disposed(by: disposeBag)
-
+        
+        // 최근 검색 기록 바인딩
+        viewModel.recentSearches
+            .observe(on: MainScheduler.instance)
+            .subscribe(onNext: { [weak self] searches in
+                self?.recentSearches = searches
+                if self?.searchMode == .recent {
+                    self?.searchView.tableView.reloadData()
+                }
+            })
+            .disposed(by: disposeBag)
+        
+        // 검색 기록 삭제 버튼 바인딩
         searchView.clearButton.addTarget(self, action: #selector(clearSearchHistory), for: .touchUpInside)
     }
-
+    
     private func setupTableView() {
         searchView.tableView.delegate = self
         searchView.tableView.dataSource = self
         searchView.tableView.register(CustomSearchCell.self, forCellReuseIdentifier: CustomSearchCell.identifier)
+        searchView.tableView.register(FavoritesViewCell.self, forCellReuseIdentifier: FavoritesViewCell.identifier)
     }
-
+    
     @objc private func clearSearchHistory() {
         viewModel.clearSearchHistory()
     }
@@ -78,30 +103,48 @@ final class SearchViewController: UIViewController {
 // MARK: - UITableView Delegate & DataSource
 extension SearchViewController: UITableViewDelegate, UITableViewDataSource {
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        return recentSearches.count
+        return searchMode == .recent ? recentSearches.count : searchResults.count
     }
-
+    
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        guard let cell = tableView.dequeueReusableCell(withIdentifier: CustomSearchCell.identifier, for: indexPath) as? CustomSearchCell else {
-            return UITableViewCell()
+        if searchMode == .recent {
+            // 최근 검색 기록은 CustomSearchCell을 사용
+            guard let cell = tableView.dequeueReusableCell(withIdentifier: CustomSearchCell.identifier, for: indexPath) as? CustomSearchCell else {
+                return UITableViewCell()
+            }
+            
+            let search = recentSearches[indexPath.row]
+            let symbol = search.0.uppercased() // 심볼 (BTC, ETH 등)
+            let exchange = search.1
+            let date = search.2
+            
+            // 1. 캐시에서 이미지 확인
+            var image = CoinImageCache.shared.getImage(for: symbol)
+            
+            // 2. 캐시에 없으면 기본 이미지 적용
+            if image == nil {
+                image = ImageRepository.getImage(for: symbol)
+            }
+            
+            // 3. 설정
+            cell.configure(with: "\(symbol) \(exchange)", date: date, image: image)
+            
+            return cell
+        } else {
+            // 검색 결과는 FavoritesViewCell을 사용
+            guard let cell = tableView.dequeueReusableCell(withIdentifier: FavoritesViewCell.identifier, for: indexPath) as? FavoritesViewCell else {
+                return UITableViewCell()
+            }
+            
+            let marketPrice = searchResults[indexPath.row]
+            cell.configure(with: marketPrice)
+            return cell
         }
-
-        let search = recentSearches[indexPath.row]
-        let symbol = search.0.uppercased() // 심볼 (BTC, ETH 등)
-        let exchange = search.1
-        let date = search.2
-
-        // 1. 캐시에서 이미지 확인
-        var image = CoinImageCache.shared.getImage(for: symbol)
-
-        // 2. 캐시에 없으면 기본 이미지 적용
-        if image == nil {
-            image = ImageRepository.getImage(for: symbol)
-        }
-
-        // 3. 설정
-        cell.configure(with: "\(symbol) \(exchange)", date: date, image: image)
-
-        return cell
+    }
+    
+    func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
+        return searchMode == .recent ? UITableView.automaticDimension : 60
     }
 }
+
+

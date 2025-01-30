@@ -18,7 +18,7 @@ final class SymbolFormatter {
     /// 심볼에서 법정 화폐 및 불필요한 구분자를 제거
     private func normalizeSymbol(_ symbol: String) -> String {
         let separators: [Character] = ["-", "_"]
-        let fiatCurrencies: Set<String> = ["KRW", "USDT", "USD", "EUR", "JPY"]
+        let fiatCurrencies: Set<String> = ["KRW"]
         
         let uppercasedSymbol = symbol.uppercased()
         let components = uppercasedSymbol.split(whereSeparator: { separators.contains($0) }).map { String($0) }
