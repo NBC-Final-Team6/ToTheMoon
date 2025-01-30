@@ -20,7 +20,6 @@ class MarketView: UIView {
         image.contentMode = .scaleAspectFit
         image.layer.cornerRadius = (UIScreen.main.bounds.width - 90) / 8
         image.clipsToBounds = true
-        image.backgroundColor = .red
         return image
     }()
     
@@ -87,8 +86,7 @@ class MarketView: UIView {
     
     // 데이터 불러오기
     func configure(with item: MarketModel) {
-//        marketImage.image = UIImage(named: item.imageName)
-        marketImage.image = UIImage(systemName: item.imageName)
+        marketImage.image = UIImage(named: item.imageName)
         marketLabel.text = item.title
         
         switch item.title {
