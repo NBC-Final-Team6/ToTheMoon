@@ -36,17 +36,10 @@ final class SearchView: UIView {
     let tableView: UITableView = {
         let tableView = UITableView()
         tableView.register(UITableViewCell.self, forCellReuseIdentifier: "SearchCell")
-        tableView.separatorStyle = .none
+        tableView.separatorStyle = .singleLine
+        tableView.layer.cornerRadius = 30
         tableView.backgroundColor = .clear
         return tableView
-    }()
-    
-    let clearButton: UIButton = {
-        let clearButton = UIButton()
-        clearButton.setTitle("검색 기록 지우기", for: .normal)
-        clearButton.setTitleColor(.text, for: .normal)
-        clearButton.titleLabel?.font = .medium.regular()
-        return clearButton
     }()
 
     override init(frame: CGRect) {
@@ -61,7 +54,7 @@ final class SearchView: UIView {
     private func setupUI() {
         backgroundColor = .background
 
-        [ searchBar, tableView, clearButton ].forEach{ addSubview($0)  }
+        [ searchBar, tableView ].forEach{ addSubview($0)  }
                    
         // 레이아웃 설정
         searchBar.snp.makeConstraints { make in
@@ -69,13 +62,8 @@ final class SearchView: UIView {
             make.leading.trailing.equalToSuperview().inset(16)
         }
 
-        clearButton.snp.makeConstraints { make in
-            make.top.equalTo(searchBar.snp.bottom).offset(10)
-            make.trailing.equalToSuperview().inset(16)
-        }
-
         tableView.snp.makeConstraints { make in
-            make.top.equalTo(clearButton.snp.bottom).offset(10)
+            make.top.equalTo(searchBar.snp.bottom).offset(10)
             make.leading.trailing.bottom.equalToSuperview()
         }
     }
