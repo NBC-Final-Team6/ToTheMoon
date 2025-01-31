@@ -32,11 +32,11 @@ final class CustomTableView: UIView {
         
         addSubview(tableView)
         
-        tableView.snp.makeConstraints{ make in
+        tableView.snp.makeConstraints { make in
             make.verticalEdges.equalToSuperview()
             make.horizontalEdges.equalToSuperview().inset(10)
         }
         
-        tableView.register(CoinPriceTableViewCell2.self, forCellReuseIdentifier: CoinPriceTableViewCell2.cellIdentifier)
+        tableView.register(CoinPriceTableViewCell.self, forCellReuseIdentifier: CoinPriceTableViewCell.identifier)
     }
 }

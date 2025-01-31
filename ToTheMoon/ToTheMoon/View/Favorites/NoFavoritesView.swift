@@ -44,7 +44,7 @@ final class NoFavoritesView: UIView {
         return stackView
     }()
     
-    private let addButton: UIButton = {
+    let addButton: UIButton = {
         let button = UIButton(type: .system)
         button.setTitle("코인 추가하기", for: .normal)
         button.setTitleColor(.white, for: .normal)
