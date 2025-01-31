@@ -42,6 +42,8 @@ final class SearchViewController: UIViewController {
         super.viewDidLoad()
         setupBindings()
         setupTableView()
+        
+        searchView.searchBar.delegate = self
     }
     
     private func setupBindings() {
@@ -83,9 +85,6 @@ final class SearchViewController: UIViewController {
                 }
             })
             .disposed(by: disposeBag)
-        
-        // 검색 기록 삭제 버튼 바인딩
-        searchView.clearButton.addTarget(self, action: #selector(clearSearchHistory), for: .touchUpInside)
     }
     
     private func setupTableView() {
@@ -102,6 +101,11 @@ final class SearchViewController: UIViewController {
 
 // MARK: - UITableView Delegate & DataSource
 extension SearchViewController: UITableViewDelegate, UITableViewDataSource {
+    
+    func numberOfSections(in tableView: UITableView) -> Int {
+        return 1
+    }
+    
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         return searchMode == .recent ? recentSearches.count : searchResults.count
     }
@@ -142,9 +146,73 @@ extension SearchViewController: UITableViewDelegate, UITableViewDataSource {
         }
     }
     
+    // MARK: - Header View for Recent Searches Section
+    func tableView(_ tableView: UITableView, viewForHeaderInSection section: Int) -> UIView? {
+        guard searchMode == .recent, !recentSearches.isEmpty else { return nil }
+        
+        let headerView = UIView()
+        headerView.backgroundColor = .background
+        
+        let titleLabel = UILabel()
+        titleLabel.text = "최근 검색"
+        titleLabel.textColor = .text
+        titleLabel.font = .boldSystemFont(ofSize: 16)
+        
+        let clearButton = UIButton()
+        clearButton.setTitle("검색 기록 지우기", for: .normal)
+        clearButton.setTitleColor(.text, for: .normal)
+        clearButton.titleLabel?.font = .medium.regular()
+        clearButton.rx.tap
+            .bind { [weak self] in
+                self?.clearSearchHistory()
+            }
+            .disposed(by: disposeBag)
+        
+        headerView.addSubview(titleLabel)
+        headerView.addSubview(clearButton)
+        
+        titleLabel.snp.makeConstraints { make in
+            make.leading.equalToSuperview().inset(16)
+            make.centerY.equalToSuperview()
+        }
+
+        clearButton.snp.makeConstraints { make in
+            make.trailing.equalToSuperview().inset(16)
+            make.centerY.equalToSuperview()
+        }
+
+        return headerView
+    }
+    
+    func tableView(_ tableView: UITableView, heightForHeaderInSection section: Int) -> CGFloat {
+           return searchMode == .recent && !recentSearches.isEmpty ? 40 : 0
+       }
+    
     func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
         return searchMode == .recent ? UITableView.automaticDimension : 60
     }
+    
+    // MARK: - 최근 검색 기록을 클릭하면 해당 검색어로 검색 수행
+    func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
+        guard searchMode == .recent else { return }
+        
+        let selectedSearch = recentSearches[indexPath.row]
+        let searchQuery = selectedSearch.0 // 심볼 (BTC, ETH 등)
+        
+        // 검색바에 검색어 설정
+        searchView.searchBar.text = searchQuery
+        
+        // 검색 수행
+        viewModel.search(query: searchQuery)
+        
+        // 키보드 내리기
+        searchView.searchBar.resignFirstResponder()
+    }
 }
 
+extension SearchViewController: UISearchBarDelegate {
+    func searchBarSearchButtonClicked(_ searchBar: UISearchBar) {
+        searchBar.resignFirstResponder() // 키보드 내리기
+    }
+}
 
