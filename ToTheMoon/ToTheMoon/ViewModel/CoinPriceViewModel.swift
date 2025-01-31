@@ -19,7 +19,7 @@ class CoinPriceViewModel {
     private let korbitService = KorbitService()
     private let symbolService = SymbolService()
     
-    private var loadingSymbols = Set<String>()
+    private var loadingSymbols = Set<String>()  // 중복 로딩 방지
     
     private var currentExchange: Exchange = .upbit
     private var timer: Disposable?
@@ -97,6 +97,8 @@ class CoinPriceViewModel {
         guard !loadingSymbols.contains(symbol) else { return }
         loadingSymbols.insert(symbol)
         
+        print("Asset에 없는 이미지 로드 시도: \(symbol)")
+        
         symbolService.fetchCoinThumbImage(coinSymbol: symbol)
             .observe(on: MainScheduler.instance)
             .subscribe(onSuccess: { [weak self] image in
@@ -104,6 +106,7 @@ class CoinPriceViewModel {
                 self.loadingSymbols.remove(symbol)
                 
                 if let image = image {
+                    print("이미지 로드 성공: \(symbol)")
                     // 현재 목록 업데이트
                     var currentPrices = self.coinPrices.value
                     if let index = currentPrices.firstIndex(where: { $0.symbol == symbol }) {
@@ -113,7 +116,8 @@ class CoinPriceViewModel {
                         self.coinPrices.accept(currentPrices)
                     }
                 }
-            }, onFailure: { [weak self] _ in
+            }, onFailure: { [weak self] error in
+                print("이미지 로드 실패: \(symbol), 에러: \(error.localizedDescription)")
                 self?.loadingSymbols.remove(symbol)
             })
             .disposed(by: disposeBag)
@@ -139,7 +143,7 @@ class CoinPriceViewModel {
                 marketPrices.map { price in
                     var modifiedPrice = price
                     modifiedPrice.symbol = self.extractCoinSymbol(price.symbol)
-                    // 기본 이미지 설정
+                    // Asset에서 이미지 가져오기
                     modifiedPrice.image = ImageRepository.getImage(for: modifiedPrice.symbol)
                     return modifiedPrice
                 }
@@ -148,10 +152,12 @@ class CoinPriceViewModel {
             .observe(on: MainScheduler.instance)
             .subscribe(onSuccess: { [weak self] marketPrices in
                 self?.coinPrices.accept(marketPrices)
-                // 각 코인에 대해 이미지 로드 시도
-                marketPrices.forEach { price in
-                    self?.loadCoinImage(for: price.symbol)
-                }
+                // Asset에 없는 코인에 대해서만 이미지 로드
+                marketPrices
+                    .filter { ImageRepository.getImage(for: $0.symbol) == nil }
+                    .forEach { price in
+                        self?.loadCoinImage(for: price.symbol)
+                    }
             }, onFailure: { [weak self] error in
                 self?.error.onNext(error)
             })
