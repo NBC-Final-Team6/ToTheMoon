@@ -22,12 +22,12 @@ final class SymbolService {
     ///    let description: Description
     /// }
     func fetchCoinDataAll(coinSymbol: String) -> Single<SymbolData> {
-        let endpoint = "\(baseURL)/\(coinSymbol)"
-        guard let url = URL(string: endpoint) else {
-            return Single.error(NetworkError.invalidUrl)
-        }
-        return networkManager.fetch(url: url)
-    }
+           let endpoint = "\(baseURL)/\(coinSymbol)"
+           guard let url = URL(string: endpoint) else {
+               return Single.error(NetworkError.invalidUrl)
+           }
+           return networkManager.fetch(url: url)
+       }
     
     // 코인 심볼 -> 코인 ID 매핑을 저장하는 캐시
     private var symbolToIDMap: [String: String] = [:]

@@ -57,6 +57,47 @@ final class CoinOneService {
             }
     }
     
+    func fetchMarketPrice(symbol: String) -> Single<[MarketPrice]> {
+        let symbol = symbol.uppercased()
+        let endpoint = "\(baseURL)/public/v2/ticker_new/KRW/\(symbol)?additional_data=true"
+        guard let url = URL(string: endpoint) else {
+            return Single.error(NetworkError.invalidUrl)
+        }
+        print(url)
+        return NetworkManager.shared.fetch(url: url)
+            .do(onError: { error in
+            }, onSubscribe: {
+            })
+            .map { (response: CoinOneTickerResponse) -> [MarketPrice] in
+                return response.tickers.map { ticker in
+                    // 현재 가격과 전날 가격
+                    let currentPrice = Double(ticker.last) ?? 0
+                    let yesterdayPrice = Double(ticker.yesterdayLast) ?? 0
+                    // changeRate 계산 (yesterdayPrice가 0인 경우 대비)
+                    let changeRate = yesterdayPrice != 0 ? ((currentPrice - yesterdayPrice) / yesterdayPrice) * 100 : 0
+                    // change 상태 결정
+                    let change: ChangeState
+                    if changeRate > 0 {
+                        change = .rise
+                    } else if changeRate == 0 {
+                        change = .even
+                    } else {
+                        change = .fall
+                    }
+                    return MarketPrice(
+                        symbol: "\(ticker.quoteCurrency)-\(ticker.targetCurrency)",
+                        price: Double(ticker.last) ?? 0,
+                        exchange: self.exchange.rawValue,
+                        change: change.rawValue,
+                        changeRate: changeRate,
+                        quoteVolume: Double(ticker.quoteVolume) ?? 0,
+                        highPrice: Double(ticker.high) ?? 0,
+                        lowPrice: Double(ticker.low) ?? 0
+                    )
+                }
+            }
+    }
+    
     func fetchCandles(symbol: String, interval: CandleInterval, count: Int) -> Single<[Candle]> {
         let baseURL = Exchange.coinone.baseURL
         let intervalPath = interval.coinOneRawValue // 코인원에서 지원하는 `1m`, `1d` 등
