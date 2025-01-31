@@ -8,7 +8,7 @@
 import UIKit
 import SnapKit
 
-final class FavoritesView: UIView {
+final class fffView: UIView {
     let logoLabel: UILabel = {
         let label = UILabel()
         label.text = "ToTheMoon"
