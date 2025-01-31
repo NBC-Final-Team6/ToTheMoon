@@ -41,6 +41,36 @@ final class KorbitService {
             }
     }
     
+    func fetchMarketPrice(symbol: String) -> Single<[MarketPrice]> {
+        let symbol = symbol.lowercased()
+        let endpoint = "\(baseURL)/v2/tickers?symbol=\(symbol)_krw"
+        
+        guard let url = URL(string: endpoint) else {
+            return Single.error(NetworkError.invalidUrl)
+        }
+        return NetworkManager.shared.fetch(url: url)
+            .do(onError: { error in
+            }, onSubscribe: {
+            })
+            .map { (response: KorbitTickerResponse) -> [MarketPrice] in
+                return response.data.map { ticker in
+                    let priceChangePercent = Double(ticker.priceChangePercent) ?? 0
+                    let status: String = priceChangePercent > 0 ? "RISE" : (priceChangePercent == 0 ? "EVEN" : "FALL")
+                    
+                    return MarketPrice(
+                        symbol: ticker.symbol,
+                        price: Double(ticker.close) ?? 0,
+                        exchange: self.exchange.rawValue,
+                        change: status,
+                        changeRate: priceChangePercent,
+                        quoteVolume: Double(ticker.quoteVolume) ?? 0,
+                        highPrice: Double(ticker.high) ?? 0,
+                        lowPrice: Double(ticker.low) ?? 0
+                    )
+                }
+            }
+    }
+    
     func fetchCandles(symbol: String, interval: CandleInterval, count: Int) -> Single<[Candle]> {
         let baseURL = "https://api.korbit.co.kr/v2/candles"
         
