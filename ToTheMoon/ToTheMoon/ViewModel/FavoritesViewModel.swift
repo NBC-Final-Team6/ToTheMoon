@@ -8,9 +8,6 @@
 import RxSwift
 import RxCocoa
 
-import RxSwift
-import RxCocoa
-
 final class FavoritesViewModel {
     
     let favoriteCoins = BehaviorRelay<[String]>(value: [])

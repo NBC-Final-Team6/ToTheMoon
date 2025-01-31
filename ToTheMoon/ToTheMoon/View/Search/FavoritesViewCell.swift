@@ -55,16 +55,17 @@ class FavoritesViewCell: UITableViewCell {
     private let addButton: UIButton = {
         let button = UIButton(type: .system)
         button.setTitle("추가하기", for: .normal)
-        button.setTitleColor(.text, for: .normal)
-        button.backgroundColor = .personel
-        button.titleLabel?.font = .medium.regular()
+        button.setTitleColor(.white, for: .normal)
+        button.backgroundColor = UIColor(named: "ButtonColor")
+        button.titleLabel?.font = .systemFont(ofSize: 14, weight: .medium)
         button.layer.cornerRadius = 8
         button.clipsToBounds = true
         return button
     }()
     
-    var addButtonAction: (() -> Void)?
-    
+    var addButtonAction: ((MarketPrice) -> Void)?  // 버튼 클릭 시 실행할 클로저
+    private var currentCoin: MarketPrice?
+
     override init(style: UITableViewCell.CellStyle, reuseIdentifier: String?) {
         super.init(style: style, reuseIdentifier: reuseIdentifier)
         setupUI()
@@ -75,7 +76,6 @@ class FavoritesViewCell: UITableViewCell {
     }
     
     private func setupUI() {
-        
         backgroundColor = UIColor(named: "ContainerColor")
         
         [logoImageView, coinNameLabel, marketNameLabel, priceLabel, priceChangeLabel, addButton]
@@ -115,11 +115,10 @@ class FavoritesViewCell: UITableViewCell {
         }
         
         addButton.addTarget(self, action: #selector(addButtonTapped), for: .touchUpInside)
-        
     }
     
     func configure(with item: MarketPrice) {
-        // TODO: 로고, 그래프 뷰
+        currentCoin = item
         coinNameLabel.text = item.symbol
         marketNameLabel.text = item.exchange
         priceLabel.text = "₩\(formatPrice(item.price))"
@@ -129,18 +128,19 @@ class FavoritesViewCell: UITableViewCell {
             priceChangeLabel.text = "▲ \(String(format: "%.2f%%", item.changeRate))"
             priceChangeLabel.textColor = UIColor(named: "NumbersGreenColor")
         } else {
-            priceChangeLabel.text = "▼ \(String(format: "%.2f%%", abs(item.changeRate)))"  // abs()함수: 절대값을 구하는 함수
+            priceChangeLabel.text = "▼ \(String(format: "%.2f%%", abs(item.changeRate)))"
             priceChangeLabel.textColor = UIColor(named: "NumbersRedColor")
         }
     }
     
     private func formatPrice(_ price: Double) -> String {
         let numberFormatter = NumberFormatter()
-        numberFormatter.numberStyle = .decimal  // 천 단위로 쉼표 찍어줌
+        numberFormatter.numberStyle = .decimal
         return numberFormatter.string(from: NSNumber(value: price)) ?? "0"
     }
     
     @objc private func addButtonTapped() {
-        addButtonAction?()
+        guard let coin = currentCoin else { return }
+        addButtonAction?(coin)  // 버튼 클릭 시 클로저 호출
     }
 }
