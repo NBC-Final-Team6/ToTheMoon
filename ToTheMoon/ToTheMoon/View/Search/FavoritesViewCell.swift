@@ -58,9 +58,9 @@ class FavoritesViewCell: UITableViewCell {
     private let addButton: UIButton = {
         let button = UIButton(type: .system)
         button.setTitle("추가하기", for: .normal)
-        button.setTitleColor(.white, for: .normal)
-        button.backgroundColor = UIColor(named: "ButtonColor")
-        button.titleLabel?.font = .systemFont(ofSize: 14, weight: .medium)
+        button.setTitleColor(.text, for: .normal)
+        button.backgroundColor = .personel
+        button.titleLabel?.font = .medium.regular()
         button.layer.cornerRadius = 8
         button.clipsToBounds = true
         return button
