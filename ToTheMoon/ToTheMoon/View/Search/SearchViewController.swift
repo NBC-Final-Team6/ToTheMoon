@@ -136,14 +136,15 @@ extension SearchViewController: UITableViewDelegate, UITableViewDataSource {
             
             let marketPrice = searchResults[indexPath.row]
             
+            cell.disposeBag = DisposeBag()
+            
             // 저장된 코인 여부 확인 후 UI 업데이트 (symbol + exchange 기반)
             viewModel.isCoinSaved(marketPrice.symbol, exchange: marketPrice.exchange)
+                .observe(on: MainScheduler.instance)
                 .subscribe(onNext: { isSaved in
-                    DispatchQueue.main.async {
-                        cell.configure(with: marketPrice, isSaved: isSaved)
-                    }
+                    cell.configure(with: marketPrice, isSaved: isSaved)
                 })
-                .disposed(by: disposeBag)
+                .disposed(by: cell.disposeBag)
 
             // 버튼 클릭 시 Core Data 저장 처리
             cell.addButtonAction = { [weak self] selectedCoin in

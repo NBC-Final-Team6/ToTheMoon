@@ -7,10 +7,13 @@
 
 import UIKit
 import SnapKit
+import RxSwift
 
 class FavoritesViewCell: UITableViewCell {
     
     static let identifier = "FavoritesViewCell"
+    
+    var disposeBag = DisposeBag()
     
     private let logoImageView: UIImageView = {
         let imageView = UIImageView()

@@ -12,7 +12,7 @@ import RxCocoa
 final class SearchViewModel {
     private let getMarketPricesUseCase: GetMarketPricesUseCase
     private let manageFavoritesUseCase: ManageFavoritesUseCaseProtocol  // ✅ Use Case 주입
-    private let savedCoinsSubject = BehaviorSubject<Set<String>>(value: [])
+    private let savedCoinsRelay = BehaviorRelay<Set<String>>(value: Set())
     private let disposeBag = DisposeBag()
     private let symbolFormatter = SymbolFormatter()
     
@@ -32,6 +32,7 @@ final class SearchViewModel {
         self.getMarketPricesUseCase = getMarketPricesUseCase
         self.manageFavoritesUseCase = manageFavoritesUseCase  // ✅ FavoritesViewModel 의존성 제거
         fetchMarketPrices()
+        loadSavedCoins()
     }
     
     private func fetchMarketPrices() {
@@ -44,11 +45,16 @@ final class SearchViewModel {
     
     private func loadSavedCoins() {
         manageFavoritesUseCase.fetchFavoriteCoins()
-            .map { coins in
-                Set(coins.map { "\(String(describing: $0.symbol))_\($0.exchangename ?? "")" })  // ✅ "symbol + exchange" 조합 생성
+            .map { coins -> Set<String> in // ✅ 반환 타입 명시
+                let savedSet: Set<String> = Set(coins.compactMap { coin in
+                    guard let symbol = coin.symbol, let exchange = coin.exchangename else { return nil }
+                    return "\(symbol)_\(exchange)" // ✅ Optional 제거 후 저장
+                })
+                print("📌 [loadSavedCoins] 저장된 코인 목록: \(savedSet)") // ✅ 디버깅 로그
+                return savedSet
             }
             .subscribe(onNext: { [weak self] savedCoins in
-                self?.savedCoinsSubject.onNext(savedCoins)
+                self?.savedCoinsRelay.accept(savedCoins)
             })
             .disposed(by: disposeBag)
     }
@@ -95,36 +101,32 @@ final class SearchViewModel {
     
     func toggleFavorite(_ marketPrice: MarketPrice) {
         let coinKey = "\(marketPrice.symbol)_\(marketPrice.exchange)"
-        
+
         manageFavoritesUseCase.isCoinSaved(marketPrice.symbol, exchange: marketPrice.exchange)
-            .observe(on: MainScheduler.asyncInstance) // ✅ UI 업데이트를 위해 메인 스레드에서 실행
+            .observe(on: MainScheduler.asyncInstance)
             .flatMapLatest { isSaved -> Observable<Void> in
                 if isSaved {
                     print("🔴 삭제 요청: \(coinKey)")
-                    return self.manageFavoritesUseCase.removeCoin(marketPrice) // ✅ 삭제 요청
+                    return self.manageFavoritesUseCase.removeCoin(marketPrice)
                 } else {
                     print("🟢 추가 요청: \(coinKey)")
-                    return self.manageFavoritesUseCase.saveCoin(marketPrice) // ✅ 추가 요청
+                    return self.manageFavoritesUseCase.saveCoin(marketPrice)
                 }
             }
-            .flatMapLatest { [weak self] in
-                // ✅ 저장된 코인 목록을 불러와 BehaviorSubject 업데이트
-                self?.manageFavoritesUseCase.fetchFavoriteCoins() ?? Observable.just([])
-            }
-            .subscribe(onNext: { [weak self] savedCoins in
-                let updatedSavedCoins = Set(savedCoins.map { "\(String(describing: $0.symbol))_\($0.exchangename ?? "")" })
-                self?.savedCoinsSubject.onNext(updatedSavedCoins) // ✅ 상태 업데이트
-                
-                print("⭐ 현재 저장된 코인 목록:", updatedSavedCoins)
+            .subscribe(onNext: { [weak self] in
+                guard let self = self else { return }
+                self.loadSavedCoins()
             })
-            .disposed(by: disposeBag) // ✅ 한 번만 disposeBag에 추가
+            .disposed(by: disposeBag)
     }
     
-    /// ✅ "symbol + exchange" 조합으로 개별 코인 저장 여부 확인
-    func isCoinSaved(_ symbol: String, exchange: String) -> Observable<Bool> {
+    func isCoinSaved(_ symbol: String?, exchange: String?) -> Observable<Bool> {
+        guard let symbol = symbol, let exchange = exchange else {
+            return Observable.just(false)
+        }
         let coinKey = "\(symbol)_\(exchange)"
-        return savedCoinsSubject
-            .map { $0.contains(coinKey) }
-            .distinctUntilChanged()
+        return savedCoinsRelay
+            .map { savedCoins in savedCoins.contains(coinKey) }
+            .observe(on: MainScheduler.instance) // ✅ 즉시 UI 업데이트를 위해 추가
     }
 }
