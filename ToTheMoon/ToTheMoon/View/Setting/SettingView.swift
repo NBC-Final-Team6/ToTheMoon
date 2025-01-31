@@ -10,23 +10,22 @@ import SnapKit
 
 class SettingView: UIView {
     
+    let titleLabel: UILabel = {
+        let label = UILabel()
+        label.text = "앱 설정"
+        label.textColor = UIColor(named: "TextColor")
+        label.font = UIFont.boldSystemFont(ofSize: 30)
+        label.textAlignment = .center
+        return label
+    }()
+    
     let tableView: UITableView = {
         let tableView = UITableView()
         tableView.backgroundColor = UIColor(named: "BackgroundColor")
         tableView.separatorStyle = .singleLine
         tableView.separatorColor = UIColor(red: 30/255, green: 30/255, blue: 30/255, alpha: 1)
-        tableView.separatorInset = UIEdgeInsets(top: 0, left: 10, bottom: 0, right: 10)
         tableView.register(UITableViewCell.self, forCellReuseIdentifier: "SettingCell")
         return tableView
-    }()
-    
-    let titleLabel: UILabel = {
-        let label = UILabel()
-        label.text = "앱 설정"
-        label.textColor = UIColor(named: "TextColor")
-        label.font = UIFont.boldSystemFont(ofSize: 32)
-        label.textAlignment = .center
-        return label
     }()
     
     var onItemSelected: ((Int) -> Void)?
@@ -46,13 +45,14 @@ class SettingView: UIView {
         addSubview(titleLabel)
         addSubview(tableView)
         
+        
         titleLabel.snp.makeConstraints { make in
-            make.top.equalTo(safeAreaLayoutGuide).offset(-30)
+            make.top.equalTo(safeAreaLayoutGuide).offset(10)
             make.centerX.equalToSuperview()
         }
         
         tableView.snp.makeConstraints { make in
-            make.top.equalTo(titleLabel.snp.bottom).offset(40)
+            make.top.equalTo(titleLabel.snp.bottom).offset(20)
             make.leading.trailing.bottom.equalToSuperview()
         }
     }
@@ -79,4 +79,3 @@ extension SettingView: UITableViewDataSource, UITableViewDelegate {
         onItemSelected?(indexPath.row)
     }
 }
-
