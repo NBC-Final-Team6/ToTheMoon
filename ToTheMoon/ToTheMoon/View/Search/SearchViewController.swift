@@ -141,7 +141,27 @@ extension SearchViewController: UITableViewDelegate, UITableViewDataSource {
             }
             
             let marketPrice = searchResults[indexPath.row]
-            cell.configure(with: marketPrice)
+            
+            // 저장된 코인 여부 확인 후 UI 업데이트 (symbol + exchange 기반)
+            viewModel.isCoinSaved(marketPrice.symbol, exchange: marketPrice.exchange)
+                .subscribe(onNext: { isSaved in
+                    DispatchQueue.main.async {
+                        cell.configure(with: marketPrice, isSaved: isSaved)
+                    }
+                })
+                .disposed(by: disposeBag)
+
+            // 버튼 클릭 시 Core Data 저장 처리
+            cell.addButtonAction = { [weak self] selectedCoin in
+                guard let self = self else { return }
+                
+                self.viewModel.toggleFavorite(selectedCoin)
+                
+                if let updatedCell = self.searchView.tableView.cellForRow(at: indexPath) as? FavoritesViewCell {
+                    updatedCell.toggleButtonState()
+                }
+            }
+            
             return cell
         }
     }

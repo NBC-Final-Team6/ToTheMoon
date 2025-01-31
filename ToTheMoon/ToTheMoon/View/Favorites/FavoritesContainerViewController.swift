@@ -17,7 +17,7 @@ final class FavoritesContainerViewController: UIViewController {
     private let disposeBag = DisposeBag()
 
     private lazy var popularCurrencyVC = PopularCurrencyViewController()
-    private lazy var favoriteListVC = FavoriteListViewController()
+    //private lazy var favoriteListVC = FavoriteListViewController()
 
     override func loadView() {
         self.view = topFavoritesView
@@ -94,11 +94,11 @@ final class FavoritesContainerViewController: UIViewController {
     private func switchToViewController(for segment: SegmentType) {
         // 기존 ViewController 제거 및 새 ViewController 추가
         if segment == .popularCurrency {
-            remove(child: favoriteListVC)
+            //remove(child: favoriteListVC)
             add(child: popularCurrencyVC)
         } else {
             remove(child: popularCurrencyVC)
-            add(child: favoriteListVC)
+            //add(child: favoriteListVC)
         }
     }
 

@@ -65,6 +65,7 @@ class FavoritesViewCell: UITableViewCell {
     
     var addButtonAction: ((MarketPrice) -> Void)?  // 버튼 클릭 시 실행할 클로저
     private var currentCoin: MarketPrice?
+    private var isSaved: Bool = false  // 저장 여부 상태 추가
 
     override init(style: UITableViewCell.CellStyle, reuseIdentifier: String?) {
         super.init(style: style, reuseIdentifier: reuseIdentifier)
@@ -117,8 +118,21 @@ class FavoritesViewCell: UITableViewCell {
         addButton.addTarget(self, action: #selector(addButtonTapped), for: .touchUpInside)
     }
     
-    func configure(with item: MarketPrice) {
+    override func prepareForReuse() {
+        super.prepareForReuse()
+        logoImageView.image = nil
+        coinNameLabel.text = nil
+        marketNameLabel.text = nil
+        priceLabel.text = nil
+        priceChangeLabel.text = nil
+        isSaved = false
+        updateAddButton()
+    }
+    
+    func configure(with item: MarketPrice, isSaved: Bool) {
         currentCoin = item
+        self.isSaved = isSaved  // 저장 상태 업데이트
+        
         coinNameLabel.text = item.symbol
         marketNameLabel.text = item.exchange
         priceLabel.text = "₩\(formatPrice(item.price))"
@@ -131,6 +145,12 @@ class FavoritesViewCell: UITableViewCell {
             priceChangeLabel.text = "▼ \(String(format: "%.2f%%", abs(item.changeRate)))"
             priceChangeLabel.textColor = UIColor(named: "NumbersRedColor")
         }
+       
+        updateAddButton()
+    }
+    
+    private func updateAddButton() {
+        addButton.setTitle(isSaved ? "추가됨" : "추가하기", for: .normal)
     }
     
     private func formatPrice(_ price: Double) -> String {
@@ -141,6 +161,11 @@ class FavoritesViewCell: UITableViewCell {
     
     @objc private func addButtonTapped() {
         guard let coin = currentCoin else { return }
-        addButtonAction?(coin)  // 버튼 클릭 시 클로저 호출
+        addButtonAction?(coin)
+    }
+    
+    func toggleButtonState() {
+        isSaved.toggle()
+        updateAddButton()
     }
 }
