@@ -17,7 +17,6 @@ class CoinPriceTableViewCell: UITableViewCell {
         imageView.contentMode = .scaleAspectFit
         imageView.clipsToBounds = true
         imageView.layer.cornerRadius = 20
-        imageView.backgroundColor = .red
         return imageView
     }()
     
@@ -111,18 +110,23 @@ class CoinPriceTableViewCell: UITableViewCell {
     }
     
     func configure(with item: MarketPrice) {
-        // TODO: 로고, 그래프 뷰
+        
+        logoImageView.backgroundColor = .systemGray6
+        logoImageView.image = item.image ?? ImageRepository.getImage(for: item.symbol)
+        
         coinNameLabel.text = item.symbol
         marketNameLabel.text = item.exchange
         priceLabel.text = "₩\(formatPrice(item.price))"
         
         if item.change == "RISE" {
             priceChangeLabel.text = "▲ \(String(format: "%.2f%%", item.changeRate))"
-            priceChangeLabel.textColor = UIColor(named: "NumbersGreenColor")
+            priceChangeLabel.textColor = .numbersGreen
         } else {
             priceChangeLabel.text = "▼ \(String(format: "%.2f%%", abs(item.changeRate)))"  // abs()함수: 절대값을 구하는 함수
-            priceChangeLabel.textColor = UIColor(named: "NumbersRedColor")
+            priceChangeLabel.textColor = .numbersRed
         }
+        
+        // TODO: 그래프 뷰
     }
     
     private func formatPrice(_ price: Double) -> String {

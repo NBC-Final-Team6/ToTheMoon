@@ -5,7 +5,7 @@
 //  Created by 황석범 on 1/21/25.
 //
 
-import Foundation
+import UIKit
 import RxSwift
 import RxCocoa
 
@@ -17,6 +17,9 @@ class CoinPriceViewModel {
     private let bithumbService = BithumbService()
     private let coinoneService = CoinOneService()
     private let korbitService = KorbitService()
+    private let symbolService = SymbolService()
+    
+    private var loadingSymbols = Set<String>()
     
     private var currentExchange: Exchange = .upbit
     private var timer: Disposable?
@@ -26,8 +29,12 @@ class CoinPriceViewModel {
     let selectedCoinPrice = PublishSubject<MarketPrice>()
     let error = PublishSubject<Error>()
     
+    private var coinImages: [String: UIImage] = [:]
+    private let imageSubject = PublishSubject<(String, UIImage?)>()
+    
     init() {
         setupTimer()
+        setupImageBinding()
     }
     
     deinit {
@@ -64,9 +71,56 @@ class CoinPriceViewModel {
         return formatter.format(symbol: symbol)
     }
     
+    // 이미지 바인딩 설정
+    private func setupImageBinding() {
+        imageSubject
+            .observe(on: MainScheduler.instance)
+            .subscribe(onNext: { [weak self] (symbol, image) in
+                guard let self = self else { return }
+                self.coinImages[symbol] = image
+                
+                // 현재 목록 업데이트
+                var currentPrices = self.coinPrices.value
+                if let index = currentPrices.firstIndex(where: { $0.symbol == symbol }) {
+                    var updatedPrice = currentPrices[index]
+                    updatedPrice.image = image
+                    currentPrices[index] = updatedPrice
+                    self.coinPrices.accept(currentPrices)
+                }
+            })
+            .disposed(by: disposeBag)
+    }
+    
+    // 코인 이미지 로드
+    private func loadCoinImage(for symbol: String) {
+        // 이미 로딩 중인 심볼은 스킵
+        guard !loadingSymbols.contains(symbol) else { return }
+        loadingSymbols.insert(symbol)
+        
+        symbolService.fetchCoinThumbImage(coinSymbol: symbol)
+            .observe(on: MainScheduler.instance)
+            .subscribe(onSuccess: { [weak self] image in
+                guard let self = self else { return }
+                self.loadingSymbols.remove(symbol)
+                
+                if let image = image {
+                    // 현재 목록 업데이트
+                    var currentPrices = self.coinPrices.value
+                    if let index = currentPrices.firstIndex(where: { $0.symbol == symbol }) {
+                        var updatedPrice = currentPrices[index]
+                        updatedPrice.image = image
+                        currentPrices[index] = updatedPrice
+                        self.coinPrices.accept(currentPrices)
+                    }
+                }
+            }, onFailure: { [weak self] _ in
+                self?.loadingSymbols.remove(symbol)
+            })
+            .disposed(by: disposeBag)
+    }
+    
     // 코인 가격 데이터 가져오기
     private func fetchCoinPrices() {
-        
         let service: Single<[MarketPrice]>
         
         switch currentExchange {
@@ -85,6 +139,8 @@ class CoinPriceViewModel {
                 marketPrices.map { price in
                     var modifiedPrice = price
                     modifiedPrice.symbol = self.extractCoinSymbol(price.symbol)
+                    // 기본 이미지 설정
+                    modifiedPrice.image = ImageRepository.getImage(for: modifiedPrice.symbol)
                     return modifiedPrice
                 }
                 .sorted { $0.quoteVolume > $1.quoteVolume }
@@ -92,6 +148,10 @@ class CoinPriceViewModel {
             .observe(on: MainScheduler.instance)
             .subscribe(onSuccess: { [weak self] marketPrices in
                 self?.coinPrices.accept(marketPrices)
+                // 각 코인에 대해 이미지 로드 시도
+                marketPrices.forEach { price in
+                    self?.loadCoinImage(for: price.symbol)
+                }
             }, onFailure: { [weak self] error in
                 self?.error.onNext(error)
             })
