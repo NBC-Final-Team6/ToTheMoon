@@ -12,46 +12,82 @@ final class BithumbService {
     let exchange: Exchange = .bithumb
     private let baseURL = Exchange.bithumb.baseURL
     
+//    func fetchMarketPrices() -> Single<[MarketPrice]> {
+//        return fetchAllMarkets()
+//            .flatMap { markets -> Single<[MarketPrice]> in
+//                // markets에서 KRW-로 시작하는 심볼만 필터링
+//                let marketSymbols = markets.filter { $0.starts(with: "KRW-") }
+//                let tickerEndpoints = marketSymbols.map { "\(self.baseURL)/v1/ticker?markets=\($0)" }
+//                
+//                // 각 tickerEndpoint를 가져오는 Single 배열 생성
+//                let fetchTickers = tickerEndpoints.map { endpoint -> Single<[MarketPrice]> in
+//                    guard let url = URL(string: endpoint) else {
+//                        return Single.just([]) // URL이 잘못되었으면 빈 배열 반환
+//                    }
+//                    return NetworkManager.shared.fetch(url: url)
+//                        .do(onError: { error in
+//                        }, onSubscribe: {
+//                        })
+//                        .map { (responses: [BithumbTickerResponse]) -> [MarketPrice] in
+//                            // 응답을 MarketPrice 배열로 변환
+//                            return responses.map { response in
+//                                MarketPrice(
+//                                    symbol: response.market,
+//                                    price: response.tradePrice,
+//                                    exchange: self.exchange.rawValue,
+//                                    change: response.change,
+//                                    changeRate: response.changeRate * 100,
+//                                    quoteVolume: response.tradeVolume,
+//                                    highPrice: response.highPrice,
+//                                    lowPrice: response.lowPrice
+//                                )
+//                            }
+//                        }
+//                        .catchAndReturn([]) // 에러 발생 시 빈 배열로 대체
+//                }
+//                
+//                // 모든 요청을 병렬로 실행한 뒤 결과를 단일 배열로 반환
+//                return Single.zip(fetchTickers)
+//                    .map { $0.flatMap { $0 } } // 중첩된 배열을 단일 배열로 변환
+//            }
+//    }
+    
     func fetchMarketPrices() -> Single<[MarketPrice]> {
-        return fetchAllMarkets()
-            .flatMap { markets -> Single<[MarketPrice]> in
-                // markets에서 KRW-로 시작하는 심볼만 필터링
-                let marketSymbols = markets.filter { $0.starts(with: "KRW-") }
-                let tickerEndpoints = marketSymbols.map { "\(self.baseURL)/v1/ticker?markets=\($0)" }
-                
-                // 각 tickerEndpoint를 가져오는 Single 배열 생성
-                let fetchTickers = tickerEndpoints.map { endpoint -> Single<[MarketPrice]> in
-                    guard let url = URL(string: endpoint) else {
-                        return Single.just([]) // URL이 잘못되었으면 빈 배열 반환
+        let endpoint = "\(baseURL)/public/ticker/ALL_KRW"
+        guard let url = URL(string: endpoint) else {
+            return Single.error(NetworkError.invalidUrl)
+        }
+        return NetworkManager.shared.fetch(url: url)
+            .map { (response: BithumbTickersResponse) -> [MarketPrice] in
+                return response.data.coins.map { symbol, data in
+                    // 현재 가격과 전날 가격
+                    let currentPrice = Double(data.closingPrice)
+                    let yesterdayPrice = Double(data.prevClosingPrice)
+                    // changeRate 계산 (yesterdayPrice가 0인 경우 대비)
+                    let changeRate = yesterdayPrice != 0 ? ((currentPrice - yesterdayPrice) / yesterdayPrice) * 100 : 0
+                    // change 상태 결정
+                    let change: ChangeState
+                    if changeRate > 0 {
+                        change = .rise
+                    } else if changeRate == 0 {
+                        change = .even
+                    } else {
+                        change = .fall
                     }
-                    return NetworkManager.shared.fetch(url: url)
-                        .do(onError: { error in
-                        }, onSubscribe: {
-                        })
-                        .map { (responses: [BithumbTickerResponse]) -> [MarketPrice] in
-                            // 응답을 MarketPrice 배열로 변환
-                            return responses.map { response in
-                                MarketPrice(
-                                    symbol: response.market,
-                                    price: response.tradePrice,
-                                    exchange: self.exchange.rawValue,
-                                    change: response.change,
-                                    changeRate: response.changeRate * 100,
-                                    quoteVolume: response.tradeVolume,
-                                    highPrice: response.highPrice,
-                                    lowPrice: response.lowPrice
-                                )
-                            }
-                        }
-                        .catchAndReturn([]) // 에러 발생 시 빈 배열로 대체
+                    return MarketPrice(
+                        symbol: symbol,
+                        price: data.closingPrice,
+                        exchange: self.exchange.rawValue,
+                        change: change.rawValue,
+                        changeRate: changeRate,
+                        quoteVolume: data.accTradeValue,
+                        highPrice: data.maxPrice,
+                        lowPrice: data.minPrice
+                    )
                 }
-                
-                // 모든 요청을 병렬로 실행한 뒤 결과를 단일 배열로 반환
-                return Single.zip(fetchTickers)
-                    .map { $0.flatMap { $0 } } // 중첩된 배열을 단일 배열로 변환
             }
     }
-
+    
     private func fetchAllMarkets() -> Single<[String]> {
         let endpoint = "\(baseURL)/v1/market/all"
         guard let url = URL(string: endpoint) else {
