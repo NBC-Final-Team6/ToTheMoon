@@ -95,9 +95,9 @@ final class SearchViewModel {
     
     func toggleFavorite(_ marketPrice: MarketPrice) {
         let coinKey = "\(marketPrice.symbol)_\(marketPrice.exchange)"
-
+        
         manageFavoritesUseCase.isCoinSaved(marketPrice.symbol, exchange: marketPrice.exchange)
-            .observe(on: MainScheduler.asyncInstance) // ✅ 이벤트가 비동기적으로 실행되도록 함
+            .observe(on: MainScheduler.asyncInstance) // ✅ UI 업데이트를 위해 메인 스레드에서 실행
             .flatMapLatest { isSaved -> Observable<Void> in
                 if isSaved {
                     print("🔴 삭제 요청: \(coinKey)")
@@ -107,23 +107,17 @@ final class SearchViewModel {
                     return self.manageFavoritesUseCase.saveCoin(marketPrice) // ✅ 추가 요청
                 }
             }
-            .subscribe(onNext: { [weak self] in
-                var savedCoins = (try? self?.savedCoinsSubject.value()) ?? []
-                if savedCoins.contains(coinKey) {
-                    savedCoins.remove(coinKey) // ✅ 삭제된 경우 제거
-                } else {
-                    savedCoins.insert(coinKey) // ✅ 추가된 경우 삽입
-                }
-                self?.savedCoinsSubject.onNext(savedCoins) // ✅ 상태 업데이트
+            .flatMapLatest { [weak self] in
+                // ✅ 저장된 코인 목록을 불러와 BehaviorSubject 업데이트
+                self?.manageFavoritesUseCase.fetchFavoriteCoins() ?? Observable.just([])
+            }
+            .subscribe(onNext: { [weak self] savedCoins in
+                let updatedSavedCoins = Set(savedCoins.map { "\(String(describing: $0.symbol))_\($0.exchangename ?? "")" })
+                self?.savedCoinsSubject.onNext(updatedSavedCoins) // ✅ 상태 업데이트
                 
-                // ✅ 저장된 코인 목록 다시 불러와서 확인 (디버깅)
-                self?.manageFavoritesUseCase.fetchFavoriteCoins()
-                    .subscribe(onNext: { savedCoins in
-                        print("⭐ 현재 저장된 코인 목록:", savedCoins.map { "\(String(describing: $0.symbol))_\($0.exchangename ?? "")" })
-                    })
-                    .disposed(by: self!.disposeBag)
+                print("⭐ 현재 저장된 코인 목록:", updatedSavedCoins)
             })
-            .disposed(by: disposeBag)
+            .disposed(by: disposeBag) // ✅ 한 번만 disposeBag에 추가
     }
     
     /// ✅ "symbol + exchange" 조합으로 개별 코인 저장 여부 확인
