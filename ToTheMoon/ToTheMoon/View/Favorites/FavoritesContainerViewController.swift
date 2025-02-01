@@ -82,6 +82,7 @@ final class FavoritesContainerViewController: UIViewController {
                 guard let self = self else { return }
                 self.switchToViewController(for: segment)
                 self.updateTabUI(for: segment)
+                self.topFavoritesView.searchButton.isHidden = (segment == .popularCurrency)
             })
             .disposed(by: disposeBag)
     }
@@ -126,7 +127,6 @@ final class FavoritesContainerViewController: UIViewController {
     }
 
     private func switchToViewController(for segment: SegmentType) {
-        // 기존 ViewController 제거 및 새 ViewController 추가
         if segment == .popularCurrency {
             remove(child: favoriteListVC)
             add(child: popularCurrencyVC)
