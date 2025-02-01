@@ -13,21 +13,12 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
 
     func scene(_ scene: UIScene, willConnectTo session: UISceneSession, options connectionOptions: UIScene.ConnectionOptions) {
         guard let windowScene = (scene as? UIWindowScene) else { return }
-        
-        let getMarketPricesUseCase = GetMarketPricesUseCase()
-        let manageFavoritesUseCase = ManageFavoritesUseCase() // ManageFavoritesUseCaseProtocol 준수 객체
-        
-        let viewModel = SearchViewModel(
-            getMarketPricesUseCase: getMarketPricesUseCase,
-            manageFavoritesUseCase: manageFavoritesUseCase
-        )
-        
-        let rootViewController = SearchViewController(viewModel: viewModel)
         let window = UIWindow(windowScene: windowScene)
-        window.rootViewController = UINavigationController(rootViewController: rootViewController)
+        window.rootViewController = UINavigationController(rootViewController: CustomTabBarViewController())
         window.makeKeyAndVisible()
         self.window = window
     }
+
 
 
     func sceneDidDisconnect(_ scene: UIScene) {

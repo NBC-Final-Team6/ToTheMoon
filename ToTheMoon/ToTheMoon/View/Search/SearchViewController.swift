@@ -99,7 +99,6 @@ final class SearchViewController: UIViewController {
     }
 }
 
-// MARK: - UITableView Delegate & DataSource
 extension SearchViewController: UITableViewDelegate, UITableViewDataSource {
     
     func numberOfSections(in tableView: UITableView) -> Int {
@@ -159,7 +158,6 @@ extension SearchViewController: UITableViewDelegate, UITableViewDataSource {
         }
     }
     
-    // MARK: - Header View for Recent Searches Section
     func tableView(_ tableView: UITableView, viewForHeaderInSection section: Int) -> UIView? {
         guard searchMode == .recent, !recentSearches.isEmpty else { return nil }
         
@@ -199,7 +197,7 @@ extension SearchViewController: UITableViewDelegate, UITableViewDataSource {
     
     func tableView(_ tableView: UITableView, heightForHeaderInSection section: Int) -> CGFloat {
            return searchMode == .recent && !recentSearches.isEmpty ? 40 : 0
-       }
+    }
     
     func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
         return searchMode == .recent ? UITableView.automaticDimension : 60

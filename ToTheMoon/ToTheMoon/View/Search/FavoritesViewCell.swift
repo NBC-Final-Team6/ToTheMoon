@@ -66,9 +66,9 @@ class FavoritesViewCell: UITableViewCell {
         return button
     }()
     
-    var addButtonAction: ((MarketPrice) -> Void)?  // 버튼 클릭 시 실행할 클로저
+    var addButtonAction: ((MarketPrice) -> Void)?
     private var currentCoin: MarketPrice?
-    private var isSaved: Bool = false  // 저장 여부 상태 추가
+    private var isSaved: Bool = false
 
     override init(style: UITableViewCell.CellStyle, reuseIdentifier: String?) {
         super.init(style: style, reuseIdentifier: reuseIdentifier)
@@ -134,7 +134,7 @@ class FavoritesViewCell: UITableViewCell {
     
     func configure(with item: MarketPrice, isSaved: Bool) {
         currentCoin = item
-        self.isSaved = isSaved  // 저장 상태 업데이트
+        self.isSaved = isSaved
         
         coinNameLabel.text = item.symbol
         marketNameLabel.text = item.exchange
