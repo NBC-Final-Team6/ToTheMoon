@@ -10,12 +10,8 @@ import RxCocoa
 
 final class FavoritesListViewModel {
     private let manageFavoritesUseCase: ManageFavoritesUseCaseProtocol
+    private let getMarketPricesUseCase: GetMarketPricesUseCase
     private let disposeBag = DisposeBag()
-    
-    private let upbitService = UpbitService()
-    private let bithumbService = BithumbService()
-    private let korbitService = KorbitService()
-    private let coinOneService = CoinOneService()
 
     private let favoriteCoinsRelay = BehaviorRelay<[MarketPrice]>(value: [])
 
@@ -23,54 +19,34 @@ final class FavoritesListViewModel {
         return favoriteCoinsRelay.asObservable()
     }
 
-    init(manageFavoritesUseCase: ManageFavoritesUseCaseProtocol) {
+    init(manageFavoritesUseCase: ManageFavoritesUseCaseProtocol, getMarketPricesUseCase: GetMarketPricesUseCase) {
         self.manageFavoritesUseCase = manageFavoritesUseCase
+        self.getMarketPricesUseCase = getMarketPricesUseCase
         fetchFavoriteCoins()
     }
 
     func fetchFavoriteCoins() {
-        manageFavoritesUseCase.fetchFavoriteCoins()
-            .flatMap { [weak self] savedCoins -> Observable<[MarketPrice]> in
-                guard let self = self else { return Observable.just([]) }
-
-                let requests = savedCoins.compactMap { coin -> Observable<[MarketPrice]>? in
-                    guard let symbol = coin.symbol, let exchange = coin.exchangename else { return nil }
-                    print("📌 저장된 코인 정보: \(symbol), \(exchange)")
-                    return self.fetchMarketPrice(for: symbol, exchange: exchange)
-                }
-
-                return Observable.zip(requests)
-                    .map { $0.flatMap { $0 } }
+        let savedCoinsObservable = manageFavoritesUseCase.fetchFavoriteCoins()
+            .map { savedCoins in
+                // ✅ UUID 값을 기준으로 오름차순 정렬
+                return savedCoins.sorted { $0.id?.uuidString ?? "" < $1.id?.uuidString ?? "" }
             }
-            .subscribe(onNext: { [weak self] marketPrices in
-                //print("✅ 받아온 코인 데이터: \(marketPrices)")
-                self?.favoriteCoinsRelay.accept(marketPrices)
+            .asObservable()
+        
+        let allMarketPricesSingle = getMarketPricesUseCase.execute()
+        
+        Observable.combineLatest(savedCoinsObservable, allMarketPricesSingle.asObservable())
+            .map { savedCoins, marketPrices in
+                // 📌 사용자의 즐겨찾기 리스트에 해당하는 코인만 필터링
+                return marketPrices.filter { marketPrice in
+                    savedCoins.contains { $0.symbol == marketPrice.symbol && $0.exchangename == marketPrice.exchange }
+                }
+            }
+            .subscribe(onNext: { [weak self] filteredMarketPrices in
+                self?.favoriteCoinsRelay.accept(filteredMarketPrices)
             }, onError: { error in
                 print("❌ 코인 가격 가져오기 실패: \(error.localizedDescription)")
             })
             .disposed(by: disposeBag)
-    }
-
-    private func fetchMarketPrice(for symbol: String, exchange: String) -> Observable<[MarketPrice]> {
-        guard let exchangeEnum = Exchange(rawValue: exchange) else { 
-            return Observable.just([])
-        }
-        switch exchangeEnum {
-        case .upbit:
-            return upbitService.fetchMarketPrice(symbol: symbol)
-                .asObservable()
-
-        case .bithumb:
-            return bithumbService.fetchMarketPrice(symbol: symbol)
-                .asObservable()
-
-        case .korbit:
-            return korbitService.fetchMarketPrice(symbol: symbol)
-                .asObservable()
-
-        case .coinone:
-            return coinOneService.fetchMarketPrice(symbol: symbol)
-                .asObservable()
-        }
     }
 }

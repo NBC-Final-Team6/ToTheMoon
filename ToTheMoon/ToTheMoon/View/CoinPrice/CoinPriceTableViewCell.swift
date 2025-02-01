@@ -111,7 +111,10 @@ class CoinPriceTableViewCell: UITableViewCell {
     }
     
     func configure(with item: MarketPrice) {
-        // TODO: 로고, 그래프 뷰
+        
+        logoImageView.backgroundColor = .systemGray6
+        logoImageView.image = item.image
+        
         coinNameLabel.text = item.symbol
         marketNameLabel.text = item.exchange
         priceLabel.text = "₩\(formatPrice(item.price))"

@@ -17,8 +17,13 @@ final class FavoritesContainerViewController: UIViewController {
     private let disposeBag = DisposeBag()
 
     private lazy var popularCurrencyVC = PopularCurrencyViewController()
-    private lazy var favoriteListVC = FavoriteListViewController(viewModel: FavoritesListViewModel(manageFavoritesUseCase: ManageFavoritesUseCase()))
-
+    private lazy var getMarketPricesUseCase = GetMarketPricesUseCase()
+    private lazy var favoriteListVC = FavoriteListViewController(
+        viewModel: FavoritesListViewModel(
+            manageFavoritesUseCase: ManageFavoritesUseCase(),
+            getMarketPricesUseCase: getMarketPricesUseCase
+        )
+    )
     override func loadView() {
         self.view = topFavoritesView
         
@@ -131,7 +136,7 @@ final class FavoritesContainerViewController: UIViewController {
         viewController.view.snp.makeConstraints { make in
             make.edges.equalToSuperview()
         }
-        
+
         viewController.didMove(toParent: self)
     }
 

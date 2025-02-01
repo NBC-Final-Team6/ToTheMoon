@@ -27,6 +27,7 @@ final class PopularCurrencyViewController: UIViewController {
 
     private func bindViewModel() {
         viewModel.popularCoins
+            .observe(on: MainScheduler.instance)
             .bind(to: contentView.tableView.rx.items(cellIdentifier: CoinPriceTableViewCell.identifier, cellType: CoinPriceTableViewCell.self)) { _, coin, cell in
                 cell.configure(with: coin)
             }
