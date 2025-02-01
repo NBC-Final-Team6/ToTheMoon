@@ -56,7 +56,6 @@ final class SearchView: UIView {
 
         [ searchBar, tableView ].forEach{ addSubview($0)  }
                    
-        // 레이아웃 설정
         searchBar.snp.makeConstraints { make in
             make.top.equalTo(safeAreaLayoutGuide.snp.top).offset(10)
             make.leading.trailing.equalToSuperview().inset(16)
