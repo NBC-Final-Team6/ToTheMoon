@@ -11,7 +11,7 @@ import RxCocoa
 
 final class SearchViewModel {
     private let getMarketPricesUseCase: GetMarketPricesUseCase
-    private let manageFavoritesUseCase: ManageFavoritesUseCaseProtocol  // ✅ Use Case 주입
+    private let manageFavoritesUseCase: ManageFavoritesUseCaseProtocol  
     private let savedCoinsRelay = BehaviorRelay<Set<String>>(value: Set())
     private let disposeBag = DisposeBag()
     private let symbolFormatter = SymbolFormatter()
@@ -30,7 +30,7 @@ final class SearchViewModel {
     
     init(getMarketPricesUseCase: GetMarketPricesUseCase, manageFavoritesUseCase: ManageFavoritesUseCaseProtocol) {
         self.getMarketPricesUseCase = getMarketPricesUseCase
-        self.manageFavoritesUseCase = manageFavoritesUseCase  // ✅ FavoritesViewModel 의존성 제거
+        self.manageFavoritesUseCase = manageFavoritesUseCase
         fetchMarketPrices()
         loadSavedCoins()
     }
@@ -45,12 +45,11 @@ final class SearchViewModel {
     
     private func loadSavedCoins() {
         manageFavoritesUseCase.fetchFavoriteCoins()
-            .map { coins -> Set<String> in // ✅ 반환 타입 명시
+            .map { coins -> Set<String> in
                 let savedSet: Set<String> = Set(coins.compactMap { coin in
                     guard let symbol = coin.symbol, let exchange = coin.exchangename else { return nil }
-                    return "\(symbol)_\(exchange)" // ✅ Optional 제거 후 저장
+                    return "\(symbol)_\(exchange)"
                 })
-                print("📌 [loadSavedCoins] 저장된 코인 목록: \(savedSet)") // ✅ 디버깅 로그
                 return savedSet
             }
             .subscribe(onNext: { [weak self] savedCoins in
@@ -127,6 +126,6 @@ final class SearchViewModel {
         let coinKey = "\(symbol)_\(exchange)"
         return savedCoinsRelay
             .map { savedCoins in savedCoins.contains(coinKey) }
-            .observe(on: MainScheduler.instance) // ✅ 즉시 UI 업데이트를 위해 추가
+            .observe(on: MainScheduler.instance)
     }
 }

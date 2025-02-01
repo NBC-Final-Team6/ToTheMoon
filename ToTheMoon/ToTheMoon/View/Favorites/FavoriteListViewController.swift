@@ -34,6 +34,10 @@ final class FavoriteListViewController: UIViewController {
         contentView.tableView.delegate = self
     }
     
+    override func viewWillAppear(_ animated: Bool) {
+        viewModel.fetchFavoriteCoins()
+    }
+    
     private func setupBindings() {
         viewModel.favoriteCoins
             .observe(on: MainScheduler.instance)
@@ -66,7 +70,7 @@ extension FavoriteListViewController: UITableViewDelegate {
                 return
             }
             self.viewModel.favoriteCoins
-                .take(1) // 한 번만 값을 가져옴
+                .take(1)
                 .subscribe(onNext: { coins in
                     guard indexPath.row < coins.count else {
                         completionHandler(false) // 인덱스 초과 방지
