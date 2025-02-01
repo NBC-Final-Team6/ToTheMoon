@@ -49,4 +49,14 @@ final class FavoritesListViewModel {
             })
             .disposed(by: disposeBag)
     }
+    
+    func removeFavoriteCoin(_ coin: MarketPrice) {
+         manageFavoritesUseCase.removeCoin(coin)
+            .subscribe(onError: { error in
+                print("❌ 즐겨찾기 코인 삭제 실패: \(error.localizedDescription)")
+            }, onCompleted: { [weak self] in
+                self?.fetchFavoriteCoins()
+            })
+             .disposed(by: disposeBag)
+     }
 }
