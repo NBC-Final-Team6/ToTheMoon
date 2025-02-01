@@ -28,7 +28,6 @@ final class FavoritesListViewModel {
         fetchFavoriteCoins()
     }
 
-    /// ✅ Core Data에서 저장된 코인 목록을 가져오고, API 요청을 실행하여 최신 데이터를 가져온다.
     func fetchFavoriteCoins() {
         manageFavoritesUseCase.fetchFavoriteCoins()
             .flatMap { [weak self] savedCoins -> Observable<[MarketPrice]> in
@@ -36,12 +35,15 @@ final class FavoritesListViewModel {
 
                 let requests = savedCoins.compactMap { coin -> Observable<[MarketPrice]>? in
                     guard let symbol = coin.symbol, let exchange = coin.exchangename else { return nil }
+                    print("📌 저장된 코인 정보: \(symbol), \(exchange)")
                     return self.fetchMarketPrice(for: symbol, exchange: exchange)
                 }
+
                 return Observable.zip(requests)
                     .map { $0.flatMap { $0 } }
             }
             .subscribe(onNext: { [weak self] marketPrices in
+                //print("✅ 받아온 코인 데이터: \(marketPrices)")
                 self?.favoriteCoinsRelay.accept(marketPrices)
             }, onError: { error in
                 print("❌ 코인 가격 가져오기 실패: \(error.localizedDescription)")
@@ -49,7 +51,6 @@ final class FavoritesListViewModel {
             .disposed(by: disposeBag)
     }
 
-    /// ✅ 특정 거래소에 맞는 `fetchMarketPrice(symbol:)` 메서드를 호출하여 데이터를 가져온다.
     private func fetchMarketPrice(for symbol: String, exchange: String) -> Observable<[MarketPrice]> {
         guard let exchangeEnum = Exchange(rawValue: exchange) else { 
             return Observable.just([])

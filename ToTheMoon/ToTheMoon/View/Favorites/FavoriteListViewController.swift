@@ -31,25 +31,27 @@ final class FavoriteListViewController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         setupBindings()
-        viewModel.fetchFavoriteCoins() // ✅ CoreData에서 저장된 코인 불러오기
+        contentView.tableView.delegate = self
     }
 
     private func setupBindings() {
         // ✅ ViewModel의 favoriteCoins를 테이블 뷰에 바인딩
         viewModel.favoriteCoins
-            .bind(to: contentView.tableView.rx.items(
-                cellIdentifier: CoinPriceTableViewCell.identifier,
-                cellType: CoinPriceTableViewCell.self
-            )) { _, marketPrice, cell in
-                cell.configure(with: marketPrice)
+            .observe(on: MainScheduler.instance) // UI 업데이트는 메인 스레드에서 실행
+            .bind(to: contentView.tableView.rx.items(cellIdentifier: CoinPriceTableViewCell.identifier, cellType: CoinPriceTableViewCell.self)) { _, coin, cell in
+                print("✅ 바인딩된 코인: \(coin.symbol)")
+                cell.configure(with: coin)
             }
             .disposed(by: disposeBag)
-
-        // ✅ 데이터의 유무에 따라 UI 업데이트
+        
+        contentView.tableView.rx.modelSelected(MarketPrice.self)
+            .subscribe(onNext: { print("Selected coin: \($0.symbol)") })
+            .disposed(by: disposeBag)
+        
         viewModel.favoriteCoins
-            .map { !$0.isEmpty } // 데이터가 있으면 true
-            .distinctUntilChanged() // 중복된 값은 무시
-            .bind(to: contentView.tableView.rx.isHidden) // ✅ 테이블 뷰 가시성 업데이트
+            .map { $0.isEmpty } // 데이터가 없으면 true
+            .distinctUntilChanged()
+            .bind(to: contentView.tableView.rx.isHidden)
             .disposed(by: disposeBag)
     }
 }
