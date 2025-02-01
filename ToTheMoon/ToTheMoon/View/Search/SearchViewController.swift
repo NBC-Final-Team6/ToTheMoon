@@ -6,6 +6,7 @@
 //
 
 import UIKit
+import SnapKit
 import RxSwift
 import RxCocoa
 
@@ -14,7 +15,6 @@ final class SearchViewController: UIViewController {
     private let viewModel: SearchViewModel
     private let disposeBag = DisposeBag()
     
-    // 검색 모드를 구분하기 위한 enum
     private enum SearchMode {
         case recent
         case result
@@ -44,6 +44,22 @@ final class SearchViewController: UIViewController {
         setupTableView()
         
         searchView.searchBar.delegate = self
+    }
+    
+    override func viewWillAppear(_ animated: Bool) {
+        navigationController?.navigationBar.isHidden = false
+            navigationItem.title = "관심목록 추가"
+            navigationItem.leftBarButtonItem = UIBarButtonItem(
+                image: UIImage(systemName: "chevron.left"),
+                style: .plain,
+                target: self,
+                action: #selector(dismissSearch)
+            )
+        navigationItem.leftBarButtonItem?.tintColor = .personel
+    }
+    
+    @objc private func dismissSearch() {
+        navigationController?.popViewController(animated: true) // 이전 화면으로 돌아가기
     }
     
     private func setupBindings() {
@@ -179,9 +195,8 @@ extension SearchViewController: UITableViewDelegate, UITableViewDataSource {
             }
             .disposed(by: disposeBag)
         
-        headerView.addSubview(titleLabel)
-        headerView.addSubview(clearButton)
-        
+        [ titleLabel, clearButton ].forEach{ headerView.addSubview($0)}
+       
         titleLabel.snp.makeConstraints { make in
             make.leading.equalToSuperview().inset(16)
             make.centerY.equalToSuperview()
