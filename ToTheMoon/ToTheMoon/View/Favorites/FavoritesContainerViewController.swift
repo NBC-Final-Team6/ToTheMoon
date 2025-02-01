@@ -11,7 +11,8 @@ import RxSwift
 import RxCocoa
 
 final class FavoritesContainerViewController: UIViewController {
-    private let topFavoritesView = TopFavoritesView() // 상단 UI 포함 공통 뷰
+    private let topFavoritesView = TopFavoritesView()
+    private let viewModel = FavoritesContainerViewModel()
     private let tabs = ["인기 화폐", "관심 목록"]
     private let selectedSegment = BehaviorRelay<SegmentType>(value: .favoriteList)
     private let disposeBag = DisposeBag()
@@ -35,6 +36,7 @@ final class FavoritesContainerViewController: UIViewController {
         setupTabCollectionView()
         setupInitialView()
         bindSegmentSelection()
+        bindSearchButton()
     }
 
     override func viewDidLayoutSubviews() {
@@ -79,6 +81,31 @@ final class FavoritesContainerViewController: UIViewController {
                 self.updateTabUI(for: segment)
             })
             .disposed(by: disposeBag)
+    }
+    
+    private func bindSearchButton() {
+       
+        topFavoritesView.searchButton.rx.tap
+            .bind(to: viewModel.showSearchViewController)
+            .disposed(by: disposeBag)
+        
+        viewModel.showSearchViewController
+            .subscribe(onNext: { [weak self] in
+                self?.presentSearchViewController()
+            })
+            .disposed(by: disposeBag)
+    }
+    
+    private func presentSearchViewController() {
+        let getMarketPricesUseCase = GetMarketPricesUseCase()
+        let manageFavoritesUseCase = ManageFavoritesUseCase()
+        let searchViewModel = SearchViewModel(
+            getMarketPricesUseCase: getMarketPricesUseCase,
+            manageFavoritesUseCase: manageFavoritesUseCase
+        )
+        let searchVC = SearchViewController(viewModel: searchViewModel)
+        searchVC.modalPresentationStyle = .fullScreen
+        present(searchVC, animated: true)
     }
 
     private func setupTabCollectionViewLayout() {
