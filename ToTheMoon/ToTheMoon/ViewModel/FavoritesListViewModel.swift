@@ -11,46 +11,65 @@ import RxCocoa
 final class FavoritesListViewModel {
     private let manageFavoritesUseCase: ManageFavoritesUseCaseProtocol
     private let disposeBag = DisposeBag()
-    private let service = BithumbService()
     
-    private let favoriteCoinsRelay = BehaviorRelay<[Coin]>(value: [])
-    
-    var favoriteCoins: Observable<[Coin]> {
+    private let upbitService = UpbitService()
+    private let bithumbService = BithumbService()
+    private let korbitService = KorbitService()
+    private let coinOneService = CoinOneService()
+
+    private let favoriteCoinsRelay = BehaviorRelay<[MarketPrice]>(value: [])
+
+    var favoriteCoins: Observable<[MarketPrice]> {
         return favoriteCoinsRelay.asObservable()
     }
-    
+
     init(manageFavoritesUseCase: ManageFavoritesUseCaseProtocol) {
         self.manageFavoritesUseCase = manageFavoritesUseCase
         fetchFavoriteCoins()
     }
-    
+
+    /// ✅ Core Data에서 저장된 코인 목록을 가져오고, API 요청을 실행하여 최신 데이터를 가져온다.
     func fetchFavoriteCoins() {
         manageFavoritesUseCase.fetchFavoriteCoins()
-            .subscribe(onNext: { [weak self] coins in
-                self?.favoriteCoinsRelay.accept(coins)
-            })
-            .disposed(by: disposeBag)
-    }
-    
-    func toggleFavorite(_ marketPrice: MarketPrice) {
-        let coinKey = "\(marketPrice.symbol)_\(marketPrice.exchange)"
+            .flatMap { [weak self] savedCoins -> Observable<[MarketPrice]> in
+                guard let self = self else { return Observable.just([]) }
 
-        manageFavoritesUseCase.isCoinSaved(marketPrice.symbol, exchange: marketPrice.exchange)
-            .observe(on: MainScheduler.asyncInstance) // ✅ 이벤트가 비동기적으로 실행되도록 함
-            .flatMapLatest { isSaved -> Observable<Void> in
-                if isSaved {
-                    return self.manageFavoritesUseCase.removeCoin(marketPrice)
-                } else {
-                    return self.manageFavoritesUseCase.saveCoin(marketPrice)
+                let requests = savedCoins.compactMap { coin -> Observable<[MarketPrice]>? in
+                    guard let symbol = coin.symbol, let exchange = coin.exchangename else { return nil }
+                    return self.fetchMarketPrice(for: symbol, exchange: exchange)
                 }
+                return Observable.zip(requests)
+                    .map { $0.flatMap { $0 } }
             }
-            .subscribe(onNext: { [weak self] in
-                self?.fetchFavoriteCoins()  // ✅ 업데이트된 즐겨찾기 리스트 불러오기
+            .subscribe(onNext: { [weak self] marketPrices in
+                self?.favoriteCoinsRelay.accept(marketPrices)
+            }, onError: { error in
+                print("❌ 코인 가격 가져오기 실패: \(error.localizedDescription)")
             })
             .disposed(by: disposeBag)
     }
-    
-    func isCoinSaved(_ symbol: String, exchange: String) -> Observable<Bool> {
-        return manageFavoritesUseCase.isCoinSaved(symbol, exchange: exchange)
+
+    /// ✅ 특정 거래소에 맞는 `fetchMarketPrice(symbol:)` 메서드를 호출하여 데이터를 가져온다.
+    private func fetchMarketPrice(for symbol: String, exchange: String) -> Observable<[MarketPrice]> {
+        guard let exchangeEnum = Exchange(rawValue: exchange) else { 
+            return Observable.just([])
+        }
+        switch exchangeEnum {
+        case .upbit:
+            return upbitService.fetchMarketPrice(symbol: symbol)
+                .asObservable()
+
+        case .bithumb:
+            return bithumbService.fetchMarketPrice(symbol: symbol)
+                .asObservable()
+
+        case .korbit:
+            return korbitService.fetchMarketPrice(symbol: symbol)
+                .asObservable()
+
+        case .coinone:
+            return coinOneService.fetchMarketPrice(symbol: symbol)
+                .asObservable()
+        }
     }
 }

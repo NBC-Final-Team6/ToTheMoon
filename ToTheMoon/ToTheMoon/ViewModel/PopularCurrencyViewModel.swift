@@ -9,7 +9,7 @@ import RxSwift
 import RxCocoa
 
 final class PopularCurrencyViewModel {
-    private let upbitService = UpbitService()
+    private let upbitService = BithumbService()
     private let disposeBag = DisposeBag()
     
     // 인기 화폐 데이터
@@ -23,7 +23,6 @@ final class PopularCurrencyViewModel {
             }
             .subscribe(onSuccess: { [weak self] sortedCoins in
                 self?.popularCoins.accept(sortedCoins)
-                print(sortedCoins)
             }, onFailure: { error in
                 print("Error fetching market prices: \(error)")
             })
