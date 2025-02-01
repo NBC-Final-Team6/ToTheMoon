@@ -24,10 +24,10 @@ final class CoinImageCache {
         do {
             if !fileManager.fileExists(atPath: directory.path) {
                 try fileManager.createDirectory(at: directory, withIntermediateDirectories: true, attributes: nil)
-                print("✅ [CACHE] 이미지 캐시 디렉토리 생성됨: \(directory.path)")
+                //print("✅ [CACHE] 이미지 캐시 디렉토리 생성됨: \(directory.path)")
             }
         } catch {
-            print("❌ [ERROR] 이미지 캐시 디렉토리 생성 실패: \(error.localizedDescription)")
+            //print("❌ [ERROR] 이미지 캐시 디렉토리 생성 실패: \(error.localizedDescription)")
         }
     }
 
@@ -37,14 +37,14 @@ final class CoinImageCache {
 
         // 1️⃣ 메모리 캐시 확인
         if let cachedImage = cache.object(forKey: key) {
-            print("✅ [CACHE] 메모리 캐시에서 이미지 찾음: \(coinID)")
+            //print("✅ [CACHE] 메모리 캐시에서 이미지 찾음: \(coinID)")
             return cachedImage
         }
 
         // 2️⃣ 디스크 캐시 확인 (파일 존재 여부 체크)
         let fileURL = directory.appendingPathComponent("\(coinID.lowercased()).png")
         guard fileManager.fileExists(atPath: fileURL.path) else {
-            print("❌ [CACHE MISS] 디스크에 이미지 없음: \(coinID)")
+            //print("❌ [CACHE MISS] 디스크에 이미지 없음: \(coinID)")
             return nil
         }
 
@@ -52,7 +52,7 @@ final class CoinImageCache {
             let imageData = try Data(contentsOf: fileURL)
             if let image = UIImage(data: imageData) {
                 cache.setObject(image, forKey: key) // 메모리 캐시에 저장
-                print("✅ [CACHE] 디스크에서 이미지 로드 성공: \(coinID)")
+                //print("✅ [CACHE] 디스크에서 이미지 로드 성공: \(coinID)")
                 return image
             }
         } catch {
@@ -72,12 +72,12 @@ final class CoinImageCache {
         do {
             if let data = image.pngData() {
                 try data.write(to: fileURL)
-                print("✅ [CACHE] 디스크에 이미지 저장 완료: \(coinID)")
+                //print("✅ [CACHE] 디스크에 이미지 저장 완료: \(coinID)")
             } else {
-                print("❌ [ERROR] 이미지 PNG 변환 실패: \(coinID)")
+                //print("❌ [ERROR] 이미지 PNG 변환 실패: \(coinID)")
             }
         } catch {
-            print("❌ [ERROR] 디스크에 이미지 저장 실패: \(error.localizedDescription)")
+            //print("❌ [ERROR] 디스크에 이미지 저장 실패: \(error.localizedDescription)")
         }
     }
 }
