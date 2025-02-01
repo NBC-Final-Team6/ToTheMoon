@@ -12,6 +12,7 @@ import SnapKit
 
 final class FavoriteListViewController: UIViewController {
     private let contentView = CustomTableView()
+    private let noFavoritesView = NoFavoritesView()
     private let viewModel: FavoritesListViewModel
     private let disposeBag = DisposeBag()
     
@@ -25,13 +26,22 @@ final class FavoriteListViewController: UIViewController {
     }
     
     override func loadView() {
-        view = contentView
+        view = UIView() // 기본 View 설정
+        view.backgroundColor = .background
+        
+        [contentView, noFavoritesView].forEach {
+            view.addSubview($0)
+            $0.snp.makeConstraints { make in
+                make.edges.equalToSuperview()
+            }
+        }
     }
     
     override func viewDidLoad() {
         super.viewDidLoad()
         setupBindings()
         contentView.tableView.delegate = self
+        noFavoritesView.addButton.addTarget(self, action: #selector(navigateToSearch), for: .touchUpInside)
     }
     
     override func viewWillAppear(_ animated: Bool) {
@@ -39,6 +49,18 @@ final class FavoriteListViewController: UIViewController {
     }
     
     private func setupBindings() {
+        
+        viewModel.favoriteCoins
+            .observe(on: MainScheduler.instance)
+            .subscribe(onNext: { [weak self] coins in
+                guard let self = self else { return }
+                let hasFavorites = !coins.isEmpty
+                self.contentView.isHidden = !hasFavorites
+                self.noFavoritesView.isHidden = hasFavorites
+                self.contentView.tableView.reloadData()
+            })
+            .disposed(by: disposeBag)
+        
         viewModel.favoriteCoins
             .observe(on: MainScheduler.instance)
             .bind(to: contentView.tableView.rx.items(cellIdentifier: CoinPriceTableViewCell.identifier, cellType: CoinPriceTableViewCell.self)) { _, coin, cell in
@@ -49,12 +71,17 @@ final class FavoriteListViewController: UIViewController {
         contentView.tableView.rx.modelSelected(MarketPrice.self)
             .subscribe(onNext: { print("Selected coin: \($0.symbol)") })
             .disposed(by: disposeBag)
-        
-        viewModel.favoriteCoins
-            .map { $0.isEmpty } // 데이터가 없으면 true
-            .distinctUntilChanged()
-            .bind(to: contentView.tableView.rx.isHidden)
-            .disposed(by: disposeBag)
+    }
+    
+    @objc private func navigateToSearch() {
+        let getMarketPricesUseCase = GetMarketPricesUseCase()
+        let manageFavoritesUseCase = ManageFavoritesUseCase()
+        let searchViewModel = SearchViewModel(
+            getMarketPricesUseCase: getMarketPricesUseCase,
+            manageFavoritesUseCase: manageFavoritesUseCase
+        )
+        let searchVC = SearchViewController(viewModel: searchViewModel)
+        navigationController?.pushViewController(searchVC, animated: true)
     }
 }
 
