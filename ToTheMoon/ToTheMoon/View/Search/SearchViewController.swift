@@ -56,6 +56,7 @@ final class SearchViewController: UIViewController {
                 action: #selector(dismissSearch)
             )
         navigationItem.leftBarButtonItem?.tintColor = .personel
+        searchView.tableView.reloadData()
     }
     
     @objc private func dismissSearch() {
