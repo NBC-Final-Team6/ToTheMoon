@@ -32,11 +32,14 @@ final class FavoritesContainerViewController: UIViewController {
 
     override func viewDidLoad() {
         super.viewDidLoad()
-        navigationController?.navigationBar.isHidden = true
         setupTabCollectionView()
         setupInitialView()
         bindSegmentSelection()
         bindSearchButton()
+    }
+    
+    override func viewWillAppear(_ animated: Bool) {
+        navigationController?.navigationBar.isHidden = true
     }
 
     override func viewDidLayoutSubviews() {
@@ -91,12 +94,12 @@ final class FavoritesContainerViewController: UIViewController {
         
         viewModel.showSearchViewController
             .subscribe(onNext: { [weak self] in
-                self?.presentSearchViewController()
+                self?.navigateToSearchViewController()
             })
             .disposed(by: disposeBag)
     }
     
-    private func presentSearchViewController() {
+    private func navigateToSearchViewController() {
         let getMarketPricesUseCase = GetMarketPricesUseCase()
         let manageFavoritesUseCase = ManageFavoritesUseCase()
         let searchViewModel = SearchViewModel(
@@ -104,8 +107,7 @@ final class FavoritesContainerViewController: UIViewController {
             manageFavoritesUseCase: manageFavoritesUseCase
         )
         let searchVC = SearchViewController(viewModel: searchViewModel)
-        searchVC.modalPresentationStyle = .fullScreen
-        present(searchVC, animated: true)
+        navigationController?.pushViewController(searchVC, animated: true)
     }
 
     private func setupTabCollectionViewLayout() {
