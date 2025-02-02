@@ -11,7 +11,7 @@ import RxCocoa
 import SnapKit
 
 final class FavoriteListViewController: UIViewController {
-    private let contentView = CustomTableView()
+    private let contentView = FovoritesListTableView()
     private let noFavoritesView = NoFavoritesView()
     private let viewModel: FavoritesListViewModel
     private let disposeBag = DisposeBag()

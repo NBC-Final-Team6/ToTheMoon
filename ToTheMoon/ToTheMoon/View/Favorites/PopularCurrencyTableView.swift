@@ -8,7 +8,7 @@
 import UIKit
 import SnapKit
 
-final class CustomTableView: UIView {
+final class PopularCurrencyTableView: UIView {
     
     let tableView: UITableView = {
         let tableview = UITableView()
@@ -30,7 +30,7 @@ final class CustomTableView: UIView {
     private func setupUI() {
         backgroundColor = UIColor(named: "BackgroundColor")
         
-        addSubview(tableView)
+        [ tableView ].forEach{ addSubview($0) }
         
         tableView.snp.makeConstraints { make in
             make.verticalEdges.equalToSuperview()

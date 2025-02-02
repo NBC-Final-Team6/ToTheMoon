@@ -10,7 +10,7 @@ import RxSwift
 import RxCocoa
 
 final class PopularCurrencyViewController: UIViewController {
-    private let contentView = CustomTableView()
+    private let contentView = PopularCurrencyTableView()
     private let viewModel = PopularCurrencyViewModel()
     private let disposeBag = DisposeBag()
 
