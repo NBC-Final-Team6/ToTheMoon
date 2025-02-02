@@ -14,9 +14,14 @@ final class FavoritesListViewModel {
     private let disposeBag = DisposeBag()
 
     private let favoriteCoinsRelay = BehaviorRelay<[MarketPrice]>(value: [])
+    private let isLoadingRelay = BehaviorRelay<Bool>(value: false) // ✅ 추가
 
     var favoriteCoins: Observable<[MarketPrice]> {
         return favoriteCoinsRelay.asObservable()
+    }
+    
+    var isLoading: Observable<Bool> { // ✅ 추가
+        return isLoadingRelay.asObservable()
     }
 
     init(manageFavoritesUseCase: ManageFavoritesUseCaseProtocol, getMarketPricesUseCase: GetMarketPricesUseCase) {
@@ -26,9 +31,10 @@ final class FavoritesListViewModel {
     }
 
     func fetchFavoriteCoins() {
+        isLoadingRelay.accept(true) // ✅ 데이터 로딩 시작
+
         let savedCoinsObservable = manageFavoritesUseCase.fetchFavoriteCoins()
             .map { savedCoins in
-                // ✅ UUID 값을 기준으로 오름차순 정렬
                 return savedCoins.sorted { $0.id?.uuidString ?? "" < $1.id?.uuidString ?? "" }
             }
             .asObservable()
@@ -37,15 +43,16 @@ final class FavoritesListViewModel {
         
         Observable.combineLatest(savedCoinsObservable, allMarketPricesSingle.asObservable())
             .map { savedCoins, marketPrices in
-                // 📌 사용자의 즐겨찾기 리스트에 해당하는 코인만 필터링
                 return marketPrices.filter { marketPrice in
                     savedCoins.contains { $0.symbol == marketPrice.symbol && $0.exchangename == marketPrice.exchange }
                 }
             }
             .subscribe(onNext: { [weak self] filteredMarketPrices in
                 self?.favoriteCoinsRelay.accept(filteredMarketPrices)
+                self?.isLoadingRelay.accept(false) // ✅ 데이터 로딩 완료
             }, onError: { error in
                 print("❌ 코인 가격 가져오기 실패: \(error.localizedDescription)")
+                self.isLoadingRelay.accept(false) // ✅ 오류 발생 시 로딩 상태 해제
             })
             .disposed(by: disposeBag)
     }
@@ -60,3 +67,4 @@ final class FavoritesListViewModel {
              .disposed(by: disposeBag)
      }
 }
+

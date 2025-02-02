@@ -13,6 +13,7 @@ import SnapKit
 final class FavoriteListViewController: UIViewController {
     private let contentView = FovoritesListTableView()
     private let noFavoritesView = NoFavoritesView()
+    private let loadingView = LoadingView()
     private let viewModel: FavoritesListViewModel
     private let disposeBag = DisposeBag()
     
@@ -29,7 +30,7 @@ final class FavoriteListViewController: UIViewController {
         view = UIView() // 기본 View 설정
         view.backgroundColor = .background
         
-        [contentView, noFavoritesView].forEach {
+        [contentView, noFavoritesView, loadingView].forEach {
             view.addSubview($0)
             $0.snp.makeConstraints { make in
                 make.edges.equalToSuperview()
@@ -49,15 +50,22 @@ final class FavoriteListViewController: UIViewController {
     }
     
     private func setupBindings() {
-        
-        viewModel.favoriteCoins
+        Observable.combineLatest(viewModel.favoriteCoins, viewModel.isLoading)
             .observe(on: MainScheduler.instance)
-            .subscribe(onNext: { [weak self] coins in
+            .subscribe(onNext: { [weak self] (coins, isLoading) in
                 guard let self = self else { return }
-                let hasFavorites = !coins.isEmpty
-                self.contentView.isHidden = !hasFavorites
-                self.noFavoritesView.isHidden = hasFavorites
-                self.contentView.tableView.reloadData()
+                
+                if isLoading {
+                    self.loadingView.startLoading()
+                    self.contentView.isHidden = true
+                    self.noFavoritesView.isHidden = true
+                } else {
+                    self.loadingView.stopLoading()
+                    let hasFavorites = !coins.isEmpty
+                    self.contentView.isHidden = !hasFavorites
+                    self.noFavoritesView.isHidden = hasFavorites
+                    self.contentView.tableView.reloadData()
+                }
             })
             .disposed(by: disposeBag)
         
@@ -122,3 +130,4 @@ extension FavoriteListViewController: UITableViewDelegate {
         return UISwipeActionsConfiguration(actions: [deleteAction])
     }
 }
+
