@@ -50,7 +50,7 @@ final class NoFavoritesView: UIView {
         button.setTitleColor(.white, for: .normal)
         button.backgroundColor = .personel
         button.layer.cornerRadius = 10
-        button.titleLabel?.font = .systemFont(ofSize: 16, weight: .medium)
+        button.titleLabel?.font = .medium.bold()
         return button
     }()
     

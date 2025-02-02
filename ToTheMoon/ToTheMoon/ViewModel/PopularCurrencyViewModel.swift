@@ -10,29 +10,58 @@ import RxCocoa
 
 final class PopularCurrencyViewModel {
     private let getMarketPricesUseCase: GetMarketPricesUseCase
+    private let manageFavoritesUseCase: ManageFavoritesUseCaseProtocol
     private let disposeBag = DisposeBag()
     
     let popularCoins = BehaviorRelay<[MarketPrice]>(value: [])
-    
-    init(getMarketPricesUseCase: GetMarketPricesUseCase = GetMarketPricesUseCase()) {
+    let selectedCoins = BehaviorRelay<Set<MarketPrice>>(value: []) 
+    let isFavoriteButtonVisible = BehaviorRelay<Bool>(value: false)
+
+    init(getMarketPricesUseCase: GetMarketPricesUseCase = GetMarketPricesUseCase(),
+         manageFavoritesUseCase: ManageFavoritesUseCaseProtocol = ManageFavoritesUseCase()) {
         self.getMarketPricesUseCase = getMarketPricesUseCase
+        self.manageFavoritesUseCase = manageFavoritesUseCase
     }
     
     func fetchPopularCoins() {
-        Observable<Int>.interval(.seconds(1), scheduler: MainScheduler.instance)
-            .flatMapLatest { [weak self] _ -> Single<[MarketPrice]> in
-                guard let self = self else { return .never() }
-                return self.getMarketPricesUseCase.execute()
-            }
+        getMarketPricesUseCase.execute()
             .map { marketPrices in
-                // 거래 금액(quoteVolume) 기준으로 내림차순 정렬
                 marketPrices.sorted(by: { $0.quoteVolume > $1.quoteVolume })
             }
-            .subscribe(onNext: { [weak self] sortedCoins in
+            .subscribe(onSuccess: { [weak self] sortedCoins in
                 self?.popularCoins.accept(sortedCoins)
             }, onError: { error in
                 print("❌ 인기 코인 데이터 가져오기 실패: \(error.localizedDescription)")
             })
             .disposed(by: disposeBag)
+    }
+
+    func toggleSelection(for coin: MarketPrice) {
+        var updatedSelection = selectedCoins.value
+        if updatedSelection.contains(coin) {
+            updatedSelection.remove(coin)
+        } else {
+            updatedSelection.insert(coin) 
+        }
+        selectedCoins.accept(updatedSelection)
+        
+        isFavoriteButtonVisible.accept(!updatedSelection.isEmpty)
+    }
+
+    func addSelectedToFavorites() {
+        let coinsToSave = Array(selectedCoins.value)
+        guard !coinsToSave.isEmpty else { return }
+
+        let saveOperations = coinsToSave.map { manageFavoritesUseCase.saveCoin($0) }
+        Observable.zip(saveOperations)
+            .subscribe(onNext: { _ in
+                print("✅ 관심 목록에 추가 완료!")
+            }, onError: { error in
+                print("❌ 관심 목록 추가 실패: \(error.localizedDescription)")
+            })
+            .disposed(by: disposeBag)
+        
+        selectedCoins.accept([])
+        isFavoriteButtonVisible.accept(false)
     }
 }

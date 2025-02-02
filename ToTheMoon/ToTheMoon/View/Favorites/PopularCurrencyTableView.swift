@@ -17,6 +17,17 @@ final class PopularCurrencyTableView: UIView {
         return tableview
     }()
 
+    let favoriteButton: UIButton = {
+        let button = UIButton(type: .system)
+        button.setTitle("관심목록에 추가", for: .normal)
+        button.setTitleColor(.white, for: .normal)
+        button.backgroundColor = .personel
+        button.layer.cornerRadius = 10
+        button.alpha = 0
+        button.titleLabel?.font = .medium.bold()
+        return button
+    }()
+
     override init(frame: CGRect) {
         super.init(frame: frame)
         setupUI()
@@ -30,13 +41,21 @@ final class PopularCurrencyTableView: UIView {
     private func setupUI() {
         backgroundColor = UIColor(named: "BackgroundColor")
         
-        [ tableView ].forEach{ addSubview($0) }
+        [tableView, favoriteButton].forEach { addSubview($0) }
         
         tableView.snp.makeConstraints { make in
             make.verticalEdges.equalToSuperview()
             make.horizontalEdges.equalToSuperview().inset(10)
         }
         
+        favoriteButton.snp.makeConstraints { make in
+            make.bottom.equalTo(safeAreaLayoutGuide).offset(-20)
+            make.centerX.equalToSuperview()
+            make.width.greaterThanOrEqualTo(150)
+            make.height.equalTo(50)
+        }
+        
         tableView.register(CoinPriceTableViewCell.self, forCellReuseIdentifier: CoinPriceTableViewCell.identifier)
     }
 }
+

@@ -6,9 +6,9 @@
 //
 
 import UIKit
+import SnapKit
 import RxSwift
 import RxCocoa
-import SnapKit
 
 final class FavoriteListViewController: UIViewController {
     private let contentView = FovoritesListTableView()
@@ -76,10 +76,6 @@ final class FavoriteListViewController: UIViewController {
             }
             .disposed(by: disposeBag)
         
-        contentView.tableView.rx.modelSelected(MarketPrice.self)
-            .subscribe(onNext: { print("Selected coin: \($0.symbol)") })
-            .disposed(by: disposeBag)
-        
         contentView.floatingButton.rx.tap
             .bind { [weak self] in
                 self?.navigateToSearch()
@@ -114,7 +110,7 @@ extension FavoriteListViewController: UITableViewDelegate {
                 .take(1)
                 .subscribe(onNext: { coins in
                     guard indexPath.row < coins.count else {
-                        completionHandler(false) // 인덱스 초과 방지
+                        completionHandler(false) 
                         return
                     }
                     let coin = coins[indexPath.row]
