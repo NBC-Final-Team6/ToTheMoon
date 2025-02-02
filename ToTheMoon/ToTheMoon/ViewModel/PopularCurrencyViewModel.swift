@@ -14,44 +14,47 @@ final class PopularCurrencyViewModel {
     private let disposeBag = DisposeBag()
     
     let popularCoins = BehaviorRelay<[MarketPrice]>(value: [])
-    let selectedCoins = BehaviorRelay<Set<MarketPrice>>(value: []) 
+    let selectedCoins = BehaviorRelay<Set<MarketPrice>>(value: [])
     let isFavoriteButtonVisible = BehaviorRelay<Bool>(value: false)
-
+    
     init(getMarketPricesUseCase: GetMarketPricesUseCase = GetMarketPricesUseCase(),
          manageFavoritesUseCase: ManageFavoritesUseCaseProtocol = ManageFavoritesUseCase()) {
         self.getMarketPricesUseCase = getMarketPricesUseCase
         self.manageFavoritesUseCase = manageFavoritesUseCase
+        fetchPopularCoins()
     }
     
     func fetchPopularCoins() {
-        getMarketPricesUseCase.execute()
-            .map { marketPrices in
-                marketPrices.sorted(by: { $0.quoteVolume > $1.quoteVolume })
+        Observable<Int>.interval(.seconds(1), scheduler: MainScheduler.instance)
+            .flatMapLatest { [weak self] _ in
+                self?.getMarketPricesUseCase.execute()
+                    .map { marketPrices in
+                        marketPrices.sorted(by: { $0.quoteVolume > $1.quoteVolume })
+                    }
+                    .asObservable()
+                    .catchAndReturn([])
+                ?? Observable.just([])
             }
-            .subscribe(onSuccess: { [weak self] sortedCoins in
-                self?.popularCoins.accept(sortedCoins)
-            }, onError: { error in
-                print("❌ 인기 코인 데이터 가져오기 실패: \(error.localizedDescription)")
-            })
+            .bind(to: popularCoins)
             .disposed(by: disposeBag)
     }
-
+    
     func toggleSelection(for coin: MarketPrice) {
         var updatedSelection = selectedCoins.value
         if updatedSelection.contains(coin) {
             updatedSelection.remove(coin)
         } else {
-            updatedSelection.insert(coin) 
+            updatedSelection.insert(coin)
         }
         selectedCoins.accept(updatedSelection)
         
         isFavoriteButtonVisible.accept(!updatedSelection.isEmpty)
     }
-
+    
     func addSelectedToFavorites() {
         let coinsToSave = Array(selectedCoins.value)
         guard !coinsToSave.isEmpty else { return }
-
+        
         let saveOperations = coinsToSave.map { manageFavoritesUseCase.saveCoin($0) }
         Observable.zip(saveOperations)
             .subscribe(onNext: { _ in
