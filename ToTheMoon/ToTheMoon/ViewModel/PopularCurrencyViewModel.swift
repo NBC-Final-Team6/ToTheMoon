@@ -55,6 +55,9 @@ final class PopularCurrencyViewModel {
         let coinsToSave = Array(selectedCoins.value)
         guard !coinsToSave.isEmpty else { return }
         
+        selectedCoins.accept([])
+        isFavoriteButtonVisible.accept(false)
+        
         let saveOperations = coinsToSave.map { manageFavoritesUseCase.saveCoin($0) }
         Observable.zip(saveOperations)
             .subscribe(onNext: { _ in
@@ -63,8 +66,5 @@ final class PopularCurrencyViewModel {
                 print("❌ 관심 목록 추가 실패: \(error.localizedDescription)")
             })
             .disposed(by: disposeBag)
-        
-        selectedCoins.accept([])
-        isFavoriteButtonVisible.accept(false)
     }
 }

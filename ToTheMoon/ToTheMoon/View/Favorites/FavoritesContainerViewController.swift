@@ -14,7 +14,7 @@ final class FavoritesContainerViewController: UIViewController {
     private let topFavoritesView = TopFavoritesView()
     private let viewModel = FavoritesContainerViewModel()
     private let tabs = ["인기 화폐", "관심 목록"]
-    private let selectedSegment = BehaviorRelay<SegmentType>(value: .favoriteList)
+    let selectedSegment = BehaviorRelay<SegmentType>(value: .favoriteList)
     private let disposeBag = DisposeBag()
 
     private lazy var popularCurrencyVC = PopularCurrencyViewController()

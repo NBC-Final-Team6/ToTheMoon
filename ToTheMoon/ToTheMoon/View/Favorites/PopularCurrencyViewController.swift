@@ -53,8 +53,10 @@ final class PopularCurrencyViewController: UIViewController {
 
         contentView.favoriteButton.rx.tap
             .bind { [weak self] in
-                self?.viewModel.addSelectedToFavorites()
-                self?.contentView.tableView.reloadData()
+                guard let self = self, let containerVC = self.parent as? FavoritesContainerViewController else { return }
+                self.viewModel.addSelectedToFavorites()
+                self.contentView.tableView.reloadData()
+                containerVC.selectedSegment.accept(.favoriteList)
             }
             .disposed(by: disposeBag)
     }
