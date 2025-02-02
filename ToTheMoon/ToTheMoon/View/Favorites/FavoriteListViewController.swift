@@ -71,6 +71,12 @@ final class FavoriteListViewController: UIViewController {
         contentView.tableView.rx.modelSelected(MarketPrice.self)
             .subscribe(onNext: { print("Selected coin: \($0.symbol)") })
             .disposed(by: disposeBag)
+        
+        contentView.floatingButton.rx.tap
+            .bind { [weak self] in
+                self?.navigateToSearch()
+            }
+            .disposed(by: disposeBag)
     }
     
     @objc private func navigateToSearch() {

@@ -17,7 +17,7 @@ final class FovoritesListTableView: UIView {
         return tableview
     }()
     
-    private let floatingButton: UIButton = {
+    let floatingButton: UIButton = {
         let button = UIButton()
         button.backgroundColor = .personel
         button.setTitle("+", for: .normal)
