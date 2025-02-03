@@ -22,13 +22,13 @@ final class SearchView: UIView {
         searchBar.searchTextField.clipsToBounds = true
         
         let placeholderAttributes: [NSAttributedString.Key: Any] = [
-            .foregroundColor: UIColor.personel, // 원하는 색상
+            .foregroundColor: UIColor.personel,
             .font: UIFont.medium.regular()
         ]
         searchBar.searchTextField.attributedPlaceholder = NSAttributedString(string: "검색어를 입력해 주세요.", attributes: placeholderAttributes)
         
         if let glassIconView = searchBar.searchTextField.leftView as? UIImageView {
-            glassIconView.tintColor = .personel // 원하는 색상
+            glassIconView.tintColor = .personel 
         }
         return searchBar
     }()
@@ -56,7 +56,6 @@ final class SearchView: UIView {
 
         [ searchBar, tableView ].forEach{ addSubview($0)  }
                    
-        // 레이아웃 설정
         searchBar.snp.makeConstraints { make in
             make.top.equalTo(safeAreaLayoutGuide.snp.top).offset(10)
             make.leading.trailing.equalToSuperview().inset(16)
