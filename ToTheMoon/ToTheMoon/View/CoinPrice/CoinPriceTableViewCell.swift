@@ -7,6 +7,7 @@
 
 import UIKit
 import SnapKit
+import DGCharts
 
 class CoinPriceTableViewCell: UITableViewCell {
     
@@ -51,9 +52,9 @@ class CoinPriceTableViewCell: UITableViewCell {
         return label
     }()
     
-    private let graphView: UIView = {
-        let view = UIView()
-        // TODO: 그래프 뷰
+    private lazy var chartView: SimpleChartView = {
+        let view = SimpleChartView(frame: .zero)
+        view.backgroundColor = .clear
         return view
     }()
     
@@ -69,9 +70,9 @@ class CoinPriceTableViewCell: UITableViewCell {
     
     private func setupUI() {
         
-        backgroundColor = UIColor(named: "ContainerColor")
+        backgroundColor = .container
         
-        [logoImageView, coinNameLabel, marketNameLabel, priceLabel, priceChangeLabel, graphView]
+        [logoImageView, coinNameLabel, marketNameLabel, priceLabel, priceChangeLabel, chartView]
             .forEach { contentView.addSubview($0) }
         
         logoImageView.snp.makeConstraints { make in
@@ -91,7 +92,7 @@ class CoinPriceTableViewCell: UITableViewCell {
         }
         
         priceLabel.snp.makeConstraints { make in
-            make.trailing.equalTo(graphView.snp.leading).inset(10)
+            make.trailing.equalTo(chartView.snp.leading).inset(10)
             make.top.equalToSuperview().offset(15)
         }
         
@@ -100,7 +101,7 @@ class CoinPriceTableViewCell: UITableViewCell {
             make.bottom.equalToSuperview().inset(15)
         }
         
-        graphView.snp.makeConstraints { make in
+        chartView.snp.makeConstraints { make in
             make.trailing.equalToSuperview().inset(15)
             make.centerY.equalToSuperview()
             make.width.equalTo(80)
@@ -109,7 +110,9 @@ class CoinPriceTableViewCell: UITableViewCell {
         
     }
     
-    func configure(with item: MarketPrice) {
+    func configure(with item: MarketPrice, candles: [Candle]? = nil) {
+        print("🟢 configure 호출됨")
+        
         
         logoImageView.backgroundColor = .systemGray6
         logoImageView.image = item.image
@@ -126,7 +129,14 @@ class CoinPriceTableViewCell: UITableViewCell {
             priceChangeLabel.textColor = .numbersRed
         }
         
-        // TODO: 그래프 뷰
+        if let candles = candles {
+            print("🟡 candles 데이터 있음: \(candles.count)개")
+            let processedCandles = CandleChartDataManager.processCandles(candles)
+            chartView.updateChart(with: processedCandles, changeRate: item.changeRate)
+        } else {
+            print("🔴 candles가 nil임")
+            chartView.clearChart()
+        }
     }
     
     private func formatPrice(_ price: Double) -> String {
@@ -137,6 +147,7 @@ class CoinPriceTableViewCell: UITableViewCell {
     
     override func prepareForReuse() {
         super.prepareForReuse()
-        self.backgroundColor = .container
+        logoImageView.image = nil
+        chartView.clearChart()
     }
 }
