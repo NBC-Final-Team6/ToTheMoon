@@ -14,9 +14,9 @@ class CoinPriceView: UIView {
     private let titleLabel: UILabel = {
         let label = UILabel()
         label.text = "ToTheMoon"
-        label.textColor = UIColor(named: "TextColor")
+        label.textColor = .text
         label.textAlignment = .center
-        label.font = .boldSystemFont(ofSize: 30)
+        label.font = UIFont.extraLarge.bold()
         return label
     }()
     
@@ -33,7 +33,7 @@ class CoinPriceView: UIView {
     let coinPriceTableView: UITableView = {
         let tableview = UITableView()
         tableview.register(CoinPriceTableViewCell.self, forCellReuseIdentifier: CoinPriceTableViewCell.identifier)
-        tableview.backgroundColor = UIColor(named: "ContainerColor")
+        tableview.backgroundColor = .container
         tableview.separatorStyle = .singleLine
         tableview.layer.cornerRadius = 30
         return tableview
@@ -62,7 +62,7 @@ class CoinPriceView: UIView {
         
         stackView.snp.makeConstraints { make in
             make.top.equalTo(titleLabel.snp.bottom).offset(20)
-            make.horizontalEdges.equalToSuperview().inset(10)
+            make.horizontalEdges.equalToSuperview().inset(15)
             make.height.equalTo(100)
         }
         
@@ -87,5 +87,12 @@ extension CoinPriceView {
     
     func resetMarketViews() {
         getMarketViews().forEach { $0.resetState() }
+    }
+}
+
+// 거래소 화면 전환 시 맨 위로 스크롤
+extension CoinPriceView {
+    func scrollToTop() {
+        coinPriceTableView.setContentOffset(.zero, animated: false)
     }
 }

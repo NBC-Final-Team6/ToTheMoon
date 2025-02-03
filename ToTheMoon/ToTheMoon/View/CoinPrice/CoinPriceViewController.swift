@@ -61,9 +61,8 @@ class CoinPriceViewController: UIViewController {
         for subview in coinPriceView.getMarketViews() {
             subview.selectedExchange
                 .subscribe(onNext: { [weak self] exchange in
-                    // 다른 MarketView들의 상태 초기화
                     self?.coinPriceView.resetMarketViews()
-                    // 선택된 거래소의 데이터 로드
+                    self?.coinPriceView.scrollToTop()
                     self?.viewModel.selectExchange(exchange)
                 })
                 .disposed(by: disposeBag)
@@ -81,7 +80,7 @@ class CoinPriceViewController: UIViewController {
 
 extension CoinPriceViewController: UITableViewDelegate {
     func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
-        return 60
+        return 70
     }
 }
 
