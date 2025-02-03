@@ -63,7 +63,6 @@ final class CoinOneService {
         guard let url = URL(string: endpoint) else {
             return Single.error(NetworkError.invalidUrl)
         }
-        print(url)
         return NetworkManager.shared.fetch(url: url)
             .do(onError: { error in
             }, onSubscribe: {

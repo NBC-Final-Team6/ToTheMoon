@@ -134,4 +134,9 @@ class CoinPriceTableViewCell: UITableViewCell {
         numberFormatter.numberStyle = .decimal  // 천 단위로 쉼표 찍어줌
         return numberFormatter.string(from: NSNumber(value: price)) ?? "0"
     }
+    
+    override func prepareForReuse() {
+        super.prepareForReuse()
+        self.backgroundColor = .container
+    }
 }

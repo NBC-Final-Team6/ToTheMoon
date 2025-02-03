@@ -87,14 +87,21 @@ class CoreDataManager {
     }
 
     // MARK: - Delete Coin
-    func deleteCoin(coin: Coin) -> Observable<Void> {
+    func deleteCoin(symbol: String, exchange: String) -> Observable<Void> {
         return Observable.create { observer in
-            self.context.delete(coin)
+            let fetchRequest: NSFetchRequest<Coin> = Coin.fetchRequest()
+            fetchRequest.predicate = NSPredicate(format: "symbol == %@ AND exchangename == %@", symbol, exchange)
 
             do {
-                try self.context.save()
-                observer.onNext(())
-                observer.onCompleted()
+                let coins = try self.context.fetch(fetchRequest)
+                if let coinToDelete = coins.first {  // 첫 번째 매칭된 코인 삭제
+                    self.context.delete(coinToDelete)
+                    try self.context.save()
+                    observer.onNext(())
+                    observer.onCompleted()
+                } else {
+                    observer.onError(NSError(domain: "", code: 404, userInfo: [NSLocalizedDescriptionKey: "해당 코인을 찾을 수 없습니다."]))
+                }
             } catch {
                 observer.onError(error)
             }

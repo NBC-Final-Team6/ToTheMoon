@@ -9,7 +9,7 @@ import Foundation
 import UIKit
 
 final class CoinImageCache {
-    private let cache = NSCache<NSString, UIImage>() // 메모리 캐시
+    private let cache = NSCache<NSString, UIImage>()
     private let fileManager = FileManager.default
     private let directory: URL
 
@@ -24,7 +24,6 @@ final class CoinImageCache {
         do {
             if !fileManager.fileExists(atPath: directory.path) {
                 try fileManager.createDirectory(at: directory, withIntermediateDirectories: true, attributes: nil)
-                print("✅ [CACHE] 이미지 캐시 디렉토리 생성됨: \(directory.path)")
             }
         } catch {
             print("❌ [ERROR] 이미지 캐시 디렉토리 생성 실패: \(error.localizedDescription)")
@@ -37,7 +36,6 @@ final class CoinImageCache {
 
         // 1️⃣ 메모리 캐시 확인
         if let cachedImage = cache.object(forKey: key) {
-            print("✅ [CACHE] 메모리 캐시에서 이미지 찾음: \(coinID)")
             return cachedImage
         }
 
@@ -52,7 +50,7 @@ final class CoinImageCache {
             let imageData = try Data(contentsOf: fileURL)
             if let image = UIImage(data: imageData) {
                 cache.setObject(image, forKey: key) // 메모리 캐시에 저장
-                print("✅ [CACHE] 디스크에서 이미지 로드 성공: \(coinID)")
+                //print("✅ [CACHE] 디스크에서 이미지 로드 성공: \(coinID)")
                 return image
             }
         } catch {
@@ -72,7 +70,6 @@ final class CoinImageCache {
         do {
             if let data = image.pngData() {
                 try data.write(to: fileURL)
-                print("✅ [CACHE] 디스크에 이미지 저장 완료: \(coinID)")
             } else {
                 print("❌ [ERROR] 이미지 PNG 변환 실패: \(coinID)")
             }

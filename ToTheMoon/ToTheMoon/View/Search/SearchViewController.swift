@@ -6,6 +6,7 @@
 //
 
 import UIKit
+import SnapKit
 import RxSwift
 import RxCocoa
 
@@ -14,7 +15,6 @@ final class SearchViewController: UIViewController {
     private let viewModel: SearchViewModel
     private let disposeBag = DisposeBag()
     
-    // 검색 모드를 구분하기 위한 enum
     private enum SearchMode {
         case recent
         case result
@@ -44,6 +44,23 @@ final class SearchViewController: UIViewController {
         setupTableView()
         
         searchView.searchBar.delegate = self
+    }
+    
+    override func viewWillAppear(_ animated: Bool) {
+        navigationController?.navigationBar.isHidden = false
+            navigationItem.title = "관심목록 추가"
+            navigationItem.leftBarButtonItem = UIBarButtonItem(
+                image: UIImage(systemName: "chevron.left"),
+                style: .plain,
+                target: self,
+                action: #selector(dismissSearch)
+            )
+        navigationItem.leftBarButtonItem?.tintColor = .personel
+        searchView.tableView.reloadData()
+    }
+    
+    @objc private func dismissSearch() {
+        navigationController?.popViewController(animated: true) // 이전 화면으로 돌아가기
     }
     
     private func setupBindings() {
@@ -99,7 +116,6 @@ final class SearchViewController: UIViewController {
     }
 }
 
-// MARK: - UITableView Delegate & DataSource
 extension SearchViewController: UITableViewDelegate, UITableViewDataSource {
     
     func numberOfSections(in tableView: UITableView) -> Int {
@@ -121,18 +137,12 @@ extension SearchViewController: UITableViewDelegate, UITableViewDataSource {
             let symbol = search.0.uppercased() // 심볼 (BTC, ETH 등)
             let exchange = search.1
             let date = search.2
-            
-            // 1. 캐시에서 이미지 확인
             var image = CoinImageCache.shared.getImage(for: symbol)
-            
-            // 2. 캐시에 없으면 기본 이미지 적용
             if image == nil {
                 image = ImageRepository.getImage(for: symbol)
             }
-            
-            // 3. 설정
             cell.configure(with: "\(symbol) \(exchange)", date: date, image: image)
-            
+    
             return cell
         } else {
             // 검색 결과는 FavoritesViewCell을 사용
@@ -141,12 +151,30 @@ extension SearchViewController: UITableViewDelegate, UITableViewDataSource {
             }
             
             let marketPrice = searchResults[indexPath.row]
-            cell.configure(with: marketPrice)
+            
+            cell.disposeBag = DisposeBag()
+            
+            // 저장된 코인 여부 확인 후 UI 업데이트 (symbol + exchange 기반)
+            viewModel.isCoinSaved(marketPrice.symbol, exchange: marketPrice.exchange)
+                .observe(on: MainScheduler.instance)
+                .subscribe(onNext: { isSaved in
+                    cell.configure(with: marketPrice, isSaved: isSaved)
+                })
+                .disposed(by: cell.disposeBag)
+
+            // 버튼 클릭 시 Core Data 저장 처리
+            cell.addButtonAction = { [weak self] selectedCoin in
+                guard let self = self else { return }
+                self.viewModel.toggleFavorite(selectedCoin)
+                if let updatedCell = self.searchView.tableView.cellForRow(at: indexPath) as? FavoritesViewCell {
+                    updatedCell.toggleButtonState()
+                }
+            }
+            
             return cell
         }
     }
     
-    // MARK: - Header View for Recent Searches Section
     func tableView(_ tableView: UITableView, viewForHeaderInSection section: Int) -> UIView? {
         guard searchMode == .recent, !recentSearches.isEmpty else { return nil }
         
@@ -168,9 +196,8 @@ extension SearchViewController: UITableViewDelegate, UITableViewDataSource {
             }
             .disposed(by: disposeBag)
         
-        headerView.addSubview(titleLabel)
-        headerView.addSubview(clearButton)
-        
+        [ titleLabel, clearButton ].forEach{ headerView.addSubview($0)}
+       
         titleLabel.snp.makeConstraints { make in
             make.leading.equalToSuperview().inset(16)
             make.centerY.equalToSuperview()
@@ -186,7 +213,7 @@ extension SearchViewController: UITableViewDelegate, UITableViewDataSource {
     
     func tableView(_ tableView: UITableView, heightForHeaderInSection section: Int) -> CGFloat {
            return searchMode == .recent && !recentSearches.isEmpty ? 40 : 0
-       }
+    }
     
     func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
         return searchMode == .recent ? UITableView.automaticDimension : 60
@@ -195,17 +222,10 @@ extension SearchViewController: UITableViewDelegate, UITableViewDataSource {
     // MARK: - 최근 검색 기록을 클릭하면 해당 검색어로 검색 수행
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         guard searchMode == .recent else { return }
-        
         let selectedSearch = recentSearches[indexPath.row]
         let searchQuery = selectedSearch.0 // 심볼 (BTC, ETH 등)
-        
-        // 검색바에 검색어 설정
         searchView.searchBar.text = searchQuery
-        
-        // 검색 수행
         viewModel.search(query: searchQuery)
-        
-        // 키보드 내리기
         searchView.searchBar.resignFirstResponder()
     }
 }
