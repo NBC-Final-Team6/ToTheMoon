@@ -55,8 +55,8 @@ class CustomTabBarViewController: UIViewController {
             selectedViewController = favoritesNavVC
         case 1:
             selectedViewController = coinPricesNavVC
-        case 2:
-            selectedViewController = settingsNavVC
+//        case 2:
+//            selectedViewController = settingsNavVC
         default:
             break
         }

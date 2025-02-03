@@ -12,6 +12,7 @@
 		9935C7712D3FDD6000722D84 /* RxRelay in Frameworks */ = {isa = PBXBuildFile; productRef = 9935C7702D3FDD6000722D84 /* RxRelay */; };
 		9935C7732D3FDD6000722D84 /* RxSwift in Frameworks */ = {isa = PBXBuildFile; productRef = 9935C7722D3FDD6000722D84 /* RxSwift */; };
 		CC0C7F892D41E0DE005F2AA4 /* DGCharts in Frameworks */ = {isa = PBXBuildFile; productRef = CC0C7F882D41E0DE005F2AA4 /* DGCharts */; };
+		CC713D062D482C43005D0318 /* Kingfisher in Frameworks */ = {isa = PBXBuildFile; productRef = CC713D052D482C43005D0318 /* Kingfisher */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -44,6 +45,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				CC713D062D482C43005D0318 /* Kingfisher in Frameworks */,
 				9935C7712D3FDD6000722D84 /* RxRelay in Frameworks */,
 				9935C76F2D3FDD6000722D84 /* RxCocoa in Frameworks */,
 				CC0C7F892D41E0DE005F2AA4 /* DGCharts in Frameworks */,
@@ -96,6 +98,7 @@
 				9935C7702D3FDD6000722D84 /* RxRelay */,
 				9935C7722D3FDD6000722D84 /* RxSwift */,
 				CC0C7F882D41E0DE005F2AA4 /* DGCharts */,
+				CC713D052D482C43005D0318 /* Kingfisher */,
 			);
 			productName = ToTheMoon;
 			productReference = 9935C6D02D3FDC5E00722D84 /* ToTheMoon.app */;
@@ -129,6 +132,7 @@
 				9935C76A2D3FDD4500722D84 /* XCRemoteSwiftPackageReference "SnapKit" */,
 				9935C76D2D3FDD6000722D84 /* XCRemoteSwiftPackageReference "RxSwift" */,
 				CC0C7F872D41E0DE005F2AA4 /* XCRemoteSwiftPackageReference "Charts" */,
+				CC713D042D482C43005D0318 /* XCRemoteSwiftPackageReference "Kingfisher" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 9935C6D12D3FDC5E00722D84 /* Products */;
@@ -173,8 +177,8 @@
 				INFOPLIST_FILE = ToTheMoon/Info.plist;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchStoryboardName = LaunchScreen;
-				INFOPLIST_KEY_UISupportedInterfaceOrientations = UIInterfaceOrientationPortrait;
-				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				IPHONEOS_DEPLOYMENT_TARGET = 16.6;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -183,13 +187,9 @@
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = ToTheMoon.ToTheMoon;
 				PRODUCT_NAME = "$(TARGET_NAME)";
-				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
-				SUPPORTS_MACCATALYST = NO;
-				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
-				SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD = NO;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = 1;
+				TARGETED_DEVICE_FAMILY = "1,2";
 			};
 			name = Debug;
 		};
@@ -205,8 +205,8 @@
 				INFOPLIST_FILE = ToTheMoon/Info.plist;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchStoryboardName = LaunchScreen;
-				INFOPLIST_KEY_UISupportedInterfaceOrientations = UIInterfaceOrientationPortrait;
-				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				IPHONEOS_DEPLOYMENT_TARGET = 16.6;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -215,13 +215,9 @@
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = ToTheMoon.ToTheMoon;
 				PRODUCT_NAME = "$(TARGET_NAME)";
-				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
-				SUPPORTS_MACCATALYST = NO;
-				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
-				SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD = NO;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = 1;
+				TARGETED_DEVICE_FAMILY = "1,2";
 			};
 			name = Release;
 		};
@@ -392,6 +388,14 @@
 				minimumVersion = 5.1.0;
 			};
 		};
+		CC713D042D482C43005D0318 /* XCRemoteSwiftPackageReference "Kingfisher" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/onevcat/Kingfisher.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 8.1.3;
+			};
+		};
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
@@ -419,6 +423,11 @@
 			isa = XCSwiftPackageProductDependency;
 			package = CC0C7F872D41E0DE005F2AA4 /* XCRemoteSwiftPackageReference "Charts" */;
 			productName = DGCharts;
+		};
+		CC713D052D482C43005D0318 /* Kingfisher */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = CC713D042D482C43005D0318 /* XCRemoteSwiftPackageReference "Kingfisher" */;
+			productName = Kingfisher;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};
