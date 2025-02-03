@@ -22,7 +22,7 @@ class CoinPriceViewController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         setupBinding()
-        coinPriceView.coinPriceTableView.delegate = self
+        coinPriceView.coinPriceTableView.rx.setDelegate(self).disposed(by: disposeBag)
     }
     
     override func viewWillAppear(_ animated: Bool) {
@@ -31,14 +31,30 @@ class CoinPriceViewController: UIViewController {
     }
     
     private func setupBinding() {
-        // 테이블뷰 데이터 바인딩
-        viewModel.coinPrices
+        // 테이블뷰 데이터 바인딩과 candles 데이터를 결합
+        Observable
+            .combineLatest(viewModel.coinPrices, viewModel.candlesDict)
+            .observe(on: MainScheduler.instance)
+            .map { coinPrices, candlesDict in
+                return coinPrices.map { price in
+                    let candles = candlesDict[price.symbol] ?? []
+                    return (price, candles)
+                }
+            }
             .bind(to: coinPriceView.coinPriceTableView.rx.items(
                 cellIdentifier: CoinPriceTableViewCell.identifier,
                 cellType: CoinPriceTableViewCell.self)
-            ) { (row, coinPrice, cell) in
-                cell.configure(with: coinPrice)
+            ) { row, element, cell in
+                let (price, candles) = element
+                cell.configure(with: price, candles: candles)
             }
+            .disposed(by: disposeBag)
+        
+        // candles 데이터가 업데이트될 때마다 테이블뷰 리로드
+        viewModel.candles
+            .subscribe(onNext: { [weak self] _ in
+                self?.coinPriceView.coinPriceTableView.reloadData()
+            })
             .disposed(by: disposeBag)
         
         // 셀 선택 처리
@@ -51,9 +67,13 @@ class CoinPriceViewController: UIViewController {
         
         // 선택된 코인의 차트 화면으로 네비게이션
         viewModel.selectedCoinPrice
+            .compactMap { $0 }
             .subscribe(onNext: { [weak self] coinPrice in
-                let chartVC = ChartViewController()
-                self?.navigationController?.pushViewController(chartVC, animated: true)
+                guard let self = self else { return }
+                let exchange = self.viewModel.currentExchange // 현재 선택된 거래소
+                let chartViewModel = ChartViewModel(exchange: exchange, selectedCoins: [coinPrice])
+                let chartVC = ChartViewController(viewModel: chartViewModel, coinPriceViewModel: self.viewModel)
+                self.navigationController?.pushViewController(chartVC, animated: true)
             })
             .disposed(by: disposeBag)
         

@@ -16,7 +16,7 @@ class ScreenModeViewController: UIViewController {
     override func loadView() {
         self.view = screenModeView
     }
-    
+   
     override func viewDidLoad() {
         super.viewDidLoad()
         setupActions()
@@ -33,11 +33,10 @@ class ScreenModeViewController: UIViewController {
         screenModeView.tableView.delegate = self
         screenModeView.tableView.dataSource = self
     }
-    
+
     @objc private func backButtonTapped() {
         self.navigationController?.popViewController(animated: true)
     }
-    
 }
 
 extension ScreenModeViewController: UITableViewDataSource {
@@ -51,7 +50,6 @@ extension ScreenModeViewController: UITableViewDataSource {
         cell.textLabel?.font = .large.regular()
         cell.textLabel?.textColor = UIColor(named: "TextColor")
         cell.backgroundColor = .clear
-        
         cell.accessoryType = (indexPath.row == selectedOptionIndex) ? .checkmark : .none
         return cell
     }

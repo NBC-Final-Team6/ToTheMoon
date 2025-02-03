@@ -9,7 +9,7 @@ import UIKit
 import SnapKit
 
 class ScreenModeView: UIView {
-    
+
     let backButton: UIButton = {
         let button = UIButton()
         let largeConfig = UIImage.SymbolConfiguration(pointSize: 24, weight: .regular)
