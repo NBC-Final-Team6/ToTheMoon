@@ -112,7 +112,7 @@ class CoinPriceTableViewCell: UITableViewCell {
     func configure(with item: MarketPrice) {
         
         logoImageView.backgroundColor = .systemGray6
-        logoImageView.image = item.image ?? ImageRepository.getImage(for: item.symbol)
+        logoImageView.image = item.image
         
         coinNameLabel.text = item.symbol
         marketNameLabel.text = item.exchange
