@@ -36,6 +36,7 @@ final class FavoriteListViewController: UIViewController {
                 make.edges.equalToSuperview()
             }
         }
+        view.layoutIfNeeded()
     }
     
     override func viewDidLoad() {

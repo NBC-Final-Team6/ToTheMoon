@@ -159,16 +159,16 @@ final class FavoritesContainerViewController: UIViewController {
     }
 
     private func add(child viewController: UIViewController) {
-        addChild(viewController)
         topFavoritesView.contentView.addSubview(viewController.view)
-        
+
         viewController.view.snp.makeConstraints { make in
             make.edges.equalToSuperview()
         }
-
+        topFavoritesView.contentView.layoutIfNeeded()
+        addChild(viewController)
         viewController.didMove(toParent: self)
     }
-
+    
     private func remove(child viewController: UIViewController) {
         viewController.willMove(toParent: nil)
         viewController.view.removeFromSuperview()
