@@ -27,7 +27,6 @@ final class FavoritesContainerViewController: UIViewController {
     )
     override func loadView() {
         self.view = topFavoritesView
-        
     }
 
     override func viewDidLoad() {
@@ -39,6 +38,7 @@ final class FavoritesContainerViewController: UIViewController {
     }
     
     override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
         navigationController?.navigationBar.isHidden = true
     }
 
@@ -160,7 +160,6 @@ final class FavoritesContainerViewController: UIViewController {
 
     private func add(child viewController: UIViewController) {
         topFavoritesView.contentView.addSubview(viewController.view)
-
         viewController.view.snp.makeConstraints { make in
             make.edges.equalToSuperview()
         }

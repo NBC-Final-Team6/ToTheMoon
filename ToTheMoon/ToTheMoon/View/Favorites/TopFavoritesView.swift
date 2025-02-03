@@ -91,7 +91,7 @@ final class TopFavoritesView: UIView {
         }
         
         contentView.snp.makeConstraints { make in
-            make.top.equalTo(tabCollectionView.snp.bottom).offset(8)
+            make.top.equalTo(underlineView.snp.bottom).offset(8)
             make.leading.trailing.bottom.equalToSuperview()
         }
     }
