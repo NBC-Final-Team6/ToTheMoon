@@ -92,7 +92,7 @@ class CoinPriceTableViewCell: UITableViewCell {
         }
         
         priceLabel.snp.makeConstraints { make in
-            make.trailing.equalTo(chartView.snp.leading).inset(10)
+            make.trailing.equalTo(chartView.snp.leading).offset(-10)
             make.top.equalToSuperview().offset(15)
         }
         
@@ -102,10 +102,10 @@ class CoinPriceTableViewCell: UITableViewCell {
         }
         
         chartView.snp.makeConstraints { make in
-            make.trailing.equalToSuperview().inset(15)
+            make.trailing.equalToSuperview().inset(10)
             make.centerY.equalToSuperview()
-            make.width.equalTo(80)
-            make.height.equalTo(45)
+            make.width.equalTo(60)
+            make.height.equalTo(40)
         }
         
     }
