@@ -154,6 +154,7 @@ class FavoritesViewCell: UITableViewCell {
     
     private func updateAddButton() {
         addButton.setTitle(isSaved ? "추가됨" : "추가하기", for: .normal)
+        addButton.backgroundColor = isSaved ? .numbersRed : .personel
     }
     
     private func formatPrice(_ price: Double) -> String {

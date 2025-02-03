@@ -76,7 +76,7 @@ extension PopularCurrencyViewController: UITableViewDelegate, UITableViewDataSou
         cell.configure(with: coin)
 
         let isSelected = viewModel.selectedCoins.value.contains(coin)
-        cell.backgroundColor = isSelected ? .personel : .container
+        cell.backgroundColor = isSelected ? .selected : .container
 
         return cell
     }
@@ -88,7 +88,7 @@ extension PopularCurrencyViewController: UITableViewDelegate, UITableViewDataSou
     }
     
     func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
-        return 60
+        return 70
     }
 }
 

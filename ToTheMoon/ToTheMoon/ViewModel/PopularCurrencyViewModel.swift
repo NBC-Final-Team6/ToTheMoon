@@ -17,7 +17,6 @@ final class PopularCurrencyViewModel {
     let selectedCoins = BehaviorRelay<Set<MarketPrice>>(value: [])
     let isFavoriteButtonVisible = BehaviorRelay<Bool>(value: false)
     
-    // ✅ 알럿 메시지를 전달할 Subject 추가
     let showAlertMessage = PublishSubject<String>()
 
     init(getMarketPricesUseCase: GetMarketPricesUseCase = GetMarketPricesUseCase(),
@@ -65,15 +64,14 @@ final class PopularCurrencyViewModel {
             .flatMap { coin in
                 self.manageFavoritesUseCase.isCoinSaved(coin.symbol, exchange: coin.exchange)
                     .map { isSaved in (coin, isSaved) }
-                    .asObservable() // ✅ `Single` -> `Observable` 변환
+                    .asObservable()
             }
             .toArray()
-            .asObservable() // ✅ `Single` -> `Observable` 변환
+            .asObservable()
             .flatMap { results -> Observable<Void> in
                 let alreadySavedCoins = results.filter { $0.1 }.map { $0.0 }
                 let newCoins = results.filter { !$0.1 }.map { $0.0 }
 
-                // ✅ 이미 저장된 코인이 있으면 Alert 이벤트 발생
                 if !alreadySavedCoins.isEmpty {
                     let coinNames = alreadySavedCoins.map { $0.symbol }.joined(separator: ", ")
                     let message = "\(coinNames)는(은) 이미 관심 목록에 추가되어 있습니다."
