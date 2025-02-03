@@ -32,6 +32,13 @@ class CoinPriceViewModel {
     private var coinImages: [String: UIImage] = [:]
     private let imageSubject = PublishSubject<(String, UIImage?)>()
     
+    private let candlesRelay = BehaviorRelay<[Candle]>(value: [])
+    var candles: Observable<[Candle]> { return candlesRelay.asObservable() }
+    
+    private let candlesDictRelay = BehaviorRelay<[String: [Candle]]>(value: [:])
+    var candlesDict: Observable<[String: [Candle]]> { return candlesDictRelay.asObservable() }
+        
+    
     init() {
         setupTimer()
         setupImageBinding()
@@ -152,12 +159,45 @@ class CoinPriceViewModel {
             .observe(on: MainScheduler.instance)
             .subscribe(onSuccess: { [weak self] marketPrices in
                 self?.coinPrices.accept(marketPrices)
+                
+                marketPrices.forEach { price in
+                    self?.fetchCandles(for: price.symbol)
+                }
+                
                 // Asset에 없는 코인에 대해서만 이미지 로드
                 marketPrices
                     .filter { ImageRepository.getImage(for: $0.symbol) == nil }
                     .forEach { price in
                         self?.loadCoinImage(for: price.symbol)
                     }
+            }, onFailure: { [weak self] error in
+                self?.error.onNext(error)
+            })
+            .disposed(by: disposeBag)
+    }
+    
+    private func fetchCandles(for symbol: String) {
+        let service: Single<[Candle]>
+        
+        switch currentExchange {
+        case .upbit:
+            service = upbitService.fetchCandles(symbol: symbol, interval: .minute, count: 1440) // 24시간 * 60분
+        case .bithumb:
+            service = bithumbService.fetchCandles(symbol: symbol, interval: .minute, count: 1440)
+        case .coinone:
+            service = coinoneService.fetchCandles(symbol: symbol, interval: .minute, count: 1440)
+        case .korbit:
+            service = korbitService.fetchCandles(symbol: symbol, interval: .minute, count: 1440)
+        }
+        
+        service
+            .observe(on: MainScheduler.instance)
+            .subscribe(onSuccess: { [weak self] candles in
+                guard let self = self else { return }
+                // 현재 딕셔너리 상태를 가져와서 업데이트
+                var currentDict = self.candlesDictRelay.value
+                currentDict[symbol] = candles
+                self.candlesDictRelay.accept(currentDict)
             }, onFailure: { [weak self] error in
                 self?.error.onNext(error)
             })
