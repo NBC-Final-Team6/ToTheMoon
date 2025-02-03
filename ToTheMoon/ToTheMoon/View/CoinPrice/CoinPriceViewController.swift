@@ -22,7 +22,7 @@ class CoinPriceViewController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         setupBinding()
-        coinPriceView.coinPriceTableView.delegate = self
+        coinPriceView.coinPriceTableView.rx.setDelegate(self).disposed(by: disposeBag)
     }
     
     override func viewWillAppear(_ animated: Bool) {
@@ -51,9 +51,13 @@ class CoinPriceViewController: UIViewController {
         
         // 선택된 코인의 차트 화면으로 네비게이션
         viewModel.selectedCoinPrice
+            .compactMap { $0 }
             .subscribe(onNext: { [weak self] coinPrice in
-                let chartVC = ChartViewController()
-                self?.navigationController?.pushViewController(chartVC, animated: true)
+                guard let self = self else { return }
+                let exchange = self.viewModel.currentExchange // 현재 선택된 거래소
+                let chartViewModel = ChartViewModel(exchange: exchange, selectedCoins: [coinPrice])
+                let chartVC = ChartViewController(viewModel: chartViewModel, coinPriceViewModel: self.viewModel)
+                self.navigationController?.pushViewController(chartVC, animated: true)
             })
             .disposed(by: disposeBag)
         

@@ -30,10 +30,10 @@ final class SymbolService {
        }
     
     // 코인 심볼 -> 코인 ID 매핑을 저장하는 캐시
-    private var symbolToIDMap: [String: String] = [:]
+    var symbolToIDMap: [String: String] = [:]
     
     // 코인 ID 리스트를 가져와서 캐싱
-    private func fetchCoinIDMap() -> Single<Void> {
+    func fetchCoinIDMap() -> Single<Void> {
         guard let url = URL(string: "\(baseURL)/list") else { return Single.error(NetworkError.invalidUrl) }
         return networkManager.fetch(url: url)
             .map { (coinList: [SymbolID]) in
