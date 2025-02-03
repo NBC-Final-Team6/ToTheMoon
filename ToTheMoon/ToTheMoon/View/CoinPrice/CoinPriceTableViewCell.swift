@@ -111,8 +111,6 @@ class CoinPriceTableViewCell: UITableViewCell {
     }
     
     func configure(with item: MarketPrice, candles: [Candle]? = nil) {
-        print("🟢 configure 호출됨")
-        
         
         logoImageView.backgroundColor = .systemGray6
         logoImageView.image = item.image
@@ -130,11 +128,10 @@ class CoinPriceTableViewCell: UITableViewCell {
         }
         
         if let candles = candles {
-            print("🟡 candles 데이터 있음: \(candles.count)개")
+        
             let processedCandles = CandleChartDataManager.processCandles(candles)
             chartView.updateChart(with: processedCandles, changeRate: item.changeRate)
         } else {
-            print("🔴 candles가 nil임")
             chartView.clearChart()
         }
     }
