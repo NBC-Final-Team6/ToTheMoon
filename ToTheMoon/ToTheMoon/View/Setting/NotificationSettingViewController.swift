@@ -22,6 +22,7 @@ class NotificationSettingViewController: UIViewController {
         setupActions()
         setupTableView()
         navigationController?.navigationBar.isHidden = true
+        selectedOptionIndex = UserDefaults.standard.integer(forKey: "SelectedNotificationStyle")
     }
 
     private func setupActions() {
@@ -42,6 +43,7 @@ class NotificationSettingViewController: UIViewController {
     @objc private func switchValueChanged() {
         let isOn = notificationView.notificationSwitch.isOn
         print("알림 허용: \(isOn ? "켜짐" : "꺼짐")")
+        UserDefaults.standard.set(isOn, forKey: "NotificationEnabled")
     }
 }
 
@@ -53,8 +55,8 @@ extension NotificationSettingViewController: UITableViewDataSource {
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         let cell = tableView.dequeueReusableCell(withIdentifier: "NotificationStyleCell", for: indexPath)
         cell.textLabel?.text = options[indexPath.row]
-        cell.textLabel?.font = UIFont.systemFont(ofSize: 24, weight: .medium)
-        cell.textLabel?.textColor = .white
+        cell.textLabel?.font = .large.regular()
+        cell.textLabel?.textColor = UIColor(named: "TextColor")
         cell.backgroundColor = .clear
 
         cell.accessoryType = (indexPath.row == selectedOptionIndex) ? .checkmark : .none
@@ -67,10 +69,11 @@ extension NotificationSettingViewController: UITableViewDelegate {
         selectedOptionIndex = indexPath.row
         tableView.reloadData()
         print("선택된 알림 스타일: \(options[selectedOptionIndex])")
+        UserDefaults.standard.set(selectedOptionIndex, forKey: "SelectedNotificationStyle")
     }
 
     func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
-        return 50
+        return 55
     }
     
     func tableView(_ tableView: UITableView, willDisplay cell: UITableViewCell, forRowAt indexPath: IndexPath) {
