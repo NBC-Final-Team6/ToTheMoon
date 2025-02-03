@@ -14,7 +14,7 @@ final class TopFavoritesView: UIView {
         let label = UILabel()
         label.text = "ToTheMoon"
         label.textColor = .text
-        label.font = .large.regular()
+        label.font = .extraLarge.bold()
         return label
     }()
     
@@ -69,7 +69,7 @@ final class TopFavoritesView: UIView {
          contentView].forEach { addSubview($0) }
         
         logoLabel.snp.makeConstraints { make in
-            make.top.equalTo(safeAreaLayoutGuide).offset(10)
+            make.top.equalTo(safeAreaLayoutGuide)
             make.centerX.equalToSuperview()
         }
         

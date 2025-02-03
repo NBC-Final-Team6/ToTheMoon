@@ -35,13 +35,22 @@ class CoreDataManager {
     // MARK: - Create Coin
     func createCoin(name: String, symbol: String, exchange: String) -> Observable<Void> {
         return Observable.create { observer in
-            let coin = Coin(context: self.context)
-            coin.id = UUID()
-            coin.coinname = name
-            coin.symbol = symbol
-            coin.exchangename = exchange
+            let fetchRequest: NSFetchRequest<Coin> = Coin.fetchRequest()
+            fetchRequest.predicate = NSPredicate(format: "symbol == %@ AND exchangename == %@", symbol, exchange)
 
             do {
+                let existingCoins = try self.context.fetch(fetchRequest)
+                if !existingCoins.isEmpty {
+                    observer.onError(NSError(domain: "CoreDataManager", code: 1, userInfo: [NSLocalizedDescriptionKey: "Coin with this symbol and exchange already exists"]))
+                    return Disposables.create()
+                }
+
+                let coin = Coin(context: self.context)
+                coin.id = UUID()
+                coin.coinname = name
+                coin.symbol = symbol
+                coin.exchangename = exchange
+
                 try self.context.save()
                 observer.onNext(())
                 observer.onCompleted()

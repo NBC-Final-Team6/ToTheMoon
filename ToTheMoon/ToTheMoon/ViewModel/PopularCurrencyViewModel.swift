@@ -17,6 +17,8 @@ final class PopularCurrencyViewModel {
     let selectedCoins = BehaviorRelay<Set<MarketPrice>>(value: [])
     let isFavoriteButtonVisible = BehaviorRelay<Bool>(value: false)
     
+    let showAlertMessage = PublishSubject<String>()
+
     init(getMarketPricesUseCase: GetMarketPricesUseCase = GetMarketPricesUseCase(),
          manageFavoritesUseCase: ManageFavoritesUseCaseProtocol = ManageFavoritesUseCase()) {
         self.getMarketPricesUseCase = getMarketPricesUseCase
@@ -54,13 +56,33 @@ final class PopularCurrencyViewModel {
     func addSelectedToFavorites() {
         let coinsToSave = Array(selectedCoins.value)
         guard !coinsToSave.isEmpty else { return }
-        
+
         selectedCoins.accept([])
         isFavoriteButtonVisible.accept(false)
-        
-        let saveOperations = coinsToSave.map { manageFavoritesUseCase.saveCoin($0) }
-        Observable.zip(saveOperations)
-            .subscribe(onNext: { _ in
+
+        Observable.from(coinsToSave)
+            .flatMap { coin in
+                self.manageFavoritesUseCase.isCoinSaved(coin.symbol, exchange: coin.exchange)
+                    .map { isSaved in (coin, isSaved) }
+                    .asObservable()
+            }
+            .toArray()
+            .asObservable()
+            .flatMap { results -> Observable<Void> in
+                let alreadySavedCoins = results.filter { $0.1 }.map { $0.0 }
+                let newCoins = results.filter { !$0.1 }.map { $0.0 }
+
+                if !alreadySavedCoins.isEmpty {
+                    let coinNames = alreadySavedCoins.map { $0.symbol }.joined(separator: ", ")
+                    let message = "\(coinNames)는(은) 이미 관심 목록에 추가되어 있습니다."
+                    self.showAlertMessage.onNext(message)
+                }
+
+                guard !newCoins.isEmpty else { return Observable.just(()) }
+                let saveOperations = newCoins.map { self.manageFavoritesUseCase.saveCoin($0).asObservable() }
+                return Observable.zip(saveOperations) { _ in }
+            }
+            .subscribe(onNext: {
                 print("✅ 관심 목록에 추가 완료!")
             }, onError: { error in
                 print("❌ 관심 목록 추가 실패: \(error.localizedDescription)")
