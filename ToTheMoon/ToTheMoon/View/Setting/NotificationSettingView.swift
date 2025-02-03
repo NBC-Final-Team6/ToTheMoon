@@ -12,16 +12,19 @@ class NotificationSettingView: UIView {
 
     let backButton: UIButton = {
         let button = UIButton()
-        button.setImage(UIImage(systemName: "chevron.left"), for: .normal)
-        button.tintColor = .white
+        let largeConfig = UIImage.SymbolConfiguration(pointSize: 24, weight: .regular)
+        let largeImage = UIImage(systemName: "chevron.left", withConfiguration: largeConfig)
+        button.setImage(largeImage, for: .normal)
+        button.tintColor = UIColor(named: "TextColor")
+        button.contentEdgeInsets = .zero
         return button
     }()
 
     let titleLabel: UILabel = {
         let label = UILabel()
         label.text = "알림 설정"
-        label.textColor = .white
-        label.font = UIFont.boldSystemFont(ofSize: 30)
+        label.textColor = UIColor(named: "TextColor")
+        label.font = .extraLarge.bold()
         label.textAlignment = .center
         return label
     }()
@@ -35,8 +38,8 @@ class NotificationSettingView: UIView {
     private let notificationLabel: UILabel = {
         let label = UILabel()
         label.text = "알림 허용"
-        label.textColor = .white
-        label.font = UIFont.systemFont(ofSize: 24, weight: .medium)
+        label.textColor = UIColor(named: "TextColor")
+        label.font = .large.regular()
         return label
     }()
 
@@ -71,37 +74,28 @@ class NotificationSettingView: UIView {
     private func setupUI() {
         backgroundColor = UIColor(named: "BackgroundColor")
 
-        let navigationContainer = UIView()
-        addSubview(navigationContainer)
-        navigationContainer.addSubview(backButton)
-        navigationContainer.addSubview(titleLabel)
-
+        addSubview(backButton)
+        addSubview(titleLabel)
         addSubview(notificationContainer)
         notificationContainer.addSubview(notificationLabel)
         notificationContainer.addSubview(notificationSwitch)
-
         addSubview(tableView)
 
-        navigationContainer.snp.makeConstraints { make in
-            make.top.equalTo(safeAreaLayoutGuide)
-            make.leading.trailing.equalToSuperview()
-            make.height.equalTo(50)
-        }
-
         backButton.snp.makeConstraints { make in
-            make.leading.equalToSuperview().offset(15)
-            make.centerY.equalToSuperview()
-            make.width.height.equalTo(60)
+            make.leading.equalToSuperview().offset(20)
+            make.top.equalTo(safeAreaLayoutGuide).offset(10)
+            make.width.height.equalTo(40)
         }
 
         titleLabel.snp.makeConstraints { make in
-            make.center.equalToSuperview()
+            make.centerX.equalToSuperview()
+            make.centerY.equalTo(backButton)
         }
 
         notificationContainer.snp.makeConstraints { make in
-            make.top.equalTo(navigationContainer.snp.bottom).offset(20)
+            make.top.equalTo(titleLabel.snp.bottom).offset(20)
             make.leading.trailing.equalToSuperview().inset(20)
-            make.height.equalTo(60)
+            make.height.equalTo(55)
         }
 
         notificationLabel.snp.makeConstraints { make in
@@ -117,7 +111,7 @@ class NotificationSettingView: UIView {
         tableView.snp.makeConstraints { make in
             make.top.equalTo(notificationContainer.snp.bottom).offset(20)
             make.leading.trailing.equalToSuperview().inset(20)
-            make.height.equalTo(200)
+            make.height.equalTo(220)
         }
     }
 }

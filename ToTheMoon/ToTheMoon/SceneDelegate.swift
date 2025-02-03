@@ -17,6 +17,20 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
         window.rootViewController = UINavigationController(rootViewController: CustomTabBarViewController())
         window.makeKeyAndVisible()
         self.window = window
+
+        let selectedMode = UserDefaults.standard.integer(forKey: "SelectedScreenMode")
+        applyScreenMode(to: window, modeIndex: selectedMode)
+    }
+    
+    func applyScreenMode(to window: UIWindow, modeIndex: Int) {
+        switch modeIndex {
+        case 1:
+            window.overrideUserInterfaceStyle = .light
+        case 2:
+            window.overrideUserInterfaceStyle = .dark
+        default:
+            window.overrideUserInterfaceStyle = .unspecified
+        }
     }
 
 

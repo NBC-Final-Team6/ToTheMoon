@@ -14,7 +14,7 @@ class SettingView: UIView {
         let label = UILabel()
         label.text = "앱 설정"
         label.textColor = UIColor(named: "TextColor")
-        label.font = UIFont.boldSystemFont(ofSize: 30)
+        label.font = .extraLarge.bold()
         label.textAlignment = .center
         return label
     }()
@@ -67,7 +67,7 @@ extension SettingView: UITableViewDataSource, UITableViewDelegate {
         let cell = tableView.dequeueReusableCell(withIdentifier: "SettingCell") ?? UITableViewCell(style: .default, reuseIdentifier: "SettingCell")
         let titles = ["알림 설정", "화면 모드 설정", "앱 정보"]
         cell.textLabel?.text = titles[indexPath.row]
-        cell.textLabel?.font = UIFont.systemFont(ofSize: 24, weight: .bold)
+        cell.textLabel?.font = .large.regular()
         cell.textLabel?.textColor = UIColor(named: "TextColor")
         cell.backgroundColor = UIColor(named: "BackgroundColor")
         cell.accessoryType = .disclosureIndicator

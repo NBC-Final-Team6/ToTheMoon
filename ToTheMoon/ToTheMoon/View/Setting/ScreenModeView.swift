@@ -9,19 +9,22 @@ import UIKit
 import SnapKit
 
 class ScreenModeView: UIView {
+    
     let backButton: UIButton = {
-        let button = UIButton(type: .system)
-        button.setImage(UIImage(systemName: "chevron.left"), for: .normal)
-        button.tintColor = .white
-        button.contentEdgeInsets = UIEdgeInsets(top: 10, left: 10, bottom: 10, right: 10)
+        let button = UIButton()
+        let largeConfig = UIImage.SymbolConfiguration(pointSize: 24, weight: .regular)
+        let largeImage = UIImage(systemName: "chevron.left", withConfiguration: largeConfig)
+        button.setImage(largeImage, for: .normal)
+        button.tintColor = UIColor(named: "TextColor")
+        button.contentEdgeInsets = .zero
         return button
     }()
 
     let titleLabel: UILabel = {
         let label = UILabel()
         label.text = "화면 모드 설정"
-        label.textColor = .white
-        label.font = .boldSystemFont(ofSize: 30)
+        label.textColor = UIColor(named: "TextColor")
+        label.font = .extraLarge.bold()
         label.textAlignment = .center
         return label
     }()
@@ -55,7 +58,7 @@ class ScreenModeView: UIView {
         addSubview(tableView)
 
         backButton.snp.makeConstraints { make in
-            make.leading.equalToSuperview().offset(10)
+            make.leading.equalToSuperview().offset(20)
             make.top.equalTo(safeAreaLayoutGuide).offset(10)
             make.width.height.equalTo(40)
         }
@@ -68,7 +71,7 @@ class ScreenModeView: UIView {
         tableView.snp.makeConstraints { make in
             make.top.equalTo(titleLabel.snp.bottom).offset(20)
             make.leading.trailing.equalToSuperview().inset(20)
-            make.height.equalTo(180)
+            make.height.equalTo(175)
         }
     }
 }
