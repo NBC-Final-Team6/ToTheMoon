@@ -89,3 +89,10 @@ extension CoinPriceView {
         getMarketViews().forEach { $0.resetState() }
     }
 }
+
+// 거래소 화면 전환 시 맨 위로 스크롤
+extension CoinPriceView {
+    func scrollToTop() {
+        coinPriceTableView.setContentOffset(.zero, animated: false)
+    }
+}
