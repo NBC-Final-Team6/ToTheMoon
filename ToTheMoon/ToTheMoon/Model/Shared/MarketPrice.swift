@@ -6,8 +6,9 @@
 //
 
 import Foundation
+import UIKit
 
-struct MarketPrice: Decodable {
+struct MarketPrice {
     var symbol: String       // 심볼(종목) 이름, 예: "BTC" (비트코인), "ETH" (이더리움)
     let price: Double        // 현재 시장 가격
     let exchange: String     // 거래소 이름, 예: "Upbit", "Bithumb"
@@ -16,4 +17,5 @@ struct MarketPrice: Decodable {
     let quoteVolume: Double  // 최근 24시간 동안의 거래량 거래 금액 (기준 통화로 표시, 예: KRW)
     let highPrice: Double    // 최근 24시간 동안의 최고 거래 가격
     let lowPrice: Double     // 최근 24시간 동안의 최저 거래 가격
+    var image: UIImage?    // 심볼 이미지
 }
