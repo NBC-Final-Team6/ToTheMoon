@@ -21,12 +21,12 @@ class CoinPriceViewModel {
     
     private var loadingSymbols = Set<String>()  // 중복 로딩 방지
     
-    private var currentExchange: Exchange = .upbit
+    var currentExchange: Exchange = .upbit
     private var timer: Disposable?
     
     // Output
     private(set) var coinPrices = BehaviorRelay<[MarketPrice]>(value: [])
-    let selectedCoinPrice = PublishSubject<MarketPrice>()
+    let selectedCoinPrice = BehaviorSubject<MarketPrice?>(value: nil)
     let error = PublishSubject<Error>()
     
     private var coinImages: [String: UIImage] = [:]

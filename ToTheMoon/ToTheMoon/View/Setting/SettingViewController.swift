@@ -41,10 +41,19 @@ extension SettingViewController: UITableViewDataSource {
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         let cell = tableView.dequeueReusableCell(withIdentifier: "SettingCell", for: indexPath)
         cell.textLabel?.text = settings[indexPath.row]
-        cell.textLabel?.font = UIFont.systemFont(ofSize: 24, weight: .medium)
+        cell.textLabel?.font = .large.regular()
         cell.textLabel?.textColor = UIColor(named: "TextColor")
         cell.backgroundColor = .clear
         return cell
+    }
+    
+    func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
+        return 50
+    }
+    
+    func tableView(_ tableView: UITableView, willDisplay cell: UITableViewCell, forRowAt indexPath: IndexPath) {
+        let inset: CGFloat = 20
+        cell.separatorInset = UIEdgeInsets(top: 0, left: inset, bottom: 0, right: inset)
     }
     
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {

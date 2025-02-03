@@ -13,6 +13,7 @@ enum NetworkError: Error, LocalizedError {
     case decodingFail
     case unknownError
     case invalidData
+    case serverError(statusCode: Int)
     
     // LocalizedError의 errorDescription 제공
     var errorDescription: String? {
@@ -27,6 +28,8 @@ enum NetworkError: Error, LocalizedError {
             return "알 수 없는 에러 발생!"
         case .invalidData:
             return "데이터가 없습니다!"
+        case .serverError(let statusCode):
+            return "서버 오류 발생! (HTTP \(statusCode))"
         }
     }
 }
