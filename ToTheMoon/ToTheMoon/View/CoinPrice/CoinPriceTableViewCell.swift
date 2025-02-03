@@ -128,7 +128,6 @@ class CoinPriceTableViewCell: UITableViewCell {
         }
         
         if let candles = candles {
-        
             let processedCandles = CandleChartDataManager.processCandles(candles)
             chartView.updateChart(with: processedCandles, changeRate: item.changeRate)
         } else {

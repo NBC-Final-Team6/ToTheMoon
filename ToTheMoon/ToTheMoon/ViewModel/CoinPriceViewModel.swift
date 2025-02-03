@@ -42,6 +42,7 @@ class CoinPriceViewModel {
     init() {
         setupTimer()
         setupImageBinding()
+        fetchAllCandlesOnce()
     }
     
     deinit {
@@ -52,6 +53,7 @@ class CoinPriceViewModel {
     func selectExchange(_ exchange: Exchange) {
         currentExchange = exchange
         fetchCoinPrices()
+        fetchAllCandlesOnce()
     }
     
     // 코인 선택
@@ -60,7 +62,7 @@ class CoinPriceViewModel {
         selectedCoinPrice.onNext(coinPrices.value[index])
     }
     
-    // 타이머 설정
+    // 코인 가격은 1초마다 요청
     private func setupTimer() {
         timer?.dispose()
         timer = Observable<Int>
@@ -70,6 +72,13 @@ class CoinPriceViewModel {
             })
         
         timer?.disposed(by: disposeBag)
+    }
+    
+    // 캔들 데이터는 최초 1회만 요청
+    private func fetchAllCandlesOnce() {
+        coinPrices.value.forEach { price in
+            fetchCandles(for: price.symbol)
+        }
     }
     
     // 코인명만 보이게(KRW 글자 제외)
@@ -159,10 +168,6 @@ class CoinPriceViewModel {
             .observe(on: MainScheduler.instance)
             .subscribe(onSuccess: { [weak self] marketPrices in
                 self?.coinPrices.accept(marketPrices)
-                
-                marketPrices.forEach { price in
-                    self?.fetchCandles(for: price.symbol)
-                }
                 
                 // Asset에 없는 코인에 대해서만 이미지 로드
                 marketPrices
