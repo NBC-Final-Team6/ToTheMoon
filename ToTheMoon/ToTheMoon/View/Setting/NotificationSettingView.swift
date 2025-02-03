@@ -73,7 +73,7 @@ class NotificationSettingView: UIView {
 
     private func setupUI() {
         backgroundColor = UIColor(named: "BackgroundColor")
-
+      
         addSubview(backButton)
         addSubview(titleLabel)
         addSubview(notificationContainer)

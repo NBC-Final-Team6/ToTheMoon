@@ -7,10 +7,13 @@
 
 import UIKit
 import SnapKit
+import RxSwift
 
 class FavoritesViewCell: UITableViewCell {
     
     static let identifier = "FavoritesViewCell"
+    
+    var disposeBag = DisposeBag()
     
     private let logoImageView: UIImageView = {
         let imageView = UIImageView()
@@ -63,8 +66,10 @@ class FavoritesViewCell: UITableViewCell {
         return button
     }()
     
-    var addButtonAction: (() -> Void)?
-    
+    var addButtonAction: ((MarketPrice) -> Void)?
+    private var currentCoin: MarketPrice?
+    private var isSaved: Bool = false
+
     override init(style: UITableViewCell.CellStyle, reuseIdentifier: String?) {
         super.init(style: style, reuseIdentifier: reuseIdentifier)
         setupUI()
@@ -75,7 +80,6 @@ class FavoritesViewCell: UITableViewCell {
     }
     
     private func setupUI() {
-        
         backgroundColor = UIColor(named: "ContainerColor")
         
         [logoImageView, coinNameLabel, marketNameLabel, priceLabel, priceChangeLabel, addButton]
@@ -115,11 +119,23 @@ class FavoritesViewCell: UITableViewCell {
         }
         
         addButton.addTarget(self, action: #selector(addButtonTapped), for: .touchUpInside)
-        
     }
     
-    func configure(with item: MarketPrice) {
-        // TODO: 로고, 그래프 뷰
+    override func prepareForReuse() {
+        super.prepareForReuse()
+        logoImageView.image = nil
+        coinNameLabel.text = nil
+        marketNameLabel.text = nil
+        priceLabel.text = nil
+        priceChangeLabel.text = nil
+        isSaved = false
+        updateAddButton()
+    }
+    
+    func configure(with item: MarketPrice, isSaved: Bool) {
+        currentCoin = item
+        self.isSaved = isSaved
+        
         coinNameLabel.text = item.symbol
         marketNameLabel.text = item.exchange
         priceLabel.text = "₩\(formatPrice(item.price))"
@@ -129,18 +145,30 @@ class FavoritesViewCell: UITableViewCell {
             priceChangeLabel.text = "▲ \(String(format: "%.2f%%", item.changeRate))"
             priceChangeLabel.textColor = UIColor(named: "NumbersGreenColor")
         } else {
-            priceChangeLabel.text = "▼ \(String(format: "%.2f%%", abs(item.changeRate)))"  // abs()함수: 절대값을 구하는 함수
+            priceChangeLabel.text = "▼ \(String(format: "%.2f%%", abs(item.changeRate)))"
             priceChangeLabel.textColor = UIColor(named: "NumbersRedColor")
         }
+       
+        updateAddButton()
+    }
+    
+    private func updateAddButton() {
+        addButton.setTitle(isSaved ? "추가됨" : "추가하기", for: .normal)
     }
     
     private func formatPrice(_ price: Double) -> String {
         let numberFormatter = NumberFormatter()
-        numberFormatter.numberStyle = .decimal  // 천 단위로 쉼표 찍어줌
+        numberFormatter.numberStyle = .decimal
         return numberFormatter.string(from: NSNumber(value: price)) ?? "0"
     }
     
     @objc private func addButtonTapped() {
-        addButtonAction?()
+        guard let coin = currentCoin else { return }
+        addButtonAction?(coin)
+    }
+    
+    func toggleButtonState() {
+        isSaved.toggle()
+        updateAddButton()
     }
 }
