@@ -37,11 +37,25 @@ class CoinPriceViewModel {
     
     private let candlesDictRelay = BehaviorRelay<[String: [Candle]]>(value: [:])
     var candlesDict: Observable<[String: [Candle]]> { return candlesDictRelay.asObservable() }
-        
+    
     
     init() {
         setupTimer()
         setupImageBinding()
+        fetchAllCandlesOnce()
+        fetchCoinPrices()
+        
+        // 코인 가격 데이터가 로드되면 자동으로 캔들 데이터도 가져오도록 수정
+        coinPrices
+            .skip(1) // 초기 빈 배열 스킵
+            .distinctUntilChanged()
+            .subscribe(onNext: { [weak self] prices in
+                guard !prices.isEmpty else { return }
+                prices.forEach { price in
+                    self?.fetchCandles(for: price.symbol)
+                }
+            })
+            .disposed(by: disposeBag)
     }
     
     deinit {
@@ -52,6 +66,7 @@ class CoinPriceViewModel {
     func selectExchange(_ exchange: Exchange) {
         currentExchange = exchange
         fetchCoinPrices()
+        fetchAllCandlesOnce()
     }
     
     // 코인 선택
@@ -60,7 +75,7 @@ class CoinPriceViewModel {
         selectedCoinPrice.onNext(coinPrices.value[index])
     }
     
-    // 타이머 설정
+    // 코인 가격은 1초마다 요청
     private func setupTimer() {
         timer?.dispose()
         timer = Observable<Int>
@@ -70,6 +85,13 @@ class CoinPriceViewModel {
             })
         
         timer?.disposed(by: disposeBag)
+    }
+    
+    // 캔들 데이터는 최초 1회만 요청
+    private func fetchAllCandlesOnce() {
+        coinPrices.value.forEach { price in
+            fetchCandles(for: price.symbol)
+        }
     }
     
     // 코인명만 보이게(KRW 글자 제외)
@@ -150,7 +172,6 @@ class CoinPriceViewModel {
                 marketPrices.map { price in
                     var modifiedPrice = price
                     modifiedPrice.symbol = self.extractCoinSymbol(price.symbol)
-                    // Asset에서 이미지 가져오기
                     modifiedPrice.image = ImageRepository.getImage(for: modifiedPrice.symbol)
                     return modifiedPrice
                 }
@@ -159,10 +180,6 @@ class CoinPriceViewModel {
             .observe(on: MainScheduler.instance)
             .subscribe(onSuccess: { [weak self] marketPrices in
                 self?.coinPrices.accept(marketPrices)
-                
-                marketPrices.forEach { price in
-                    self?.fetchCandles(for: price.symbol)
-                }
                 
                 // Asset에 없는 코인에 대해서만 이미지 로드
                 marketPrices
