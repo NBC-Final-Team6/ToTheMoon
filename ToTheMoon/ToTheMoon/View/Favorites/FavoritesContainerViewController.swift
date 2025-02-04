@@ -25,16 +25,18 @@ final class FavoritesContainerViewController: UIViewController {
             getMarketPricesUseCase: getMarketPricesUseCase
         )
     )
+    
     override func loadView() {
         self.view = topFavoritesView
     }
 
     override func viewDidLoad() {
         super.viewDidLoad()
+        setupCollectionViewLayout()
         setupTabCollectionView()
         setupInitialView()
         bindSegmentSelection()
-        bindSearchButton()
+        //bindSearchButton()
     }
     
     override func viewWillAppear(_ animated: Bool) {
@@ -42,23 +44,41 @@ final class FavoritesContainerViewController: UIViewController {
         navigationController?.navigationBar.isHidden = true
     }
 
-    override func viewDidLayoutSubviews() {
-        super.viewDidLayoutSubviews()
-        setupTabCollectionViewLayout()
-        setupInitialUnderlinePosition()
-        topFavoritesView.tabCollectionView.collectionViewLayout.invalidateLayout()
+    private func setupCollectionViewLayout() {
+        guard let layout = topFavoritesView.tabCollectionView.collectionViewLayout as? UICollectionViewFlowLayout else { return }
+        
+        let tabCount = CGFloat(tabs.count)
+        let collectionViewWidth = UIScreen.main.bounds.width
+        let tabWidth = collectionViewWidth / tabCount
+        
+        layout.itemSize = CGSize(width: tabWidth, height: 40)
+        layout.sectionInset = .zero 
+        
+        DispatchQueue.main.async {
+            let selectedIndex = self.selectedSegment.value.rawValue
+            let leadingOffset = tabWidth * CGFloat(selectedIndex)
+            print(leadingOffset)
+            self.topFavoritesView.underlineView.snp.remakeConstraints { make in
+                make.bottom.equalTo(self.topFavoritesView.tabCollectionView)
+                make.height.equalTo(2)
+                make.trailing.equalToSuperview().offset(-16)
+                make.width.equalTo(185)
+            }
+            self.topFavoritesView.layoutIfNeeded()
+        }
     }
 
     private func setupTabCollectionView() {
-        // 탭 데이터 바인딩
+        topFavoritesView.tabCollectionView.delegate = self  // delegate 설정 추가
+        
         Observable.just(tabs)
-            .bind(to: topFavoritesView.tabCollectionView.rx.items(cellIdentifier: "TabCell", cellType: TabCell.self)) { index, title, cell in
+            .bind(to: topFavoritesView.tabCollectionView.rx.items(cellIdentifier: "TabCell", cellType: TabCell.self)) { [weak self] index, title, cell in
+                guard let self = self else { return }
                 let isSelected = index == self.selectedSegment.value.rawValue
                 cell.configure(with: title, isSelected: isSelected)
             }
             .disposed(by: disposeBag)
 
-        // 탭 선택 이벤트
         topFavoritesView.tabCollectionView.rx.itemSelected
             .subscribe(onNext: { [weak self] indexPath in
                 guard let self = self else { return }
@@ -75,7 +95,6 @@ final class FavoritesContainerViewController: UIViewController {
     }
 
     private func bindSegmentSelection() {
-        // 탭 전환에 따른 뷰 컨트롤러 변경 및 UI 업데이트
         selectedSegment
             .distinctUntilChanged()
             .subscribe(onNext: { [weak self] segment in
@@ -86,46 +105,28 @@ final class FavoritesContainerViewController: UIViewController {
             })
             .disposed(by: disposeBag)
     }
+
+    private func updateTabUI(for segment: SegmentType) {
+        let index = segment.rawValue
+        animateUnderline(to: index)
+        topFavoritesView.tabCollectionView.reloadData()
+    }
+
+    private func animateUnderline(to index: Int) {
+        let tabWidth = topFavoritesView.tabCollectionView.frame.width / CGFloat(tabs.count)
+        let leadingOffset = tabWidth * CGFloat(index)
+        
+        UIView.animate(withDuration: 0.3) {
+            self.topFavoritesView.underlineView.snp.remakeConstraints { make in
+                make.bottom.equalTo(self.topFavoritesView.tabCollectionView)
+                make.height.equalTo(2)
+                make.leading.equalTo(self.topFavoritesView.tabCollectionView).offset(leadingOffset)
+                make.width.equalTo(tabWidth)
+            }
+            self.topFavoritesView.layoutIfNeeded()
+        }
+    }
     
-    private func bindSearchButton() {
-       
-        topFavoritesView.searchButton.rx.tap
-            .bind(to: viewModel.showSearchViewController)
-            .disposed(by: disposeBag)
-        
-        viewModel.showSearchViewController
-            .subscribe(onNext: { [weak self] in
-                self?.navigateToSearchViewController()
-            })
-            .disposed(by: disposeBag)
-    }
-    
-    private func navigateToSearchViewController() {
-        let getMarketPricesUseCase = GetMarketPricesUseCase()
-        let manageFavoritesUseCase = ManageFavoritesUseCase()
-        let searchViewModel = SearchViewModel(
-            getMarketPricesUseCase: getMarketPricesUseCase,
-            manageFavoritesUseCase: manageFavoritesUseCase
-        )
-        let searchVC = SearchViewController(viewModel: searchViewModel)
-        navigationController?.pushViewController(searchVC, animated: true)
-    }
-
-    private func setupTabCollectionViewLayout() {
-        guard let layout = topFavoritesView.tabCollectionView.collectionViewLayout as? UICollectionViewFlowLayout else { return }
-        
-        let tabCount = CGFloat(tabs.count)
-        let collectionViewWidth = topFavoritesView.tabCollectionView.bounds.width
-        let tabWidth = collectionViewWidth / tabCount
-        
-        layout.itemSize = CGSize(width: tabWidth, height: 40)
-    }
-
-    private func setupInitialUnderlinePosition() {
-        let selectedIndex = selectedSegment.value.rawValue
-        animateUnderline(to: selectedIndex)
-    }
-
     private func switchToViewController(for segment: SegmentType) {
         if segment == .popularCurrency {
             remove(child: favoriteListVC)
@@ -133,28 +134,6 @@ final class FavoritesContainerViewController: UIViewController {
         } else {
             remove(child: popularCurrencyVC)
             add(child: favoriteListVC)
-        }
-    }
-
-    private func updateTabUI(for segment: SegmentType) {
-        // 상단 탭 언더라인 위치 및 선택 상태 업데이트
-        let index = segment.rawValue
-        animateUnderline(to: index)
-        topFavoritesView.tabCollectionView.reloadData()
-    }
-
-    private func animateUnderline(to index: Int) {
-        let tabWidth = topFavoritesView.tabCollectionView.bounds.width / CGFloat(tabs.count)
-        let leadingOffset = 16 + tabWidth * CGFloat(index)
-
-        UIView.animate(withDuration: 0.3) {
-            self.topFavoritesView.underlineView.snp.remakeConstraints { make in
-                make.bottom.equalTo(self.topFavoritesView.tabCollectionView)
-                make.height.equalTo(2)
-                make.leading.equalTo(leadingOffset)
-                make.width.equalTo(tabWidth)
-            }
-            self.topFavoritesView.layoutIfNeeded()
         }
     }
 
@@ -178,4 +157,15 @@ final class FavoritesContainerViewController: UIViewController {
 enum SegmentType: Int {
     case popularCurrency = 0
     case favoriteList
+}
+
+extension FavoritesContainerViewController: UICollectionViewDelegateFlowLayout {
+    func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, sizeForItemAt indexPath: IndexPath) -> CGSize {
+        let width = (collectionView.frame.width) / CGFloat(tabs.count)
+        return CGSize(width: width, height: 40)
+    }
+    
+    func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, insetForSectionAt section: Int) -> UIEdgeInsets {
+        return .zero
+    }
 }
