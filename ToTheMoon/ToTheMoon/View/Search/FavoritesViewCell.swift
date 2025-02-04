@@ -58,7 +58,7 @@ class FavoritesViewCell: UITableViewCell {
     private let addButton: UIButton = {
         let button = UIButton(type: .system)
         button.setTitle("추가하기", for: .normal)
-        button.setTitleColor(.text, for: .normal)
+        button.setTitleColor(.white, for: .normal)
         button.backgroundColor = .personel
         button.titleLabel?.font = .medium.regular()
         button.layer.cornerRadius = 8
@@ -69,7 +69,7 @@ class FavoritesViewCell: UITableViewCell {
     var addButtonAction: ((MarketPrice) -> Void)?
     private var currentCoin: MarketPrice?
     private var isSaved: Bool = false
-
+    
     override init(style: UITableViewCell.CellStyle, reuseIdentifier: String?) {
         super.init(style: style, reuseIdentifier: reuseIdentifier)
         setupUI()
@@ -129,7 +129,7 @@ class FavoritesViewCell: UITableViewCell {
         priceLabel.text = nil
         priceChangeLabel.text = nil
         isSaved = false
-        updateAddButton()
+        updateAddButton(isSaved: isSaved) // ✅ 버튼 상태 초기화
     }
     
     func configure(with item: MarketPrice, isSaved: Bool) {
@@ -148,11 +148,11 @@ class FavoritesViewCell: UITableViewCell {
             priceChangeLabel.text = "▼ \(String(format: "%.2f%%", abs(item.changeRate)))"
             priceChangeLabel.textColor = UIColor(named: "NumbersRedColor")
         }
-       
-        updateAddButton()
+        
+        updateAddButton(isSaved: isSaved)
     }
     
-    private func updateAddButton() {
+    private func updateAddButton(isSaved: Bool) {
         addButton.setTitle(isSaved ? "추가됨" : "추가하기", for: .normal)
         addButton.backgroundColor = isSaved ? .numbersRed : .personel
     }
@@ -165,11 +165,10 @@ class FavoritesViewCell: UITableViewCell {
     
     @objc private func addButtonTapped() {
         guard let coin = currentCoin else { return }
-        addButtonAction?(coin)
-    }
-    
-    func toggleButtonState() {
-        isSaved.toggle()
-        updateAddButton()
+        
+        isSaved.toggle()  // ✅ UI 변경 반영
+        updateAddButton(isSaved: isSaved) // ✅ UI 업데이트
+        
+        addButtonAction?(coin) // ✅ ViewModel에 이벤트 전달 (Core Data 업데이트)
     }
 }

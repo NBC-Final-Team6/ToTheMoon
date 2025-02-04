@@ -11,7 +11,7 @@ import RxCocoa
 
 final class SearchViewModel {
     private let getMarketPricesUseCase: GetMarketPricesUseCase
-    private let manageFavoritesUseCase: ManageFavoritesUseCaseProtocol  
+    private let manageFavoritesUseCase: ManageFavoritesUseCaseProtocol
     private let savedCoinsRelay = BehaviorRelay<Set<String>>(value: Set())
     private let disposeBag = DisposeBag()
     private let symbolFormatter = SymbolFormatter()
@@ -26,6 +26,16 @@ final class SearchViewModel {
     
     var recentSearches: Observable<[(String, String, String)]> {
         return recentSearchesRelay.asObservable()
+    }
+    
+    var combinedSearchResults: Observable<[(MarketPrice, Bool)]> {
+        filteredSearchResultsRelay
+            .flatMapLatest { results in
+                Observable.combineLatest(results.map { marketPrice in
+                    self.manageFavoritesUseCase.isCoinSaved(marketPrice.symbol, exchange: marketPrice.exchange)
+                        .map { isSaved in (marketPrice, isSaved) }
+                })
+            }
     }
     
     init(getMarketPricesUseCase: GetMarketPricesUseCase, manageFavoritesUseCase: ManageFavoritesUseCaseProtocol) {
@@ -46,15 +56,9 @@ final class SearchViewModel {
     private func loadSavedCoins() {
         manageFavoritesUseCase.fetchFavoriteCoins()
             .map { coins -> Set<String> in
-                let savedSet: Set<String> = Set(coins.compactMap { coin in
-                    guard let symbol = coin.symbol, let exchange = coin.exchangename else { return nil }
-                    return "\(symbol)_\(exchange)"
-                })
-                return savedSet
+                Set(coins.map { "\($0.symbol)_\($0.exchangename)" })
             }
-            .subscribe(onNext: { [weak self] savedCoins in
-                self?.savedCoinsRelay.accept(savedCoins)
-            })
+            .bind(to: savedCoinsRelay)
             .disposed(by: disposeBag)
     }
     
@@ -99,33 +103,27 @@ final class SearchViewModel {
     }
     
     func toggleFavorite(_ marketPrice: MarketPrice) {
-        let coinKey = "\(marketPrice.symbol)_\(marketPrice.exchange)"
-
         manageFavoritesUseCase.isCoinSaved(marketPrice.symbol, exchange: marketPrice.exchange)
-            .observe(on: MainScheduler.asyncInstance)
-            .flatMapLatest { isSaved -> Observable<Void> in
+            .flatMap { isSaved -> Observable<Void> in  // ✅ Observable<Bool>을 flatMap으로 변환
                 if isSaved {
-                    print("🔴 삭제 요청: \(coinKey)")
-                    return self.manageFavoritesUseCase.removeCoin(marketPrice)
+                    return self.manageFavoritesUseCase.removeCoin(marketPrice) // ✅ 코어데이터에서 삭제
                 } else {
-                    print("🟢 추가 요청: \(coinKey)")
-                    return self.manageFavoritesUseCase.saveCoin(marketPrice)
+                    return self.manageFavoritesUseCase.saveCoin(marketPrice) // ✅ 코어데이터에 추가
                 }
             }
-            .subscribe(onNext: { [weak self] in
-                guard let self = self else { return }
-                self.loadSavedCoins()
+            .ignoreElements() // ✅ Observable<Void>를 Completable로 변환
+            .subscribe(onCompleted: { [weak self] in
+                self?.reloadSavedCoins() // ✅ 변경 사항 반영
             })
             .disposed(by: disposeBag)
     }
     
-    func isCoinSaved(_ symbol: String?, exchange: String?) -> Observable<Bool> {
-        guard let symbol = symbol, let exchange = exchange else {
-            return Observable.just(false)
-        }
-        let coinKey = "\(symbol)_\(exchange)"
-        return savedCoinsRelay
-            .map { savedCoins in savedCoins.contains(coinKey) }
-            .observe(on: MainScheduler.instance)
+    private func reloadSavedCoins() {
+        manageFavoritesUseCase.fetchFavoriteCoins()
+            .map { coins -> Set<String> in
+                Set(coins.map { "\($0.symbol)_\($0.exchangename)" })
+            }
+            .bind(to: savedCoinsRelay)
+            .disposed(by: disposeBag)
     }
 }
