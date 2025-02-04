@@ -50,7 +50,7 @@ class CoinPriceView: UIView {
     }
     
     private func setupView() {
-        backgroundColor = UIColor(named: "BackgroundColor")
+        backgroundColor = .background
         
         [titleLabel, stackView, coinPriceTableView]
             .forEach { addSubview($0) }
@@ -72,10 +72,14 @@ class CoinPriceView: UIView {
             make.bottom.equalTo(safeAreaLayoutGuide)
         }
         
-        for market in MarketModel.items {
+        for (index, market) in MarketModel.items.enumerated() {
             let marketView = MarketView()
             marketView.configure(with: market)
             stackView.addArrangedSubview(marketView)
+            
+            if index == 0 {
+                marketView.handleTap()
+            }
         }
     }
 }
