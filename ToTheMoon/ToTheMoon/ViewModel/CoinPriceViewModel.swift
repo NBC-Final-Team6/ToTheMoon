@@ -37,12 +37,25 @@ class CoinPriceViewModel {
     
     private let candlesDictRelay = BehaviorRelay<[String: [Candle]]>(value: [:])
     var candlesDict: Observable<[String: [Candle]]> { return candlesDictRelay.asObservable() }
-        
+    
     
     init() {
         setupTimer()
         setupImageBinding()
         fetchAllCandlesOnce()
+        fetchCoinPrices()
+        
+        // 코인 가격 데이터가 로드되면 자동으로 캔들 데이터도 가져오도록 수정
+        coinPrices
+            .skip(1) // 초기 빈 배열 스킵
+            .distinctUntilChanged()
+            .subscribe(onNext: { [weak self] prices in
+                guard !prices.isEmpty else { return }
+                prices.forEach { price in
+                    self?.fetchCandles(for: price.symbol)
+                }
+            })
+            .disposed(by: disposeBag)
     }
     
     deinit {
@@ -159,7 +172,6 @@ class CoinPriceViewModel {
                 marketPrices.map { price in
                     var modifiedPrice = price
                     modifiedPrice.symbol = self.extractCoinSymbol(price.symbol)
-                    // Asset에서 이미지 가져오기
                     modifiedPrice.image = ImageRepository.getImage(for: modifiedPrice.symbol)
                     return modifiedPrice
                 }

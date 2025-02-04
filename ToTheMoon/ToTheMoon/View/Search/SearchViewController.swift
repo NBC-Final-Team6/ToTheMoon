@@ -21,7 +21,7 @@ final class SearchViewController: UIViewController {
     }
     
     private var searchMode: SearchMode = .recent
-    private var searchResults: [MarketPrice] = [] // 검색 결과 저장
+    private var searchResults: [(MarketPrice, Bool)] = [] // 검색 결과 저장
     private var recentSearches: [(String, String, String)] = [] // (심볼, 거래소, 날짜)
     
     // ViewModel 의존성 주입
@@ -60,7 +60,7 @@ final class SearchViewController: UIViewController {
     }
     
     @objc private func dismissSearch() {
-        navigationController?.popViewController(animated: true) // 이전 화면으로 돌아가기
+        navigationController?.popViewController(animated: true) 
     }
     
     private func setupBindings() {
@@ -82,13 +82,16 @@ final class SearchViewController: UIViewController {
             })
             .disposed(by: disposeBag)
         
-        // 검색 결과 바인딩
-        viewModel.filteredSearchResults
+        // 검색 결과와 저장 상태 결합 바인딩
+        viewModel.combinedSearchResults
             .observe(on: MainScheduler.instance)
-            .subscribe(onNext: { [weak self] results in
-                self?.searchResults = results
-                self?.searchMode = results.isEmpty ? .recent : .result
-                self?.searchView.tableView.reloadData()
+            .subscribe(onNext: { [weak self] combinedResults in
+                guard let self = self else { return }
+                
+                print(combinedResults)
+                self.searchResults = combinedResults
+                self.searchMode = combinedResults.isEmpty ? .recent : .result
+                self.searchView.tableView.reloadData()
             })
             .disposed(by: disposeBag)
         
@@ -96,9 +99,12 @@ final class SearchViewController: UIViewController {
         viewModel.recentSearches
             .observe(on: MainScheduler.instance)
             .subscribe(onNext: { [weak self] searches in
-                self?.recentSearches = searches
-                if self?.searchMode == .recent {
-                    self?.searchView.tableView.reloadData()
+                guard let self = self else { return }
+                
+                // 최근 검색 기록 업데이트
+                self.recentSearches = searches
+                if self.searchMode == .recent {
+                    self.searchView.tableView.reloadData()
                 }
             })
             .disposed(by: disposeBag)
@@ -128,47 +134,34 @@ extension SearchViewController: UITableViewDelegate, UITableViewDataSource {
     
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         if searchMode == .recent {
-            // 최근 검색 기록은 CustomSearchCell을 사용
             guard let cell = tableView.dequeueReusableCell(withIdentifier: CustomSearchCell.identifier, for: indexPath) as? CustomSearchCell else {
                 return UITableViewCell()
             }
-            
             let search = recentSearches[indexPath.row]
-            let symbol = search.0.uppercased() // 심볼 (BTC, ETH 등)
+            let symbol = search.0.uppercased()
             let exchange = search.1
             let date = search.2
-            var image = CoinImageCache.shared.getImage(for: symbol)
-            if image == nil {
-                image = ImageRepository.getImage(for: symbol)
-            }
+            let image = CoinImageCache.shared.getImage(for: symbol) ?? ImageRepository.getImage(for: symbol)
+            
             cell.configure(with: "\(symbol) \(exchange)", date: date, image: image)
-    
             return cell
         } else {
-            // 검색 결과는 FavoritesViewCell을 사용
             guard let cell = tableView.dequeueReusableCell(withIdentifier: FavoritesViewCell.identifier, for: indexPath) as? FavoritesViewCell else {
                 return UITableViewCell()
             }
+            let (marketPrice, isSaved): (MarketPrice, Bool) = searchResults[indexPath.row]
+            cell.configure(with: marketPrice, isSaved: isSaved)
             
-            let marketPrice = searchResults[indexPath.row]
-            
-            cell.disposeBag = DisposeBag()
-            
-            // 저장된 코인 여부 확인 후 UI 업데이트 (symbol + exchange 기반)
-            viewModel.isCoinSaved(marketPrice.symbol, exchange: marketPrice.exchange)
-                .observe(on: MainScheduler.instance)
-                .subscribe(onNext: { isSaved in
-                    cell.configure(with: marketPrice, isSaved: isSaved)
-                })
-                .disposed(by: cell.disposeBag)
-
-            // 버튼 클릭 시 Core Data 저장 처리
-            cell.addButtonAction = { [weak self] selectedCoin in
+            cell.addButtonAction = { [weak self] coin in
                 guard let self = self else { return }
-                self.viewModel.toggleFavorite(selectedCoin)
-                if let updatedCell = self.searchView.tableView.cellForRow(at: indexPath) as? FavoritesViewCell {
-                    updatedCell.toggleButtonState()
+                
+                self.viewModel.toggleFavorite(coin)
+                
+                if let index = self.searchResults.firstIndex(where: { $0.0.symbol == coin.symbol && $0.0.exchange == coin.exchange }) {
+                    self.searchResults[index].1.toggle()
                 }
+                
+                self.searchView.tableView.reloadData()
             }
             
             return cell
@@ -197,22 +190,22 @@ extension SearchViewController: UITableViewDelegate, UITableViewDataSource {
             .disposed(by: disposeBag)
         
         [ titleLabel, clearButton ].forEach{ headerView.addSubview($0)}
-       
+        
         titleLabel.snp.makeConstraints { make in
             make.leading.equalToSuperview().inset(16)
             make.centerY.equalToSuperview()
         }
-
+        
         clearButton.snp.makeConstraints { make in
             make.trailing.equalToSuperview().inset(16)
             make.centerY.equalToSuperview()
         }
-
+        
         return headerView
     }
     
     func tableView(_ tableView: UITableView, heightForHeaderInSection section: Int) -> CGFloat {
-           return searchMode == .recent && !recentSearches.isEmpty ? 40 : 0
+        return searchMode == .recent && !recentSearches.isEmpty ? 40 : 0
     }
     
     func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
@@ -223,7 +216,7 @@ extension SearchViewController: UITableViewDelegate, UITableViewDataSource {
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         guard searchMode == .recent else { return }
         let selectedSearch = recentSearches[indexPath.row]
-        let searchQuery = selectedSearch.0 // 심볼 (BTC, ETH 등)
+        let searchQuery = selectedSearch.0
         searchView.searchBar.text = searchQuery
         viewModel.search(query: searchQuery)
         searchView.searchBar.resignFirstResponder()
@@ -232,7 +225,7 @@ extension SearchViewController: UITableViewDelegate, UITableViewDataSource {
 
 extension SearchViewController: UISearchBarDelegate {
     func searchBarSearchButtonClicked(_ searchBar: UISearchBar) {
-        searchBar.resignFirstResponder() // 키보드 내리기
+        searchBar.resignFirstResponder()
     }
 }
 

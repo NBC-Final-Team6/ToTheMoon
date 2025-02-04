@@ -1,9 +1,3 @@
-//
-//  Untitled.swift
-//  ToTheMoon
-//
-//  Created by 황석범 on 1/28/25.
-//
 
 //
 //  CustomSearchCell.swift
@@ -60,7 +54,7 @@ final class CustomSearchCell: UITableViewCell {
         iconImageView.snp.makeConstraints { make in
             make.leading.equalToSuperview().offset(16)
             make.centerY.equalToSuperview()
-            make.width.height.equalTo(24) // 아이콘 크기 설정
+            make.width.height.equalTo(24)
         }
 
         titleLabel.snp.makeConstraints { make in

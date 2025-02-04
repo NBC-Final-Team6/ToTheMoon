@@ -14,7 +14,7 @@ class CoinPriceTableViewCell: UITableViewCell {
     static let identifier = "CoinPriceTableViewCell"
     
     private let logoImageView: UIImageView = {
-       let imageView = UIImageView()
+        let imageView = UIImageView()
         imageView.contentMode = .scaleAspectFit
         imageView.clipsToBounds = true
         imageView.layer.cornerRadius = 20
@@ -115,7 +115,7 @@ class CoinPriceTableViewCell: UITableViewCell {
         logoImageView.backgroundColor = .systemGray6
         logoImageView.image = item.image
         
-        coinNameLabel.text = item.symbol
+        coinNameLabel.text = item.symbol.uppercased()
         marketNameLabel.text = item.exchange
         priceLabel.text = "₩\(formatPrice(item.price))"
         
@@ -127,7 +127,8 @@ class CoinPriceTableViewCell: UITableViewCell {
             priceChangeLabel.textColor = .numbersRed
         }
         
-        if let candles = candles {
+
+        if let candles = candles, !candles.isEmpty {
             let processedCandles = CandleChartDataManager.processCandles(candles)
             chartView.updateChart(with: processedCandles, changeRate: item.changeRate)
         } else {
