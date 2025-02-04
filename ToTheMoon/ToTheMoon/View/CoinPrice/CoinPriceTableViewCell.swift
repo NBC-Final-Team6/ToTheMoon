@@ -115,7 +115,7 @@ class CoinPriceTableViewCell: UITableViewCell {
         logoImageView.backgroundColor = .systemGray6
         logoImageView.image = item.image
         
-        coinNameLabel.text = item.symbol
+        coinNameLabel.text = item.symbol.uppercased()
         marketNameLabel.text = item.exchange
         priceLabel.text = "₩\(formatPrice(item.price))"
         
