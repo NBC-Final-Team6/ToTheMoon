@@ -60,7 +60,7 @@ final class SearchViewController: UIViewController {
     }
     
     @objc private func dismissSearch() {
-        navigationController?.popViewController(animated: true) // 이전 화면으로 돌아가기
+        navigationController?.popViewController(animated: true) 
     }
     
     private func setupBindings() {
@@ -70,7 +70,7 @@ final class SearchViewController: UIViewController {
             .debounce(.milliseconds(300), scheduler: MainScheduler.instance)
             .distinctUntilChanged()
             .bind(onNext: { [weak self] query in
-                self?.viewModel.search(query: query) // ViewModel에 검색어 전달
+                self?.viewModel.search(query: query)
             })
             .disposed(by: disposeBag)
         
@@ -78,7 +78,7 @@ final class SearchViewController: UIViewController {
         searchView.searchBar.searchTextField.rx.controlEvent(.editingDidEndOnExit)
             .withLatestFrom(searchView.searchBar.searchTextField.rx.text.orEmpty)
             .subscribe(onNext: { [weak self] query in
-                self?.viewModel.saveSearchHistory(query: query) // 검색어를 히스토리에 저장
+                self?.viewModel.saveSearchHistory(query: query)
             })
             .disposed(by: disposeBag)
         
@@ -134,11 +134,9 @@ extension SearchViewController: UITableViewDelegate, UITableViewDataSource {
     
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         if searchMode == .recent {
-            // ✅ 최근 검색 기록을 위한 CustomSearchCell
             guard let cell = tableView.dequeueReusableCell(withIdentifier: CustomSearchCell.identifier, for: indexPath) as? CustomSearchCell else {
                 return UITableViewCell()
             }
-            
             let search = recentSearches[indexPath.row]
             let symbol = search.0.uppercased()
             let exchange = search.1
@@ -148,25 +146,22 @@ extension SearchViewController: UITableViewDelegate, UITableViewDataSource {
             cell.configure(with: "\(symbol) \(exchange)", date: date, image: image)
             return cell
         } else {
-            // ✅ 검색 결과를 위한 FavoritesViewCell
             guard let cell = tableView.dequeueReusableCell(withIdentifier: FavoritesViewCell.identifier, for: indexPath) as? FavoritesViewCell else {
                 return UITableViewCell()
             }
-            
-            let (marketPrice, isSaved): (MarketPrice, Bool) = searchResults[indexPath.row] // ✅ 명확한 타입 지정
+            let (marketPrice, isSaved): (MarketPrice, Bool) = searchResults[indexPath.row]
             cell.configure(with: marketPrice, isSaved: isSaved)
             
             cell.addButtonAction = { [weak self] coin in
                 guard let self = self else { return }
                 
-                self.viewModel.toggleFavorite(coin) // 즐겨찾기 상태 변경
+                self.viewModel.toggleFavorite(coin)
                 
-                // ✅ UI 업데이트: 해당 코인의 isSaved 값을 반전
                 if let index = self.searchResults.firstIndex(where: { $0.0.symbol == coin.symbol && $0.0.exchange == coin.exchange }) {
                     self.searchResults[index].1.toggle()
                 }
                 
-                self.searchView.tableView.reloadData() // 테이블뷰 업데이트
+                self.searchView.tableView.reloadData()
             }
             
             return cell
@@ -221,7 +216,7 @@ extension SearchViewController: UITableViewDelegate, UITableViewDataSource {
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         guard searchMode == .recent else { return }
         let selectedSearch = recentSearches[indexPath.row]
-        let searchQuery = selectedSearch.0 // 심볼 (BTC, ETH 등)
+        let searchQuery = selectedSearch.0
         searchView.searchBar.text = searchQuery
         viewModel.search(query: searchQuery)
         searchView.searchBar.resignFirstResponder()
@@ -230,7 +225,7 @@ extension SearchViewController: UITableViewDelegate, UITableViewDataSource {
 
 extension SearchViewController: UISearchBarDelegate {
     func searchBarSearchButtonClicked(_ searchBar: UISearchBar) {
-        searchBar.resignFirstResponder() // 키보드 내리기
+        searchBar.resignFirstResponder()
     }
 }
 

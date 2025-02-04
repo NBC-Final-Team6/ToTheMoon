@@ -129,7 +129,7 @@ class FavoritesViewCell: UITableViewCell {
         priceLabel.text = nil
         priceChangeLabel.text = nil
         isSaved = false
-        updateAddButton(isSaved: isSaved) // ✅ 버튼 상태 초기화
+        updateAddButton(isSaved: isSaved) 
     }
     
     func configure(with item: MarketPrice, isSaved: Bool) {
@@ -165,10 +165,8 @@ class FavoritesViewCell: UITableViewCell {
     
     @objc private func addButtonTapped() {
         guard let coin = currentCoin else { return }
-        
-        isSaved.toggle()  // ✅ UI 변경 반영
-        updateAddButton(isSaved: isSaved) // ✅ UI 업데이트
-        
-        addButtonAction?(coin) // ✅ ViewModel에 이벤트 전달 (Core Data 업데이트)
+        isSaved.toggle()
+        updateAddButton(isSaved: isSaved)
+        addButtonAction?(coin)
     }
 }

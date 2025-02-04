@@ -104,11 +104,11 @@ final class SearchViewModel {
     
     func toggleFavorite(_ marketPrice: MarketPrice) {
         manageFavoritesUseCase.isCoinSaved(marketPrice.symbol, exchange: marketPrice.exchange)
-            .flatMap { isSaved -> Observable<Void> in  // ✅ Observable<Bool>을 flatMap으로 변환
+            .flatMap { isSaved -> Observable<Void> in
                 if isSaved {
-                    return self.manageFavoritesUseCase.removeCoin(marketPrice) // ✅ 코어데이터에서 삭제
+                    return self.manageFavoritesUseCase.removeCoin(marketPrice)
                 } else {
-                    return self.manageFavoritesUseCase.saveCoin(marketPrice) // ✅ 코어데이터에 추가
+                    return self.manageFavoritesUseCase.saveCoin(marketPrice)
                 }
             }
             .ignoreElements() // ✅ Observable<Void>를 Completable로 변환
