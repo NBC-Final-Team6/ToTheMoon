@@ -38,6 +38,11 @@ class ChartViewController: UIViewController {
         setupViews()
         setupBindings()
         bindViewModel()
+        
+        if let firstCoin = try? viewModel.selectedCoins.value().first {
+            viewModel.fetchCandles(for: firstCoin)
+        }
+        
         updateSelectedTimeFrame(.day)
     }
 
@@ -50,7 +55,7 @@ class ChartViewController: UIViewController {
     }
 
     private func setupBindings() {
-        // ✅ 현재 선택된 첫 번째 코인 가져오기
+        // 현재 선택된 첫 번째 코인 가져오기
         viewModel.selectedCoins
             .map { $0.first } // ✅ 첫 번째 코인만 가져옴
             .compactMap { $0 } // ✅ nil 방지
@@ -60,7 +65,7 @@ class ChartViewController: UIViewController {
             })
             .disposed(by: disposeBag)
 
-        // ✅ 차트 데이터 바인딩
+        // 차트 데이터 바인딩
         viewModel.chartData
             .observe(on: MainScheduler.instance)
             .subscribe(onNext: { [weak self] dates, entries in
@@ -75,10 +80,10 @@ class ChartViewController: UIViewController {
             })
             .disposed(by: disposeBag)
 
-        // ✅ 시간 버튼 바인딩 (RxSwift 활용)
+        // 시간 버튼 바인딩 (RxSwift 활용)
         setupTimeFrameBindings()
 
-        // ✅ 구글 검색 버튼 기능 추가
+        // 구글 검색 버튼 기능 추가
         chartView.googleSearchButton.rx.tap
             .subscribe(onNext: { [weak self] in
                 self?.searchCoinOnGoogle()
@@ -86,7 +91,7 @@ class ChartViewController: UIViewController {
             .disposed(by: disposeBag)
     }
 
-    // ✅ **시간 간격 버튼 Rx 바인딩 (분, 일, 주, 월만)**
+    // 시간 간격 버튼 Rx 바인딩 (분, 일, 주, 월만)
     private func setupTimeFrameBindings() {
         let timeButtons: [(UIButton, CandleInterval)] = [
             (chartView.minuteButton, .minute),
@@ -104,7 +109,7 @@ class ChartViewController: UIViewController {
         }
     }
 
-    // ✅ **선택된 시간 프레임 업데이트 (버튼 강조)**
+    // 선택된 시간 프레임 업데이트 (버튼 강조)
     private func updateSelectedTimeFrame(_ newInterval: CandleInterval) {
         selectedTimeFrame = newInterval
         viewModel.candleInterval.onNext(newInterval)
@@ -112,8 +117,8 @@ class ChartViewController: UIViewController {
         // 버튼 UI 업데이트
         let allButtons = [chartView.minuteButton, chartView.dayButton, chartView.weekButton, chartView.monthButton]
         for button in allButtons {
-            button.backgroundColor = .lightGray.withAlphaComponent(0.2)
-            button.setTitleColor(.black, for: .normal)
+            button.backgroundColor = .container
+            button.setTitleColor(.text, for: .normal)
         }
 
         switch newInterval {
@@ -125,7 +130,7 @@ class ChartViewController: UIViewController {
         }
     }
 
-    // ✅ **구글 검색 버튼 기능 (해당 코인을 검색)**
+    // 구글 검색 버튼 기능 (해당 코인을 검색)
     private func searchCoinOnGoogle() {
         guard let firstCoin = try? viewModel.selectedCoins.value().first else { return }
         let coinName = firstCoin.symbol.uppercased()
@@ -136,31 +141,30 @@ class ChartViewController: UIViewController {
         }
     }
 
-    // ✅ **ViewModel과 UI 바인딩**
+    // ViewModel과 UI 바인딩
     private func bindViewModel() {
         viewModel.coinInfo
             .observe(on: MainScheduler.instance)
             .subscribe(onNext: { [weak self] info in
-                print("✅ [DEBUG] UI 업데이트 요청됨: \(info)") // 디버깅 로그
                 self?.updateCoinDescription(info)
             })
             .disposed(by: disposeBag)
     }
 
-    // ✅ **UI 업데이트 함수**
+    // UI 업데이트 함수
     private func updateUI(with firstCoin: MarketPrice) {
-        // ✅ 기존 UI 바인딩 해제 후 새로운 DisposeBag 생성
+        // 기존 UI 바인딩 해제 후 새로운 DisposeBag 생성
         uiDisposeBag = DisposeBag()
         
         let coinSymbol = firstCoin.symbol
         let coinExchange = firstCoin.exchange
 
-        // ✅ 제목 및 코인 페어 표시
+        // 제목 및 코인 페어 표시
         let coinTitleText = "\(coinSymbol) / \(coinExchange)"
         chartView.coinTitleLabel.text = coinTitleText
         chartView.coinNameLabel.text = "\(coinSymbol) (\(coinExchange))"
 
-        // ✅ 가격 정보 바인딩 (중복 방지)
+        // 가격 정보 바인딩 (중복 방지)
         viewModel.currentPrices
             .map { $0[firstCoin.symbol] ?? "0" }
             .distinctUntilChanged()
@@ -182,7 +186,7 @@ class ChartViewController: UIViewController {
             .bind(to: chartView.changeRateValueLabel.rx.text)
             .disposed(by: uiDisposeBag)
 
-        // ✅ 최고가 / 최저가 업데이트
+        // 최고가 / 최저가 업데이트
         viewModel.highestPrice
             .distinctUntilChanged()
             .bind(to: chartView.highestPriceValueLabel.rx.text)
@@ -193,7 +197,7 @@ class ChartViewController: UIViewController {
             .bind(to: chartView.lowestPriceValueLabel.rx.text)
             .disposed(by: uiDisposeBag)
         
-        // ✅ **심볼 이미지 적용 (기본 이미지 → 네트워크 이미지)**
+        // 심볼 이미지 적용 (기본 이미지 → 네트워크 이미지)
         let defaultImage = UIImage(named: "default_coin")
 
         if let cachedImage = ImageRepository.getImage(for: coinSymbol) {
@@ -211,24 +215,22 @@ class ChartViewController: UIViewController {
                 .disposed(by: uiDisposeBag)
         }
 
-        // ✅ **디지털 자산 소개 업데이트**
+        // 디지털 자산 소개 업데이트
         viewModel.coinInfo
             .map { $0[firstCoin.symbol.uppercased()] ?? "설명 데이터를 가져올 수 없습니다." }
             .distinctUntilChanged()
             .observe(on: MainScheduler.instance)
             .subscribe(onNext: { [weak self] description in
-                print("✅ [DEBUG] \(firstCoin.symbol) 설명 UI 업데이트됨: \(description)") // ✅ 디버깅 로그
                 self?.chartView.digitalAssetDescriptionTextView.text = description
             })
             .disposed(by: uiDisposeBag)
     }
 
-    // ✅ **코인 설명 UI 업데이트 함수**
+    // 코인 설명 UI 업데이트 함수
     private func updateCoinDescription(_ info: [String: String]) {
         DispatchQueue.main.async {
             if let firstKey = info.keys.first, let description = info[firstKey] {
                 self.chartView.digitalAssetDescriptionTextView.text = description
-                print("✅ [UI 업데이트] \(firstKey) 설명 반영됨: \(description)")
             } else {
                 self.chartView.digitalAssetDescriptionTextView.text = "설명 데이터를 불러올 수 없습니다."
             }
