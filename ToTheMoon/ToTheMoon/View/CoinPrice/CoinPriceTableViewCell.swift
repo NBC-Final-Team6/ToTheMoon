@@ -127,6 +127,7 @@ class CoinPriceTableViewCell: UITableViewCell {
             priceChangeLabel.textColor = .numbersRed
         }
         
+
         if let candles = candles, !candles.isEmpty {
             let processedCandles = CandleChartDataManager.processCandles(candles)
             chartView.updateChart(with: processedCandles, changeRate: item.changeRate)
