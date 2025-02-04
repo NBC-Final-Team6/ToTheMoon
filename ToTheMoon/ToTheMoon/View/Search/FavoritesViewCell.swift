@@ -128,7 +128,6 @@ class FavoritesViewCell: UITableViewCell {
         marketNameLabel.text = nil
         priceLabel.text = nil
         priceChangeLabel.text = nil
-        isSaved = false
         updateAddButton(isSaved: isSaved) 
     }
     
@@ -165,8 +164,6 @@ class FavoritesViewCell: UITableViewCell {
     
     @objc private func addButtonTapped() {
         guard let coin = currentCoin else { return }
-        isSaved.toggle()
-        updateAddButton(isSaved: isSaved)
         addButtonAction?(coin)
     }
 }
