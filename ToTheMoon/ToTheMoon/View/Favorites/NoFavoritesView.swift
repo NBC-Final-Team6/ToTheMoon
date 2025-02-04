@@ -19,7 +19,7 @@ final class NoFavoritesView: UIView {
     }()
     
     private let imageView: UIImageView = {
-        let imageView = UIImageView(image: UIImage(systemName: "moon.fill"))
+        let imageView = UIImageView(image: UIImage(named: "logoImage1"))
         imageView.tintColor = .personel
         imageView.contentMode = .scaleAspectFit
         return imageView
@@ -47,7 +47,7 @@ final class NoFavoritesView: UIView {
     let addButton: UIButton = {
         let button = UIButton(type: .system)
         button.setTitle("코인 추가하기", for: .normal)
-        button.setTitleColor(.white, for: .normal)
+        button.setTitleColor(.text, for: .normal)
         button.backgroundColor = .personel
         button.layer.cornerRadius = 10
         button.titleLabel?.font = .medium.bold()
@@ -82,7 +82,7 @@ final class NoFavoritesView: UIView {
         }
         
         imageView.snp.makeConstraints { make in
-            make.height.equalTo(UIScreen.main.bounds.height * 0.3) // 화면 높이에 비례
+            make.height.equalTo(UIScreen.main.bounds.height * 0.4) // 화면 높이에 비례
             make.width.equalTo(imageView.snp.height) // 정사각형 비율
         }
         
