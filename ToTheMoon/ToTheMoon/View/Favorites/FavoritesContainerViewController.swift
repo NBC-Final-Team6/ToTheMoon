@@ -16,7 +16,7 @@ final class FavoritesContainerViewController: UIViewController {
     private let tabs = ["인기 화폐", "관심 목록"]
     let selectedSegment = BehaviorRelay<SegmentType>(value: .favoriteList)
     private let disposeBag = DisposeBag()
-
+    
     private lazy var popularCurrencyVC = PopularCurrencyViewController()
     private lazy var getMarketPricesUseCase = GetMarketPricesUseCase()
     private lazy var favoriteListVC = FavoriteListViewController(
@@ -29,21 +29,21 @@ final class FavoritesContainerViewController: UIViewController {
     override func loadView() {
         self.view = topFavoritesView
     }
-
+    
     override func viewDidLoad() {
         super.viewDidLoad()
         setupCollectionViewLayout()
         setupTabCollectionView()
         setupInitialView()
         bindSegmentSelection()
-        //bindSearchButton()
+        bindSearchButton()
     }
     
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
         navigationController?.navigationBar.isHidden = true
     }
-
+    
     private func setupCollectionViewLayout() {
         guard let layout = topFavoritesView.tabCollectionView.collectionViewLayout as? UICollectionViewFlowLayout else { return }
         
@@ -52,7 +52,7 @@ final class FavoritesContainerViewController: UIViewController {
         let tabWidth = collectionViewWidth / tabCount
         
         layout.itemSize = CGSize(width: tabWidth, height: 40)
-        layout.sectionInset = .zero 
+        layout.sectionInset = .zero
         
         DispatchQueue.main.async {
             let selectedIndex = self.selectedSegment.value.rawValue
@@ -67,7 +67,7 @@ final class FavoritesContainerViewController: UIViewController {
             self.topFavoritesView.layoutIfNeeded()
         }
     }
-
+    
     private func setupTabCollectionView() {
         topFavoritesView.tabCollectionView.delegate = self  // delegate 설정 추가
         
@@ -78,7 +78,7 @@ final class FavoritesContainerViewController: UIViewController {
                 cell.configure(with: title, isSelected: isSelected)
             }
             .disposed(by: disposeBag)
-
+        
         topFavoritesView.tabCollectionView.rx.itemSelected
             .subscribe(onNext: { [weak self] indexPath in
                 guard let self = self else { return }
@@ -89,11 +89,11 @@ final class FavoritesContainerViewController: UIViewController {
             })
             .disposed(by: disposeBag)
     }
-
+    
     private func setupInitialView() {
         switchToViewController(for: .favoriteList)
     }
-
+    
     private func bindSegmentSelection() {
         selectedSegment
             .distinctUntilChanged()
@@ -105,13 +105,13 @@ final class FavoritesContainerViewController: UIViewController {
             })
             .disposed(by: disposeBag)
     }
-
+    
     private func updateTabUI(for segment: SegmentType) {
         let index = segment.rawValue
         animateUnderline(to: index)
         topFavoritesView.tabCollectionView.reloadData()
     }
-
+    
     private func animateUnderline(to index: Int) {
         let tabWidth = topFavoritesView.tabCollectionView.frame.width / CGFloat(tabs.count)
         let leadingOffset = tabWidth * CGFloat(index)
@@ -127,6 +127,31 @@ final class FavoritesContainerViewController: UIViewController {
         }
     }
     
+    private func bindSearchButton() {
+        
+        topFavoritesView.searchButton.rx.tap
+            .bind(to: viewModel.showSearchViewController)
+            .disposed(by: disposeBag)
+        
+        viewModel.showSearchViewController
+            .subscribe(onNext: { [weak self] in
+                self?.navigateToSearchViewController()
+            })
+            .disposed(by: disposeBag)
+    }
+    
+    private func navigateToSearchViewController() {
+        let getMarketPricesUseCase = GetMarketPricesUseCase()
+        let manageFavoritesUseCase = ManageFavoritesUseCase()
+        let searchViewModel = SearchViewModel(
+            getMarketPricesUseCase: getMarketPricesUseCase,
+            manageFavoritesUseCase: manageFavoritesUseCase
+        )
+        let searchVC = SearchViewController(viewModel: searchViewModel)
+        navigationController?.pushViewController(searchVC, animated: true)
+    }
+    
+    
     private func switchToViewController(for segment: SegmentType) {
         if segment == .popularCurrency {
             remove(child: favoriteListVC)
@@ -136,7 +161,7 @@ final class FavoritesContainerViewController: UIViewController {
             add(child: favoriteListVC)
         }
     }
-
+    
     private func add(child viewController: UIViewController) {
         topFavoritesView.contentView.addSubview(viewController.view)
         viewController.view.snp.makeConstraints { make in
