@@ -21,6 +21,7 @@ class CoinPriceViewController: UIViewController {
     
     override func viewDidLoad() {
         super.viewDidLoad()
+        setupSwipeGestures()
         setupBinding()
         coinPriceView.coinPriceTableView.rx.setDelegate(self).disposed(by: disposeBag)
     }
@@ -28,6 +29,47 @@ class CoinPriceViewController: UIViewController {
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
         navigationController?.navigationBar.isHidden = true
+    }
+    
+    private func setupSwipeGestures() {
+        // 왼쪽으로 스와이프 (다음 거래소)
+        let leftSwipe = UISwipeGestureRecognizer(target: self, action: #selector(handleSwipe(_:)))
+        leftSwipe.direction = .left
+        view.addGestureRecognizer(leftSwipe)
+        
+        // 오른쪽으로 스와이프 (이전 거래소)
+        let rightSwipe = UISwipeGestureRecognizer(target: self, action: #selector(handleSwipe(_:)))
+        rightSwipe.direction = .right
+        view.addGestureRecognizer(rightSwipe)
+    }
+    
+    @objc private func handleSwipe(_ gesture: UISwipeGestureRecognizer) {
+        let exchanges: [Exchange] = [.upbit, .bithumb, .coinone, .korbit]
+        let currentIndex = exchanges.firstIndex(of: viewModel.currentExchange) ?? 0
+        
+        var nextIndex: Int
+        
+        switch gesture.direction {
+        case .left:  // 다음 거래소
+            nextIndex = (currentIndex + 1) % exchanges.count
+        case .right:  // 이전 거래소
+            nextIndex = (currentIndex - 1 + exchanges.count) % exchanges.count
+        default:
+            return
+        }
+        
+        // 마켓뷰 상태 초기화
+        coinPriceView.resetMarketViews()
+        coinPriceView.scrollToTop()
+        
+        // 다음 거래소로 변경
+        viewModel.selectExchange(exchanges[nextIndex])
+        
+        // 해당하는 마켓뷰 강조 표시
+        let marketViews = coinPriceView.getMarketViews()
+        if nextIndex < marketViews.count {
+            marketViews[nextIndex].handleTap()
+        }
     }
     
     private func setupBinding() {

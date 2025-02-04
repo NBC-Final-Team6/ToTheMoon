@@ -58,7 +58,7 @@ class MarketView: UIView {
         self.isUserInteractionEnabled = true
     }
     
-    @objc private func handleTap() {
+    @objc func handleTap() {
         if let exchange = exchange {
             selectedExchange.accept(exchange)
             marketImage.tintColor = .personel
