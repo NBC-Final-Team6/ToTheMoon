@@ -77,12 +77,6 @@ final class FavoriteListViewController: UIViewController {
                 cell.configure(with: coin)
             }
             .disposed(by: disposeBag)
-        
-        contentView.floatingButton.rx.tap
-            .bind { [weak self] in
-                self?.navigateToSearch()
-            }
-            .disposed(by: disposeBag)
     }
     
     @objc private func navigateToSearch() {
