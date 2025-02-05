@@ -134,7 +134,7 @@ class CoinPriceViewController: UIViewController {
         viewModel.error
             .observe(on: MainScheduler.instance)
             .subscribe(onNext: { error in
-                print("Error occurred: \(error.localizedDescription)")
+//                print("Error occurred: \(error.localizedDescription)")
             })
             .disposed(by: disposeBag)
     }
