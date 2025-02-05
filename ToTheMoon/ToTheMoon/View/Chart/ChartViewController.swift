@@ -67,7 +67,7 @@ class ChartViewController: UIViewController {
     }
 
     private func setupViews() {
-        view.backgroundColor = .white
+        view.backgroundColor = .clear
         view.addSubview(chartView)
         chartView.snp.makeConstraints { make in
             make.edges.equalToSuperview()
