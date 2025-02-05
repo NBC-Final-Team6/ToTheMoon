@@ -12,16 +12,6 @@ import DGCharts
 class ChartView: UIView {
     
     // MARK: - UI 컴포넌트
-    
-    // 상단 BTC/Upbit 라벨
-    let coinTitleLabel: UILabel = {
-        let label = UILabel()
-        label.text = "BTC/Upbit"
-        label.font = UIFont.boldSystemFont(ofSize: 18)
-        label.textColor = .text
-        label.textAlignment = .center
-        return label
-    }()
 
     // 현재 가격 라벨
     let currentPriceLabel: UILabel = {
@@ -31,7 +21,7 @@ class ChartView: UIView {
         label.textAlignment = .left
         return label
     }()
-
+    
     // 새로운 시간 버튼 컨테이너 뷰 (1분, 일, 주, 월 버튼을 그룹화)
     private let timeSelectorView: UIStackView = {
         let stackView = UIStackView()
@@ -98,9 +88,9 @@ class ChartView: UIView {
         return stackView
     }()
 
-    let totalSupplyLabel = ChartView.createInfoLabel(title: "총 발행 수량", value: "99,986,676,553")
-    let marketCapLabel = ChartView.createInfoLabel(title: "시가 총액", value: "2,904조 4,294억")
-    let circulatingSupplyLabel = ChartView.createInfoLabel(title: "현재 유통량", value: "57,764,441,098")
+    let totalSupplyLabel = ChartView.createInfoLabel(title: "총 발행 수량", value: "준비중")
+    let marketCapLabel = ChartView.createInfoLabel(title: "시가 총액", value: "준비중")
+    let circulatingSupplyLabel = ChartView.createInfoLabel(title: "현재 유통량", value: "준비중")
     
     // 디지털 자산 소개 컨테이너
     private let digitalAssetContainerView: UIView = {
@@ -205,7 +195,6 @@ class ChartView: UIView {
     private func setupUI() {
         backgroundColor = .background
 
-        addSubview(coinTitleLabel)
         addSubview(currentPriceLabel)
         addSubview(timeSelectorView)
 
@@ -255,13 +244,9 @@ class ChartView: UIView {
     
     // MARK: - 레이아웃 설정
     private func setupConstraints() {
-        coinTitleLabel.snp.makeConstraints { make in
-            make.top.equalTo(safeAreaLayoutGuide).offset(10)
-            make.centerX.equalToSuperview()
-        }
 
         currentPriceLabel.snp.makeConstraints { make in
-            make.top.equalTo(coinTitleLabel.snp.bottom).offset(8)
+            make.top.equalTo(safeAreaLayoutGuide).offset(10)
             make.leading.equalToSuperview().offset(20)
         }
         
