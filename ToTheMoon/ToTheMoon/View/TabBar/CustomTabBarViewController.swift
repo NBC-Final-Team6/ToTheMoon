@@ -26,9 +26,19 @@ class CustomTabBarViewController: UIViewController {
     }
 
     private func setupUI() {
+        let backgroundView = UIView()
+        backgroundView.backgroundColor = .background
+        view.addSubview(backgroundView)
+        backgroundView.snp.makeConstraints { make in
+            make.leading.trailing.bottom.equalToSuperview()
+            make.height.equalTo(120)
+        }
+
+        
         view.addSubview(customTabBar)
         customTabBar.snp.makeConstraints { make in
             make.leading.trailing.bottom.equalToSuperview()
+            make.bottom.equalToSuperview().offset(-20)
             make.height.equalTo(80)
         }
     }
