@@ -25,7 +25,7 @@ class CustomTabBarView: UIView {
     }
 
     private func setupUI() {
-        self.backgroundColor = UIColor(named: "BackgroundColor")
+        self.backgroundColor = .background
         self.layer.masksToBounds = false
         self.clipsToBounds = true
 
@@ -42,7 +42,7 @@ class CustomTabBarView: UIView {
 
             // 아이콘
             let imageView = UIImageView(image: UIImage(systemName: iconName))
-            imageView.tintColor = index == 0 ? UIColor(named: "PersonelColor") : UIColor(named: "TabBarTextColor")
+            imageView.tintColor = index == 0 ? .personel : .tabBarText
             imageView.contentMode = .scaleAspectFit
             imageView.snp.makeConstraints { make in
                 make.size.equalTo(24)
@@ -52,7 +52,7 @@ class CustomTabBarView: UIView {
             let label = UILabel()
             label.text = titles[index]
             label.font = UIFont.systemFont(ofSize: 14, weight: .bold)
-            label.textColor = index == 0 ? UIColor(named: "PersonelColor") : UIColor(named: "TabBarTextColor")
+            label.textColor = index == 0 ? .personel : .tabBarText
 
             // 스택뷰에 추가
             stackView.addArrangedSubview(imageView)
@@ -96,8 +96,8 @@ class CustomTabBarView: UIView {
             let imageView = stackView?.arrangedSubviews.first as? UIImageView
             let label = stackView?.arrangedSubviews.last as? UILabel
 
-            imageView?.tintColor = index == selectedIndex ? UIColor(named: "PersonelColor") : UIColor(named: "TabBarTextColor")
-            label?.textColor = index == selectedIndex ? UIColor(named: "PersonelColor") : UIColor(named: "TabBarTextColor")
+            imageView?.tintColor = index == selectedIndex ? .personel : .tabBarText
+            label?.textColor = index == selectedIndex ? .personel : .tabBarText
         }
     }
 }
