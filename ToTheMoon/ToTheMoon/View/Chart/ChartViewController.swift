@@ -38,16 +38,41 @@ class ChartViewController: UIViewController {
         setupViews()
         setupBindings()
         bindViewModel()
+        setupNavigationBar()
+        navigationController?.navigationBar.isHidden = false
         
         if let firstCoin = try? viewModel.selectedCoins.value().first {
             viewModel.fetchCandles(for: firstCoin)
+            updateNavigationBarTitle(with: firstCoin)
         }
         
         updateSelectedTimeFrame(.day)
     }
 
+    // 네비게이션 바 및 뒤로가기 버튼 설정
+    private func setupNavigationBar() {
+        navigationController?.navigationBar.prefersLargeTitles = false
+        navigationController?.navigationBar.tintColor = .black // 뒤로가기 버튼 색상
+
+        let backButton = UIBarButtonItem(
+            image: UIImage(systemName: "chevron.left"), // 뒤로가기 아이콘
+            style: .plain,
+            target: self,
+            action: #selector(backButtonTapped)
+        )
+        navigationItem.leftBarButtonItem = backButton
+    }
+    
+    @objc private func backButtonTapped() {
+        navigationController?.popViewController(animated: true)
+    }
+    
+    private func updateNavigationBarTitle(with coin: MarketPrice) {
+        title = "\(coin.symbol.uppercased()) / \(coin.exchange)"
+    }
+
     private func setupViews() {
-        view.backgroundColor = .white
+        view.backgroundColor = .clear
         view.addSubview(chartView)
         chartView.snp.makeConstraints { make in
             make.edges.equalToSuperview()
@@ -62,6 +87,7 @@ class ChartViewController: UIViewController {
             .observe(on: MainScheduler.instance)
             .subscribe(onNext: { [weak self] firstCoin in
                 self?.updateUI(with: firstCoin)
+                self?.updateNavigationBarTitle(with: firstCoin)
             })
             .disposed(by: disposeBag)
 
@@ -161,8 +187,7 @@ class ChartViewController: UIViewController {
 
         // 제목 및 코인 페어 표시
         let coinTitleText = "\(coinSymbol) / \(coinExchange)"
-        chartView.coinTitleLabel.text = coinTitleText
-        chartView.coinNameLabel.text = "\(coinSymbol) (\(coinExchange))"
+        chartView.coinNameLabel.text = "\(coinSymbol.uppercased()) (\(coinExchange))"
 
         // 가격 정보 바인딩 (중복 방지)
         viewModel.currentPrices
@@ -232,7 +257,7 @@ class ChartViewController: UIViewController {
             if let firstKey = info.keys.first, let description = info[firstKey] {
                 self.chartView.digitalAssetDescriptionTextView.text = description
             } else {
-                self.chartView.digitalAssetDescriptionTextView.text = "설명 데이터를 불러올 수 없습니다."
+                self.chartView.digitalAssetDescriptionTextView.text = "설명 데이터 준비중"
             }
         }
     }
