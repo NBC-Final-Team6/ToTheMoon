@@ -63,7 +63,7 @@ class CoinPriceView: UIView {
         stackView.snp.makeConstraints { make in
             make.top.equalTo(titleLabel.snp.bottom).offset(20)
             make.horizontalEdges.equalToSuperview().inset(15)
-            make.height.equalTo(100)
+            make.height.equalTo(((UIScreen.main.bounds.width - 100) / 4) + 26)
         }
         
         coinPriceTableView.snp.makeConstraints { make in
