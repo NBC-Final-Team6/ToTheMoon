@@ -30,10 +30,12 @@ final class TopFavoritesView: UIView {
         layout.scrollDirection = .horizontal
         layout.minimumLineSpacing = 0
         layout.minimumInteritemSpacing = 0
+        layout.sectionInset = .zero
         
         let collectionView = UICollectionView(frame: .zero, collectionViewLayout: layout)
         collectionView.showsHorizontalScrollIndicator = false
         collectionView.backgroundColor = .clear
+        collectionView.contentInset = .zero
         collectionView.register(TabCell.self, forCellWithReuseIdentifier: "TabCell")
         return collectionView
     }()
@@ -91,7 +93,7 @@ final class TopFavoritesView: UIView {
         }
         
         contentView.snp.makeConstraints { make in
-            make.top.equalTo(underlineView.snp.bottom).offset(8)
+            make.top.equalTo(tabCollectionView.snp.bottom).offset(8)
             make.leading.trailing.bottom.equalToSuperview()
         }
     }
