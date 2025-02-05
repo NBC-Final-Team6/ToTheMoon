@@ -77,8 +77,7 @@ final class NoFavoritesView: UIView {
         // 제약 조건 설정
         verticalStackView.snp.makeConstraints { make in
             make.top.equalToSuperview().offset(40)
-            make.centerX.equalToSuperview()
-            make.leading.trailing.equalToSuperview().inset(16) // 좌우 여백
+            make.horizontalEdges.equalToSuperview().inset(16) // 좌우 여백
         }
         
         imageView.snp.makeConstraints { make in
