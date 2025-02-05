@@ -93,19 +93,11 @@ final class GetMarketPricesUseCase {
                             }
                         }
                     }
-                    
                     // ✅ 4. 캔들 데이터 요청
                     let candleService: Single<[Candle]>
                     switch marketPrice.exchange {
                     case "Upbit":
                         candleService = self.upbitService.fetchCandles(symbol: normalizedSymbol, interval: .minute, count: 1440)
-                            .delay(.milliseconds(300), scheduler: MainScheduler.instance) // ✅ 300ms 딜레이 추가
-                                .retry(2) // ✅ 실패 시 최대 2번 더 재시도
-                                .do(onSuccess: { candles in
-                                    print("✅ \(marketPrice.exchange) 캔들 데이터 개수: \(candles.count)")
-                                }, onError: { error in
-                                    print("❌ \(marketPrice.exchange) 캔들 데이터 로드 실패: \(error.localizedDescription)")
-                                })
                     case "Bithumb":
                         candleService = self.bithumbService.fetchCandles(symbol: normalizedSymbol, interval: .minute, count: 1440)
                     case "CoinOne":
@@ -118,10 +110,15 @@ final class GetMarketPricesUseCase {
                     }
                     
                     let combinedRequest = candleService
+                        .do(onSuccess: { candles in
+                            print("📊 [\(marketPrice.exchange)] \(normalizedSymbol) 캔들 데이터 개수: \(candles.count)")
+                        }, onError: { error in
+                            print("❌ [\(marketPrice.exchange)] \(normalizedSymbol) 캔들 데이터 요청 실패: \(error)")
+                        })
                         .map { candles in
                             return (updatedMarketPrice, candles)
                         }
-                        .catchAndReturn((updatedMarketPrice, [])) // 오류 발생 시 빈 배열 반환
+                        .catchAndReturn((updatedMarketPrice, []))
                     
                     combinedRequests.append(combinedRequest)
                 }
