@@ -40,6 +40,9 @@ final class FavoritesListViewModel {
             .asObservable()
         
         let allMarketPricesSingle = getMarketPricesUseCase.execute()
+            .map { marketData in
+                marketData.map { $0.0 } // ✅ MarketPrice만 추출하여 오류 해결
+            }
         
         Observable.combineLatest(savedCoinsObservable, allMarketPricesSingle.asObservable())
             .map { savedCoins, marketPrices in

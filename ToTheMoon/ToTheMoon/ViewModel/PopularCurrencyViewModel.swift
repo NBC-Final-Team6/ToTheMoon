@@ -13,7 +13,8 @@ final class PopularCurrencyViewModel {
     private let manageFavoritesUseCase: ManageFavoritesUseCaseProtocol
     private let disposeBag = DisposeBag()
     
-    let popularCoins = BehaviorRelay<[MarketPrice]>(value: [])
+    // ✅ Output
+    let popularCoins = BehaviorRelay<[(MarketPrice, [Candle])]>(value: [])
     let selectedCoins = BehaviorRelay<Set<MarketPrice>>(value: [])
     let isFavoriteButtonVisible = BehaviorRelay<Bool>(value: false)
     
@@ -27,16 +28,12 @@ final class PopularCurrencyViewModel {
     }
     
     func fetchPopularCoins() {
-        Observable<Int>.interval(.seconds(1), scheduler: MainScheduler.instance)
-            .flatMapLatest { [weak self] _ in
-                self?.getMarketPricesUseCase.execute()
-                    .map { marketPrices in
-                        marketPrices.sorted(by: { $0.quoteVolume > $1.quoteVolume })
-                    }
-                    .asObservable()
-                    .catchAndReturn([])
-                ?? Observable.just([])
+        getMarketPricesUseCase.execute()
+            .map { marketData in
+                marketData.sorted(by: { $0.0.quoteVolume > $1.0.quoteVolume }) // ✅ 거래량 기준 정렬
             }
+            .asObservable()
+            .catchAndReturn([])
             .bind(to: popularCoins)
             .disposed(by: disposeBag)
     }

@@ -47,6 +47,9 @@ final class SearchViewModel {
     
     private func fetchMarketPrices() {
         getMarketPricesUseCase.execute()
+            .map { marketData in
+                marketData.map { $0.0 } // ✅ MarketPrice만 추출
+            }
             .subscribe(onSuccess: { [weak self] marketPrices in
                 self?.allMarketPrices.accept(marketPrices)
             })
