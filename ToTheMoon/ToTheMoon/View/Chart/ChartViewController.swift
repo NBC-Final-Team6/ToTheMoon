@@ -38,12 +38,32 @@ class ChartViewController: UIViewController {
         setupViews()
         setupBindings()
         bindViewModel()
+        setupNavigationBar()
+        navigationController?.navigationBar.isHidden = false
         
         if let firstCoin = try? viewModel.selectedCoins.value().first {
             viewModel.fetchCandles(for: firstCoin)
         }
         
         updateSelectedTimeFrame(.day)
+    }
+
+    // 네비게이션 바 및 뒤로가기 버튼 설정
+    private func setupNavigationBar() {
+        navigationController?.navigationBar.prefersLargeTitles = false
+        navigationController?.navigationBar.tintColor = .black // 뒤로가기 버튼 색상
+
+        let backButton = UIBarButtonItem(
+            image: UIImage(systemName: "chevron.left"), // 뒤로가기 아이콘
+            style: .plain,
+            target: self,
+            action: #selector(backButtonTapped)
+        )
+        navigationItem.leftBarButtonItem = backButton
+    }
+    
+    @objc private func backButtonTapped() {
+        navigationController?.popViewController(animated: true)
     }
 
     private func setupViews() {
