@@ -49,7 +49,7 @@ final class FavoritesContainerViewController: UIViewController {
         
         let tabCount = CGFloat(tabs.count)
         let collectionViewWidth = UIScreen.main.bounds.width
-        let tabWidth = collectionViewWidth / tabCount
+        let tabWidth = (collectionViewWidth / tabCount) - 16
         
         layout.itemSize = CGSize(width: tabWidth, height: 40)
         layout.sectionInset = .zero
@@ -57,12 +57,11 @@ final class FavoritesContainerViewController: UIViewController {
         DispatchQueue.main.async {
             let selectedIndex = self.selectedSegment.value.rawValue
             let leadingOffset = tabWidth * CGFloat(selectedIndex)
-            print(leadingOffset)
             self.topFavoritesView.underlineView.snp.remakeConstraints { make in
                 make.bottom.equalTo(self.topFavoritesView.tabCollectionView)
                 make.height.equalTo(2)
                 make.trailing.equalToSuperview().offset(-16)
-                make.width.equalTo(185)
+                make.width.equalTo(leadingOffset)
             }
             self.topFavoritesView.layoutIfNeeded()
         }
