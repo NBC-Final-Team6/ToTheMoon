@@ -17,14 +17,9 @@ final class FavoritesContainerViewController: UIViewController {
     let selectedSegment = BehaviorRelay<SegmentType>(value: .favoriteList)
     private let disposeBag = DisposeBag()
     
-    private lazy var popularCurrencyVC = PopularCurrencyViewController()
     private lazy var getMarketPricesUseCase = GetMarketPricesUseCase()
-    private lazy var favoriteListVC = FavoriteListViewController(
-        viewModel: FavoritesListViewModel(
-            manageFavoritesUseCase: ManageFavoritesUseCase(),
-            getMarketPricesUseCase: getMarketPricesUseCase
-        )
-    )
+    
+    private var childControllers: [SegmentType: UIViewController] = [:]
     
     override func loadView() {
         self.view = topFavoritesView
@@ -45,27 +40,15 @@ final class FavoritesContainerViewController: UIViewController {
     }
     
     private func setupCollectionViewLayout() {
-        guard let layout = topFavoritesView.tabCollectionView.collectionViewLayout as? UICollectionViewFlowLayout else { return }
-        
-        let tabCount = CGFloat(tabs.count)
-        let collectionViewWidth = UIScreen.main.bounds.width
-        let tabWidth = (collectionViewWidth / tabCount) - 16
-        
-        layout.itemSize = CGSize(width: tabWidth, height: 40)
-        layout.sectionInset = .zero
-        
-        DispatchQueue.main.async {
-            let selectedIndex = self.selectedSegment.value.rawValue
-            let leadingOffset = tabWidth * CGFloat(selectedIndex)
-            self.topFavoritesView.underlineView.snp.remakeConstraints { make in
-                make.bottom.equalTo(self.topFavoritesView.tabCollectionView)
-                make.height.equalTo(2)
-                make.trailing.equalToSuperview().offset(-16)
-                make.width.equalTo(leadingOffset)
-            }
-            self.topFavoritesView.layoutIfNeeded()
-        }
-    }
+         guard let layout = topFavoritesView.tabCollectionView.collectionViewLayout as? UICollectionViewFlowLayout else { return }
+         
+         let tabCount = CGFloat(tabs.count)
+         let collectionViewWidth = UIScreen.main.bounds.width
+         let tabWidth = (collectionViewWidth / tabCount) - 16
+         
+         layout.itemSize = CGSize(width: tabWidth, height: 40)
+         layout.sectionInset = .zero
+     }
     
     private func setupTabCollectionView() {
         topFavoritesView.tabCollectionView.delegate = self  // delegate 설정 추가
@@ -106,9 +89,9 @@ final class FavoritesContainerViewController: UIViewController {
     }
     
     private func updateTabUI(for segment: SegmentType) {
-        let index = segment.rawValue
-        animateUnderline(to: index)
+        animateUnderline(to: segment.rawValue)
         topFavoritesView.tabCollectionView.reloadData()
+        topFavoritesView.searchButton.isHidden = (segment == .popularCurrency)
     }
     
     private func animateUnderline(to index: Int) {
@@ -151,27 +134,42 @@ final class FavoritesContainerViewController: UIViewController {
     }
     
     
+    // MARK: - 뷰 컨트롤러 전환
     private func switchToViewController(for segment: SegmentType) {
-        if segment == .popularCurrency {
-            remove(child: favoriteListVC)
-            add(child: popularCurrencyVC)
-        } else {
-            remove(child: popularCurrencyVC)
-            add(child: favoriteListVC)
+        // 기존 화면 제거
+        childControllers.values.forEach { removeChildVC($0) }
+        // 새로운 화면 추가
+        let newViewController = childControllers[segment] ?? createViewController(for: segment)
+        addChildVC(newViewController)
+        // 생성된 뷰 컨트롤러를 저장
+        childControllers[segment] = newViewController
+    }
+    
+    private func createViewController(for segment: SegmentType) -> UIViewController {
+        switch segment {
+        case .popularCurrency:
+            return PopularCurrencyViewController()
+        case .favoriteList:
+            return FavoriteListViewController(
+                viewModel: FavoritesListViewModel(
+                    manageFavoritesUseCase: ManageFavoritesUseCase(),
+                    getMarketPricesUseCase: getMarketPricesUseCase
+                )
+            )
         }
     }
     
-    private func add(child viewController: UIViewController) {
+    private func addChildVC(_ viewController: UIViewController) {
         topFavoritesView.contentView.addSubview(viewController.view)
         viewController.view.snp.makeConstraints { make in
             make.edges.equalToSuperview()
         }
-        topFavoritesView.contentView.layoutIfNeeded()
+        self.view.layoutIfNeeded()
         addChild(viewController)
         viewController.didMove(toParent: self)
     }
     
-    private func remove(child viewController: UIViewController) {
+    private func removeChildVC(_ viewController: UIViewController) {
         viewController.willMove(toParent: nil)
         viewController.view.removeFromSuperview()
         viewController.removeFromParent()

@@ -111,9 +111,9 @@ final class GetMarketPricesUseCase {
                     
                     let combinedRequest = candleService
                         .do(onSuccess: { candles in
-                            print("📊 [\(marketPrice.exchange)] \(normalizedSymbol) 캔들 데이터 개수: \(candles.count)")
+                            //print("📊 [\(marketPrice.exchange)] \(normalizedSymbol) 캔들 데이터 개수: \(candles.count)")
                         }, onError: { error in
-                            print("❌ [\(marketPrice.exchange)] \(normalizedSymbol) 캔들 데이터 요청 실패: \(error)")
+                            //print("❌ [\(marketPrice.exchange)] \(normalizedSymbol) 캔들 데이터 요청 실패: \(error)")
                         })
                         .map { candles in
                             return (updatedMarketPrice, candles)

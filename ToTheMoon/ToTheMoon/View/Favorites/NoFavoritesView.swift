@@ -87,7 +87,7 @@ final class NoFavoritesView: UIView {
         
         buttonStackView.snp.makeConstraints { make in
             make.top.equalTo(verticalStackView.snp.bottom).offset(40)
-            make.centerX.equalToSuperview()
+            //make.centerX.equalToSuperview()
             make.leading.trailing.equalToSuperview().inset(48) // 좌우 여백
         }
         

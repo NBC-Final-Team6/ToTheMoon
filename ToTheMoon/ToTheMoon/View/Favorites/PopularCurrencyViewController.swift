@@ -20,6 +20,7 @@ final class PopularCurrencyViewController: UIViewController {
     
     override func viewDidLoad() {
         super.viewDidLoad()
+        print(1)
         bindViewModel()
         viewModel.fetchPopularCoins()
         contentView.tableView.delegate = self
@@ -29,8 +30,7 @@ final class PopularCurrencyViewController: UIViewController {
     private func bindViewModel() {
         viewModel.popularCoins
             .observe(on: MainScheduler.instance)
-            .subscribe(onNext: { [weak self] a in
-                print(a)
+            .subscribe(onNext: { [weak self] _ in
                 self?.contentView.tableView.reloadData()
             })
             .disposed(by: disposeBag)
