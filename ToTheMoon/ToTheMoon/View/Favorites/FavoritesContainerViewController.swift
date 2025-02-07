@@ -85,14 +85,13 @@ final class FavoritesContainerViewController: UIViewController {
         let tabWidth = topFavoritesView.tabCollectionView.frame.width / CGFloat(tabs.count)
         let leadingOffset = tabWidth * CGFloat(index)
 
-        // ✅ 초기 애니메이션 없이 즉시 언더라인 설정
         topFavoritesView.underlineView.snp.remakeConstraints { make in
             make.bottom.equalTo(topFavoritesView.tabCollectionView)
             make.height.equalTo(2)
             make.leading.equalTo(topFavoritesView.tabCollectionView).offset(leadingOffset)
             make.width.equalTo(tabWidth)
         }
-        self.topFavoritesView.layoutIfNeeded() // ✅ 즉시 반영
+        self.topFavoritesView.layoutIfNeeded()
     }
     
     private func bindSegmentSelection() {
