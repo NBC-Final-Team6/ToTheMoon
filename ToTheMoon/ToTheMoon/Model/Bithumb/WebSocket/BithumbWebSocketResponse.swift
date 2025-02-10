@@ -8,14 +8,14 @@
 import Foundation
 
 // 빗썸 웹소켓 응답의 기본 구조
-struct BithumbWebSocketTickerResponse: Codable {
+struct BithumbWebSocketTickerResponse: Decodable {
     let status: String?
     let resmsg: String?
     let type: String?
     let timestamp: String?
     let content: ContentData?
 
-    struct ContentData: Codable {
+    struct ContentData: Decodable {
         let symbol: String
         let tickType: String
         let date: String

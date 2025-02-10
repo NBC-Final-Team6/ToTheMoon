@@ -14,7 +14,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
         
-        let webSocketService = UpbitWebSocketService()
+        let webSocketService = KorbitWebSocketService()
 
         webSocketService.fetchAllKrwTickers()
             .subscribe(onNext: { marketPrices in
