@@ -14,7 +14,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
         
-        let webSocketService = BithumbWebSocketService()
+        let webSocketService = UpbitWebSocketService()
 
         webSocketService.fetchAllKrwTickers()
             .subscribe(onNext: { marketPrices in
@@ -23,7 +23,24 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
                 print("❌ WebSocket 에러: \(error)")
             })
             .disposed(by: disposeBag)
+//        let webSocketService = CoinoneWebSocketService()
+//
+//        webSocketService.fetchAllKrwTickers()
+//            .subscribe(onNext: { marketPrices in
+//                print("✅ 실시간 가격 업데이트: \(marketPrices)")
+//            }, onError: { error in
+//                print("❌ WebSocket 에러: \(error)")
+//            })
+//            .disposed(by: disposeBag)
         
+//        let a = BithumbWebSocketService()
+//        a.fetchAllKrwTickers()
+//            .subscribe(onNext: { marketPrices in
+//                print("✅ 실시간 가격 업데이트: \(marketPrices)")
+//            }, onError: { error in
+//                print("❌ WebSocket 에러: \(error)")
+//            })
+//            .disposed(by: disposeBag)
         
         return true
     }
