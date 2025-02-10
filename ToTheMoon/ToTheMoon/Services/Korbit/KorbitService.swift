@@ -38,27 +38,24 @@ final class KorbitService: BaseService {
         let korbitInterval = interval.korbitRawValue
         let endTimestamp = Int64(Date().timeIntervalSince1970 * 1000)
 
-        // URLComponents를 사용하여 URL을 구성
-        var components = URLComponents(string: "/v2/candles")
-        components?.queryItems = [
+        var urlComponents = URLComponents(string: "/v2/candles")!
+        urlComponents.queryItems = [
             URLQueryItem(name: "symbol", value: korbitSymbol),
             URLQueryItem(name: "interval", value: korbitInterval),
-            URLQueryItem(name: "limit", value: "\(count)"),
-            URLQueryItem(name: "end", value: "\(endTimestamp)")
+            URLQueryItem(name: "limit", value: String(count)),
+            URLQueryItem(name: "end", value: String(endTimestamp))
         ]
-        
-        guard let urlWithQuery = components?.url?.absoluteString else {
-            return Single.error(NSError(domain: "KorbitService", code: -1, userInfo: [NSLocalizedDescriptionKey: "Invalid URL"]))
+
+        guard let endpoint = urlComponents.url?.absoluteString else {
+            return Single.error(NetworkError.invalidUrl)
         }
 
-        return request(endpoint: urlWithQuery)
+        return request(endpoint: endpoint)
             .map { (response: KorbitCandleResponses) -> [Candle] in
                 response.data.map { $0.toCandle(symbol: korbitSymbol) }
             }
     }
 }
-
-// MARK: - Response Mapping
 
 extension KorbitTickerResponse {
     func toMarketPrices(exchange: Exchange) -> [MarketPrice] {

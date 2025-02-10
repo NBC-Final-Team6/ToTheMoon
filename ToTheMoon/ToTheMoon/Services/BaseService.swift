@@ -9,16 +9,17 @@ import Foundation
 import RxSwift
 
 class BaseService {
+    private let networkManager = NetworkManager.shared
     let baseURL: String
-    
+
     init(baseURL: String) {
         self.baseURL = baseURL
     }
 
     func request<T: Decodable>(endpoint: String) -> Single<T> {
-        guard let url = URL(string: "\(baseURL)\(endpoint)") else {
+        guard let url = URL(string: baseURL + endpoint) else {
             return Single.error(NetworkError.invalidUrl)
         }
-        return NetworkManager.shared.fetch(url: url)
+        return networkManager.fetch(url: url)
     }
 }
