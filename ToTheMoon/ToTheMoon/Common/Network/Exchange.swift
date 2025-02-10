@@ -24,4 +24,18 @@ enum Exchange: String {
             return "https://api.upbit.com"
         }
     }
+    
+    // 거래소의 WebSocket URL
+        var webSocketURL: String {
+            switch self {
+            case .bithumb:
+                return "wss://pubwss.bithumb.com/pub/ws"
+            case .coinone:
+                return "wss://stream.coinone.co.kr"
+            case .korbit:
+                return "wss://ws.korbit.co.kr"
+            case .upbit:
+                return "wss://api.upbit.com/websocket/v1"
+            }
+        }
 }
