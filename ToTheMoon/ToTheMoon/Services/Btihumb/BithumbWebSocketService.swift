@@ -40,7 +40,7 @@ final class BithumbWebSocketService {
                     tickTypes: ["24H"]
                 )
 
-                return WebSocketManager.shared.connect(
+                return BithumbWebSocketManager.shared.connect(
                     to: URL(string: self.baseURL)!,
                     decodingType: BithumbWebSocketTickerResponse.self,
                     requestPayload: requestPayload
@@ -76,3 +76,4 @@ extension BithumbWebSocketTickerResponse {
         ]
     }
 }
+

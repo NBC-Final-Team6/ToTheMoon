@@ -9,7 +9,8 @@ import Foundation
 import RxSwift
 
 final class KorbitWebSocketService {
-    private let baseURL = "wss://ws-api.korbit.co.kr/v2/ws"
+    let exchange: Exchange = .korbit
+    private let baseURL = Exchange.korbit.webSocketURL
     private let korbitService = KorbitService()
     private var cachedSymbols: [String] = []
 
@@ -39,7 +40,7 @@ final class KorbitWebSocketService {
                     symbols: symbols
                 )
 
-                return WebSocketManager.shared.connect(
+                return KorbitWebSocketManager.shared.connect(
                     to: URL(string: self.baseURL)!,
                     decodingType: KorbitWebSocketResponse.self,
                     requestPayload: [requestPayload]

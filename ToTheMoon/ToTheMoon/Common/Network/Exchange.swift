@@ -33,7 +33,7 @@ enum Exchange: String {
             case .coinone:
                 return "wss://stream.coinone.co.kr"
             case .korbit:
-                return "wss://ws.korbit.co.kr"
+                return "wss://ws-api.korbit.co.kr/v2/ws"
             case .upbit:
                 return "wss://api.upbit.com/websocket/v1"
             }

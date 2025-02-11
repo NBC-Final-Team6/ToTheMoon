@@ -10,7 +10,7 @@ import RxSwift
 
 final class UpbitWebSocketService {
     let exchange: Exchange = .upbit
-    private let baseURL = "wss://api.upbit.com/websocket/v1"
+    private let baseURL = Exchange.upbit.webSocketURL
     private let upbitService = UpbitService()
     private var cachedSymbols: [String] = []
 
@@ -43,7 +43,7 @@ final class UpbitWebSocketService {
                     ])
                 ]
 
-                return WebSocketManager.shared.connect(
+                return UpbitWebSocketManager.shared.connect(
                     to: URL(string: self.baseURL)!,
                     decodingType: UpbitWebSocketTickerResponse.self,  // ✅ UpbitWebSocketTickerResponse 사용
                     requestPayload: requestPayload
