@@ -141,8 +141,6 @@ class CoinPriceViewModel {
         guard !loadingSymbols.contains(symbol) else { return }
         loadingSymbols.insert(symbol)
         
-        print("Asset에 없는 이미지 로드 시도: \(symbol)")
-        
         symbolService.fetchCoinThumbImage(coinSymbol: symbol)
             .observe(on: MainScheduler.instance)
             .subscribe(onSuccess: { [weak self] image in
@@ -150,7 +148,6 @@ class CoinPriceViewModel {
                 self.loadingSymbols.remove(symbol)
                 
                 if let image = image {
-                    print("이미지 로드 성공: \(symbol)")
                     // 현재 목록 업데이트
                     var currentPrices = self.coinPrices.value
                     if let index = currentPrices.firstIndex(where: { $0.symbol == symbol }) {
@@ -161,7 +158,6 @@ class CoinPriceViewModel {
                     }
                 }
             }, onFailure: { [weak self] error in
-                print("이미지 로드 실패: \(symbol), 에러: \(error.localizedDescription)")
                 self?.loadingSymbols.remove(symbol)
             })
             .disposed(by: disposeBag)
