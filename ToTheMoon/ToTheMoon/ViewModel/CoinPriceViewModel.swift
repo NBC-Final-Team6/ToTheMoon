@@ -22,7 +22,8 @@ class CoinPriceViewModel {
     private var loadingSymbols = Set<String>()  // 중복 로딩 방지
     
     var currentExchange: Exchange = .upbit
-    private var timer: Disposable?
+    private var priceTimer: Disposable?
+    private var candleTimer: Disposable?
     
     // Output
     private(set) var coinPrices = BehaviorRelay<[MarketPrice]>(value: [])
@@ -40,7 +41,8 @@ class CoinPriceViewModel {
     
     
     init() {
-        setupTimer()
+        setupPriceTimer()
+        setupCandleTimer()
         setupImageBinding()
         fetchAllCandlesOnce()
         fetchCoinPrices()
@@ -59,7 +61,8 @@ class CoinPriceViewModel {
     }
     
     deinit {
-        timer?.dispose()
+        priceTimer?.dispose()
+        candleTimer?.dispose()
     }
     
     // 거래소 변경
@@ -76,18 +79,30 @@ class CoinPriceViewModel {
     }
     
     // 코인 가격은 1초마다 요청
-    private func setupTimer() {
-        timer?.dispose()
-        timer = Observable<Int>
+    private func setupPriceTimer() {
+        priceTimer?.dispose()
+        priceTimer = Observable<Int>
             .interval(.seconds(1), scheduler: MainScheduler.instance)
             .subscribe(onNext: { [weak self] _ in
                 self?.fetchCoinPrices()
             })
         
-        timer?.disposed(by: disposeBag)
+        priceTimer?.disposed(by: disposeBag)
     }
     
-    // 캔들 데이터는 최초 1회만 요청
+    // 캔들 데이터는 1분마다 갱신
+    private func setupCandleTimer() {
+        candleTimer?.dispose()
+        candleTimer = Observable<Int>
+            .interval(.seconds(60), scheduler: MainScheduler.instance)
+            .subscribe(onNext: { [weak self] _ in
+                self?.fetchAllCandlesOnce()
+            })
+        
+        candleTimer?.disposed(by: disposeBag)
+    }
+    
+    // 캔들 데이터 초기 로드
     private func fetchAllCandlesOnce() {
         coinPrices.value.forEach { price in
             fetchCandles(for: price.symbol)
@@ -198,13 +213,13 @@ class CoinPriceViewModel {
         
         switch currentExchange {
         case .upbit:
-            service = upbitService.fetchCandles(symbol: symbol, interval: .minute, count: 1440) // 24시간 * 60분
+            service = upbitService.fetchCandles(symbol: symbol, interval: .minute, count: 180)
         case .bithumb:
-            service = bithumbService.fetchCandles(symbol: symbol, interval: .minute, count: 1440)
+            service = bithumbService.fetchCandles(symbol: symbol, interval: .minute, count: 180)
         case .coinone:
-            service = coinoneService.fetchCandles(symbol: symbol, interval: .minute, count: 1440)
+            service = coinoneService.fetchCandles(symbol: symbol, interval: .minute, count: 180)
         case .korbit:
-            service = korbitService.fetchCandles(symbol: symbol, interval: .minute, count: 1440)
+            service = korbitService.fetchCandles(symbol: symbol, interval: .minute, count: 180)
         }
         
         service
