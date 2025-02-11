@@ -10,47 +10,7 @@ import RxSwift
 @main
 class AppDelegate: UIResponder, UIApplicationDelegate {
     
-    let disposeBag = DisposeBag()
-    
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
-        
-        let webSocketService = KorbitWebSocketService()
-
-        webSocketService.fetchAllKrwTickers()
-            .subscribe(onNext: { marketPrices in
-                print("✅ 코빗 실시간 가격 업데이트: \(marketPrices)")
-            }, onError: { error in
-                print("❌ WebSocket 에러: \(error)")
-            })
-            .disposed(by: disposeBag)
-        
-//        let webSocketService = CoinoneWebSocketService()
-//
-//        webSocketService.fetchAllKrwTickers()
-//            .subscribe(onNext: { marketPrices in
-//                print("✅ 실시간 가격 업데이트: \(marketPrices)")
-//            }, onError: { error in
-//                print("❌ WebSocket 에러: \(error)")
-//            })
-//            .disposed(by: disposeBag)
-        
-//        let a = BithumbWebSocketService()
-//        a.fetchAllKrwTickers()
-//            .subscribe(onNext: { marketPrices in
-//                print("✅ 빗썸 실시간 가격 업데이트: \(marketPrices)")
-//            }, onError: { error in
-//                print("❌ WebSocket 에러: \(error)")
-//            })
-//            .disposed(by: disposeBag)
-        
-        let b = UpbitWebSocketService()
-        b.fetchAllKrwTickers()
-            .subscribe(onNext: { marketPrices in
-                print("✅ 업비트 실시간 가격 업데이트: \(marketPrices)")
-            }, onError: { error in
-                print("❌ WebSocket 에러: \(error)")
-            })
-            .disposed(by: disposeBag)
         
         return true
     }
