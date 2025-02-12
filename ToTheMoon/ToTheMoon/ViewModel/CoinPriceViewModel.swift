@@ -22,7 +22,8 @@ class CoinPriceViewModel {
     private var loadingSymbols = Set<String>()  // 중복 로딩 방지
     
     var currentExchange: Exchange = .upbit
-    private var timer: Disposable?
+    private var priceTimer: Disposable?
+    private var candleTimer: Disposable?
     
     // Output
     private(set) var coinPrices = BehaviorRelay<[MarketPrice]>(value: [])
@@ -37,21 +38,38 @@ class CoinPriceViewModel {
     
     private let candlesDictRelay = BehaviorRelay<[String: [Candle]]>(value: [:])
     var candlesDict: Observable<[String: [Candle]]> { return candlesDictRelay.asObservable() }
-        
+    
     
     init() {
-        setupTimer()
+        setupPriceTimer()
+        setupCandleTimer()
         setupImageBinding()
+        fetchAllCandlesOnce()
+        fetchCoinPrices()
+        
+        // 코인 가격 데이터가 로드되면 자동으로 캔들 데이터도 가져오도록 수정
+        coinPrices
+            .skip(1) // 초기 빈 배열 스킵
+            .distinctUntilChanged()
+            .subscribe(onNext: { [weak self] prices in
+                guard !prices.isEmpty else { return }
+                prices.forEach { price in
+                    self?.fetchCandles(for: price.symbol)
+                }
+            })
+            .disposed(by: disposeBag)
     }
     
     deinit {
-        timer?.dispose()
+        priceTimer?.dispose()
+        candleTimer?.dispose()
     }
     
     // 거래소 변경
     func selectExchange(_ exchange: Exchange) {
         currentExchange = exchange
         fetchCoinPrices()
+        fetchAllCandlesOnce()
     }
     
     // 코인 선택
@@ -60,16 +78,35 @@ class CoinPriceViewModel {
         selectedCoinPrice.onNext(coinPrices.value[index])
     }
     
-    // 타이머 설정
-    private func setupTimer() {
-        timer?.dispose()
-        timer = Observable<Int>
+    // 코인 가격은 1초마다 요청
+    private func setupPriceTimer() {
+        priceTimer?.dispose()
+        priceTimer = Observable<Int>
             .interval(.seconds(1), scheduler: MainScheduler.instance)
             .subscribe(onNext: { [weak self] _ in
                 self?.fetchCoinPrices()
             })
         
-        timer?.disposed(by: disposeBag)
+        priceTimer?.disposed(by: disposeBag)
+    }
+    
+    // 캔들 데이터는 1분마다 갱신
+    private func setupCandleTimer() {
+        candleTimer?.dispose()
+        candleTimer = Observable<Int>
+            .interval(.seconds(60), scheduler: MainScheduler.instance)
+            .subscribe(onNext: { [weak self] _ in
+                self?.fetchAllCandlesOnce()
+            })
+        
+        candleTimer?.disposed(by: disposeBag)
+    }
+    
+    // 캔들 데이터 초기 로드
+    private func fetchAllCandlesOnce() {
+        coinPrices.value.forEach { price in
+            fetchCandles(for: price.symbol)
+        }
     }
     
     // 코인명만 보이게(KRW 글자 제외)
@@ -104,8 +141,6 @@ class CoinPriceViewModel {
         guard !loadingSymbols.contains(symbol) else { return }
         loadingSymbols.insert(symbol)
         
-        print("Asset에 없는 이미지 로드 시도: \(symbol)")
-        
         symbolService.fetchCoinThumbImage(coinSymbol: symbol)
             .observe(on: MainScheduler.instance)
             .subscribe(onSuccess: { [weak self] image in
@@ -113,7 +148,6 @@ class CoinPriceViewModel {
                 self.loadingSymbols.remove(symbol)
                 
                 if let image = image {
-                    print("이미지 로드 성공: \(symbol)")
                     // 현재 목록 업데이트
                     var currentPrices = self.coinPrices.value
                     if let index = currentPrices.firstIndex(where: { $0.symbol == symbol }) {
@@ -124,7 +158,6 @@ class CoinPriceViewModel {
                     }
                 }
             }, onFailure: { [weak self] error in
-                print("이미지 로드 실패: \(symbol), 에러: \(error.localizedDescription)")
                 self?.loadingSymbols.remove(symbol)
             })
             .disposed(by: disposeBag)
@@ -150,7 +183,6 @@ class CoinPriceViewModel {
                 marketPrices.map { price in
                     var modifiedPrice = price
                     modifiedPrice.symbol = self.extractCoinSymbol(price.symbol)
-                    // Asset에서 이미지 가져오기
                     modifiedPrice.image = ImageRepository.getImage(for: modifiedPrice.symbol)
                     return modifiedPrice
                 }
@@ -159,10 +191,6 @@ class CoinPriceViewModel {
             .observe(on: MainScheduler.instance)
             .subscribe(onSuccess: { [weak self] marketPrices in
                 self?.coinPrices.accept(marketPrices)
-                
-                marketPrices.forEach { price in
-                    self?.fetchCandles(for: price.symbol)
-                }
                 
                 // Asset에 없는 코인에 대해서만 이미지 로드
                 marketPrices
@@ -181,13 +209,13 @@ class CoinPriceViewModel {
         
         switch currentExchange {
         case .upbit:
-            service = upbitService.fetchCandles(symbol: symbol, interval: .minute, count: 1440) // 24시간 * 60분
+            service = upbitService.fetchCandles(symbol: symbol, interval: .minute, count: 180)
         case .bithumb:
-            service = bithumbService.fetchCandles(symbol: symbol, interval: .minute, count: 1440)
+            service = bithumbService.fetchCandles(symbol: symbol, interval: .minute, count: 180)
         case .coinone:
-            service = coinoneService.fetchCandles(symbol: symbol, interval: .minute, count: 1440)
+            service = coinoneService.fetchCandles(symbol: symbol, interval: .minute, count: 180)
         case .korbit:
-            service = korbitService.fetchCandles(symbol: symbol, interval: .minute, count: 1440)
+            service = korbitService.fetchCandles(symbol: symbol, interval: .minute, count: 180)
         }
         
         service

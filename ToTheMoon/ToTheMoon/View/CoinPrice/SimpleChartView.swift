@@ -92,7 +92,7 @@ class CandleChartDataManager {
     static func processCandles(_ candles: [Candle]) -> [Candle] {
         let sortedCandles = candles
             .sorted { $0.timestamp < $1.timestamp }
-            .suffix(24 * 60) // 24시간 * 60분
+            .suffix(180)
         return Array(sortedCandles)
     }
 }

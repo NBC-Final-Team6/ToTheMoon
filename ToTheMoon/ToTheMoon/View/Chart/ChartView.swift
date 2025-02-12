@@ -10,18 +10,8 @@ import SnapKit
 import DGCharts
 
 class ChartView: UIView {
-
+    
     // MARK: - UI 컴포넌트
-
-    // ✅ 상단 BTC/Upbit 라벨
-    let coinTitleLabel: UILabel = {
-        let label = UILabel()
-        label.text = "BTC/Upbit"
-        label.font = UIFont.boldSystemFont(ofSize: 18)
-        label.textColor = .black
-        label.textAlignment = .center
-        return label
-    }()
 
     // 현재 가격 라벨
     let currentPriceLabel: UILabel = {
@@ -31,8 +21,8 @@ class ChartView: UIView {
         label.textAlignment = .left
         return label
     }()
-
-    // ✅ 새로운 시간 버튼 컨테이너 뷰 (1분, 일, 주, 월 버튼을 그룹화)
+    
+    // 새로운 시간 버튼 컨테이너 뷰 (1분, 일, 주, 월 버튼을 그룹화)
     private let timeSelectorView: UIStackView = {
         let stackView = UIStackView()
         stackView.axis = .horizontal
@@ -41,17 +31,17 @@ class ChartView: UIView {
         return stackView
     }()
     
-    // ✅ 코인 정보 컨테이너
+    // 코인 정보 컨테이너
     private let coinInfoContainerView: UIView = {
         let view = UIView()
-        view.backgroundColor = .white
+        view.backgroundColor = .container
         view.layer.cornerRadius = 10
         view.layer.borderColor = UIColor.lightGray.cgColor
         view.layer.borderWidth = 0.5
         return view
     }()
 
-    // ✅ 코인 정보 StackView (코인 심볼 + 텍스트 + 버튼)
+    // 코인 정보 StackView (코인 심볼 + 텍스트 + 버튼)
     private let coinInfoStackView: UIStackView = {
         let stackView = UIStackView()
         stackView.axis = .horizontal
@@ -77,11 +67,11 @@ class ChartView: UIView {
         let label = UILabel()
         label.text = "BTC (Upbit)"
         label.font = UIFont.boldSystemFont(ofSize: 16)
-        label.textColor = .black
+        label.textColor = .text
         return label
     }()
 
-    // ✅ 구글 검색 버튼
+    // 구글 검색 버튼
     let googleSearchButton: UIButton = {
         let button = UIButton(type: .system)
         button.setTitle("구글에서 검색", for: .normal)
@@ -90,7 +80,7 @@ class ChartView: UIView {
         return button
     }()
 
-    // ✅ 코인 정보 (총 발행 수량, 시가 총액, 현재 유통량)
+    // 코인 정보 (총 발행 수량, 시가 총액, 현재 유통량)
     private let supplyInfoStackView: UIStackView = {
         let stackView = UIStackView()
         stackView.axis = .vertical
@@ -98,14 +88,14 @@ class ChartView: UIView {
         return stackView
     }()
 
-    let totalSupplyLabel = ChartView.createInfoLabel(title: "총 발행 수량", value: "99,986,676,553")
-    let marketCapLabel = ChartView.createInfoLabel(title: "시가 총액", value: "2,904조 4,294억")
-    let circulatingSupplyLabel = ChartView.createInfoLabel(title: "현재 유통량", value: "57,764,441,098")
+    let totalSupplyLabel = ChartView.createInfoLabel(title: "총 발행 수량", value: "준비중")
+    let marketCapLabel = ChartView.createInfoLabel(title: "시가 총액", value: "준비중")
+    let circulatingSupplyLabel = ChartView.createInfoLabel(title: "현재 유통량", value: "준비중")
     
-    // ✅ 디지털 자산 소개 컨테이너
+    // 디지털 자산 소개 컨테이너
     private let digitalAssetContainerView: UIView = {
         let view = UIView()
-        view.backgroundColor = UIColor.lightGray.withAlphaComponent(0.1)
+        view.backgroundColor = .container
         view.layer.cornerRadius = 10
         return view
     }()
@@ -115,7 +105,7 @@ class ChartView: UIView {
         let label = UILabel()
         label.text = "디지털 자산 소개"
         label.font = UIFont.boldSystemFont(ofSize: 14)
-        label.textColor = .black
+        label.textColor = .text
         return label
     }()
 
@@ -123,7 +113,7 @@ class ChartView: UIView {
     let digitalAssetDescriptionTextView: UITextView = {
         let textView = UITextView()
         textView.font = UIFont.systemFont(ofSize: 12)
-        textView.textColor = .gray
+        textView.textColor = .text
         textView.isEditable = false
         textView.isScrollEnabled = false
         textView.backgroundColor = .clear
@@ -139,7 +129,7 @@ class ChartView: UIView {
     let weekButton = ChartView.createTimeButton(title: "주")
     let monthButton = ChartView.createTimeButton(title: "월")
 
-    // ✅ 차트 뷰
+    // 차트 뷰
     private let candleStickChartView: CandleStickChartView = {
         let chartView = CandleStickChartView()
         chartView.legend.enabled = false
@@ -148,12 +138,13 @@ class ChartView: UIView {
         chartView.xAxis.granularity = 1
         chartView.dragEnabled = true
         chartView.pinchZoomEnabled = true
+        chartView.backgroundColor = .background
         return chartView
     }()
 
     private let priceInfoContainerView: UIView = {
         let view = UIView()
-        view.backgroundColor = .white
+        view.backgroundColor = .container
         view.layer.cornerRadius = 10
         view.layer.borderColor = UIColor.lightGray.cgColor
         view.layer.borderWidth = 0.5
@@ -174,7 +165,7 @@ class ChartView: UIView {
         return scrollView
     }()
 
-    // ✅ 스크롤 가능한 내용을 담을 StackView
+    // 스크롤 가능한 내용을 담을 StackView
     private let contentStackView: UIStackView = {
         let stackView = UIStackView()
         stackView.axis = .vertical
@@ -188,7 +179,7 @@ class ChartView: UIView {
     let lowestPriceLabel = ChartView.createPriceLabel(text: "최저가")
     let lowestPriceValueLabel = ChartView.createPriceValueLabel(textColor: .red)
     let changeRateLabel = ChartView.createPriceLabel(text: "변동률")
-    let changeRateValueLabel = ChartView.createPriceValueLabel(textColor: .black)
+    let changeRateValueLabel = ChartView.createPriceValueLabel(textColor: .text)
 
     // MARK: - 초기화
     override init(frame: CGRect) {
@@ -202,9 +193,8 @@ class ChartView: UIView {
 
     // MARK: - UI 설정
     private func setupUI() {
-        backgroundColor = .white
+        backgroundColor = .background
 
-        addSubview(coinTitleLabel)
         addSubview(currentPriceLabel)
         addSubview(timeSelectorView)
 
@@ -233,19 +223,19 @@ class ChartView: UIView {
         timeSelectorView.addArrangedSubview(weekButton)
         timeSelectorView.addArrangedSubview(monthButton)
 
-        // ✅ 코인 정보 추가
+        // 코인 정보
         coinInfoContainerView.addSubview(coinInfoStackView)
         coinInfoStackView.addArrangedSubview(coinSymbolImageView)
         coinInfoStackView.addArrangedSubview(coinNameLabel)
         coinInfoStackView.addArrangedSubview(googleSearchButton)
 
-        // ✅ 공급 정보 추가
+        // 공급 정보
         coinInfoContainerView.addSubview(supplyInfoStackView)
         supplyInfoStackView.addArrangedSubview(totalSupplyLabel)
         supplyInfoStackView.addArrangedSubview(marketCapLabel)
         supplyInfoStackView.addArrangedSubview(circulatingSupplyLabel)
 
-        // ✅ 디지털 자산 소개 추가
+        // 디지털 자산 소개
         digitalAssetContainerView.addSubview(digitalAssetIntroLabel)
         digitalAssetContainerView.addSubview(digitalAssetDescriptionTextView)
 
@@ -254,13 +244,9 @@ class ChartView: UIView {
     
     // MARK: - 레이아웃 설정
     private func setupConstraints() {
-        coinTitleLabel.snp.makeConstraints { make in
-            make.top.equalTo(safeAreaLayoutGuide).offset(10)
-            make.centerX.equalToSuperview()
-        }
 
         currentPriceLabel.snp.makeConstraints { make in
-            make.top.equalTo(coinTitleLabel.snp.bottom).offset(8)
+            make.top.equalTo(safeAreaLayoutGuide).offset(10)
             make.leading.equalToSuperview().offset(20)
         }
         
@@ -337,7 +323,7 @@ class ChartView: UIView {
         let titleLabel = UILabel()
         titleLabel.text = title
         titleLabel.font = UIFont.systemFont(ofSize: 14)
-        titleLabel.textColor = .black
+        titleLabel.textColor = .text
         titleLabel.textAlignment = .center
 
         let valueLabel = UILabel()
@@ -359,12 +345,12 @@ class ChartView: UIView {
         let titleLabel = UILabel()
         titleLabel.text = title
         titleLabel.font = UIFont.systemFont(ofSize: 14)
-        titleLabel.textColor = .darkGray
+        titleLabel.textColor = .text
 
         let valueLabel = UILabel()
         valueLabel.text = value
         valueLabel.font = UIFont.boldSystemFont(ofSize: 16)
-        valueLabel.textColor = .black
+        valueLabel.textColor = .text
 
         let stackView = UIStackView(arrangedSubviews: [titleLabel, valueLabel])
         stackView.axis = .horizontal
@@ -383,7 +369,7 @@ class ChartView: UIView {
         let label = UILabel()
         label.text = text
         label.font = UIFont.systemFont(ofSize: 14)
-        label.textColor = .black
+        label.textColor = .text
         return label
     }
 
@@ -417,8 +403,8 @@ class ChartView: UIView {
         let button = UIButton(type: .system)
         button.setTitle(title, for: .normal)
         button.titleLabel?.font = UIFont.boldSystemFont(ofSize: 14)
-        button.setTitleColor(.black, for: .normal)
-        button.backgroundColor = .lightGray.withAlphaComponent(0.2)
+        button.setTitleColor(UIColor.text, for: .normal)
+        button.backgroundColor = UIColor.container
         button.layer.cornerRadius = 8
         button.clipsToBounds = true
         return button

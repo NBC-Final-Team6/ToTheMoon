@@ -275,8 +275,9 @@ final class ImageRepository {
         "JTO": "jito-governance-token",
         "JUP": "jupiter",
         "KAIA": "kaia",
-        "KRW-USDT": "alcor-ibc-bridged-usdt-wax",
-        "USDT_KRW": "alcor-ibc-bridged-usdt-wax",
+        "KRW-USDT": "bridged-usdt",
+        "USDT_KRW": "bridged-usdt",
+        "USDT": "bridged-usdt",
         "KSM": "kusama",
         "LBL": "label-foundation",
         "LEVER": "lever",
@@ -425,6 +426,6 @@ final class ImageRepository {
         if let imageName = defaultSymbolImages[normalizedSymbol] {
             return UIImage(named: imageName) // Assets에서 이미지 로드
         }
-        return UIImage(named: "bitcoin") // 기본 이미지 반환 (없을 경우)
+        return UIImage(named: "default") // 기본 이미지 반환 (없을 경우)
     }
 }

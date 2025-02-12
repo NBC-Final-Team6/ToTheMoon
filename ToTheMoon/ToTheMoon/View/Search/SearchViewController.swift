@@ -209,7 +209,7 @@ extension SearchViewController: UITableViewDelegate, UITableViewDataSource {
     }
     
     func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
-        return searchMode == .recent ? UITableView.automaticDimension : 60
+        return searchMode == .recent ? 70 : 60
     }
     
     // MARK: - 최근 검색 기록을 클릭하면 해당 검색어로 검색 수행

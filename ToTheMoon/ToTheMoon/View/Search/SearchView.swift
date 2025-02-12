@@ -60,6 +60,8 @@ final class SearchView: UIView {
             make.top.equalTo(safeAreaLayoutGuide.snp.top).offset(10)
             make.leading.trailing.equalToSuperview().inset(16)
         }
+        
+        tableView.sectionHeaderTopPadding = 0
 
         tableView.snp.makeConstraints { make in
             make.top.equalTo(searchBar.snp.bottom).offset(10)

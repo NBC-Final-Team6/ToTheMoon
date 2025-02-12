@@ -50,7 +50,7 @@ class CoinPriceView: UIView {
     }
     
     private func setupView() {
-        backgroundColor = UIColor(named: "BackgroundColor")
+        backgroundColor = .background
         
         [titleLabel, stackView, coinPriceTableView]
             .forEach { addSubview($0) }
@@ -63,7 +63,7 @@ class CoinPriceView: UIView {
         stackView.snp.makeConstraints { make in
             make.top.equalTo(titleLabel.snp.bottom).offset(20)
             make.horizontalEdges.equalToSuperview().inset(15)
-            make.height.equalTo(100)
+            make.height.equalTo(((UIScreen.main.bounds.width - 100) / 4) + 26)
         }
         
         coinPriceTableView.snp.makeConstraints { make in
@@ -72,10 +72,14 @@ class CoinPriceView: UIView {
             make.bottom.equalTo(safeAreaLayoutGuide)
         }
         
-        for market in MarketModel.items {
+        for (index, market) in MarketModel.items.enumerated() {
             let marketView = MarketView()
             marketView.configure(with: market)
             stackView.addArrangedSubview(marketView)
+            
+            if index == 0 {
+                marketView.handleTap()
+            }
         }
     }
 }
