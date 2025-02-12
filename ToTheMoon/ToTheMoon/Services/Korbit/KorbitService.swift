@@ -35,14 +35,22 @@ final class KorbitService: BaseService, ServiceProtocol {
         let korbitInterval = interval.korbitRawValue
         let endTimestamp = Int64(Date().timeIntervalSince1970 * 1000)
 
-        return request(endpoint: "/v2/candles", queryParams: [
-            "symbol": korbitSymbol,
-            "interval": korbitInterval,
-            "limit": "\(count)",
-            "end": "\(endTimestamp)"
-        ]).map { (response: KorbitCandleResponses) -> [Candle] in
-            response.data.map { $0.toCandle(symbol: korbitSymbol) }
+        var urlComponents = URLComponents(string: "/v2/candles")!
+        urlComponents.queryItems = [
+            URLQueryItem(name: "symbol", value: korbitSymbol),
+            URLQueryItem(name: "interval", value: korbitInterval),
+            URLQueryItem(name: "limit", value: "\(count)"),
+            URLQueryItem(name: "end", value: "\(endTimestamp)")
+        ]
+
+        guard let endpoint = urlComponents.url?.absoluteString else {
+            return Single.error(NetworkError.invalidUrl)
         }
+
+        return request(endpoint: endpoint)
+            .map { (response: KorbitCandleResponses) -> [Candle] in
+                response.data.map { $0.toCandle(symbol: korbitSymbol) }
+            }
     }
 }
 

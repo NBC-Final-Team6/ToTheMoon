@@ -16,14 +16,10 @@ class BaseService {
         self.baseURL = baseURL
     }
 
-    func request<T: Decodable>(endpoint: String, queryParams: [String: String]? = nil) -> Single<T> {
-        var urlComponents = URLComponents(string: baseURL + endpoint)
-        urlComponents?.queryItems = queryParams?.map { URLQueryItem(name: $0.key, value: $0.value) }
-
-        guard let url = urlComponents?.url else {
+    func request<T: Decodable>(endpoint: String) -> Single<T> {
+        guard let url = URL(string: baseURL + endpoint) else {
             return Single.error(NetworkError.invalidUrl)
         }
-
         return networkManager.fetch(url: url)
     }
 }
