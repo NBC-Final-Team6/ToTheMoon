@@ -12,72 +12,57 @@ import UIKit
 final class GetMarketPricesUseCase {
     private let services: [ServiceProtocol]
     private let symbolService: SymbolService
-    
+    private let symbolFormatter: SymbolFormatter
+
     init(
-        services: [ServiceProtocol] = [BithumbService(), CoinOneService(), KorbitService(), UpbitService()],
-        symbolService: SymbolService = SymbolService()
+        services: [ServiceProtocol],
+        symbolService: SymbolService
     ) {
         self.services = services
         self.symbolService = symbolService
+        self.symbolFormatter = SymbolFormatter()
     }
     
     func execute() -> Single<[MarketPrice]> {
         let priceObservables = services.map { $0.fetchMarketPrices() }
         
-        let symbolFormatter = SymbolFormatter()
-        
         return Single.zip(priceObservables)
-            .flatMap { [weak self] marketPricesArray -> Single<[MarketPrice]> in
+            .map { $0.flatMap { $0 } } // 모든 거래소 데이터 병합
+            .flatMap { [weak self] allPrices in
                 guard let self = self else { return .just([]) }
-                
-                let allPrices = marketPricesArray.flatMap { $0 }
-                
-                var imageRequests: [String: Single<UIImage?>] = [:]
-                
-                let updatedMarketPrices = allPrices.map { marketPrice -> Single<MarketPrice> in
-                    let normalizedSymbol = symbolFormatter.format(symbol: marketPrice.symbol).uppercased()
-                    
-                    var updatedMarketPrice = MarketPrice(
-                        symbol: normalizedSymbol,
-                        price: marketPrice.price,
-                        exchange: marketPrice.exchange,
-                        change: marketPrice.change,
-                        changeRate: marketPrice.changeRate,
-                        quoteVolume: marketPrice.quoteVolume,
-                        highPrice: marketPrice.highPrice,
-                        lowPrice: marketPrice.lowPrice,
-                        image: nil
-                    )
-                    
-                    if let cachedImage = ImageRepository.getImage(for: normalizedSymbol) {
-                        updatedMarketPrice.image = cachedImage
-                        return Single.just(updatedMarketPrice)
-                    }
-                    
-                    if let existingRequest = imageRequests[normalizedSymbol] {
-                        return existingRequest.map { image in
-                            updatedMarketPrice.image = image
-                            return updatedMarketPrice
-                        }
-                    }
-                    
-                    let imageRequest = self.symbolService.fetchCoinThumbImage(coinSymbol: normalizedSymbol)
-                        .do(onSuccess: { image in
-                            if let image = image {
-                                CoinImageCache.shared.setImage(for: normalizedSymbol, image: image)
-                            }
-                        })
-                        .catchAndReturn(nil)
-                    
-                    imageRequests[normalizedSymbol] = imageRequest
-                    
-                    return imageRequest.map { image in
-                        updatedMarketPrice.image = image
-                        return updatedMarketPrice
-                    }
-                }
-                
-                return Single.zip(updatedMarketPrices)
+                return self.attachImages(to: allPrices)
             }
+    }
+    
+    private func attachImages(to prices: [MarketPrice]) -> Single<[MarketPrice]> {
+        let imageRequests = prices.map { marketPrice -> Single<MarketPrice> in
+            let normalizedSymbol = symbolFormatter.format(symbol: marketPrice.symbol).uppercased()
+            
+            var updatedMarketPrice = marketPrice
+            updatedMarketPrice.symbol = normalizedSymbol
+            
+            if let cachedImage = ImageRepository.getImage(for: normalizedSymbol) {
+                updatedMarketPrice.image = cachedImage
+                return Single.just(updatedMarketPrice)
+            }
+            
+            return fetchAndCacheImage(for: normalizedSymbol)
+                .map { image in
+                    updatedMarketPrice.image = image
+                    return updatedMarketPrice
+                }
+        }
+        
+        return Single.zip(imageRequests)
+    }
+    
+    private func fetchAndCacheImage(for symbol: String) -> Single<UIImage?> {
+        return symbolService.fetchCoinThumbImage(coinSymbol: symbol)
+            .do(onSuccess: { image in
+                if let image = image {
+                    CoinImageCache.shared.setImage(for: symbol, image: image)
+                }
+            })
+            .catchAndReturn(nil)
     }
 }
