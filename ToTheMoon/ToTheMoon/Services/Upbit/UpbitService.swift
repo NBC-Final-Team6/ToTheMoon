@@ -8,7 +8,7 @@
 import Foundation
 import RxSwift
 
-final class UpbitService: BaseService {
+final class UpbitService: BaseService, ServiceProtocol {
     let exchange: Exchange = .upbit
 
     init() {

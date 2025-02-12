@@ -8,7 +8,7 @@
 import Foundation
 import RxSwift
 
-final class BithumbService: BaseService {
+final class BithumbService: BaseService, ServiceProtocol {
     let exchange: Exchange = .bithumb
 
     init() {
