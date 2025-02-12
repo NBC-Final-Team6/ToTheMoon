@@ -67,8 +67,8 @@ class CustomTabBarView: UIView {
             }
             
             button.rx.tap
-                .map { index } // 버튼이 눌리면 해당 인덱스를 방출
-                .bind(to: selectedTab) // PublishRelay로 바인딩
+                .map { index }
+                .bind(to: selectedTab)
                 .disposed(by: disposeBag)
 
 
