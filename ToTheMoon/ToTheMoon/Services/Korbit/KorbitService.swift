@@ -8,7 +8,7 @@
 import Foundation
 import RxSwift
 
-final class KorbitService: BaseService {
+final class KorbitService: BaseService, ServiceProtocol {
     let exchange: Exchange = .korbit
 
     init() {
@@ -22,14 +22,11 @@ final class KorbitService: BaseService {
             }
     }
     
-    func fetchMarketPrice(symbol: String) -> Single<MarketPrice> {
+    func fetchMarketPrice(symbol: String) -> Single<[MarketPrice]> {
         let formattedSymbol = symbol.lowercased()
         return request(endpoint: "/v2/ticker?symbol=\(formattedSymbol)_krw")
-            .map { (response: KorbitTickerResponse) -> MarketPrice in
-                guard let ticker = response.data.first else {
-                    throw NSError(domain: "KorbitService", code: -1, userInfo: [NSLocalizedDescriptionKey: "Invalid response"])
-                }
-                return ticker.toMarketPrice(exchange: self.exchange)
+            .map { (response: KorbitTickerResponse) -> [MarketPrice] in
+                response.data.map { $0.toMarketPrice(exchange: self.exchange) }
             }
     }
     
@@ -38,22 +35,14 @@ final class KorbitService: BaseService {
         let korbitInterval = interval.korbitRawValue
         let endTimestamp = Int64(Date().timeIntervalSince1970 * 1000)
 
-        var urlComponents = URLComponents(string: "/v2/candles")!
-        urlComponents.queryItems = [
-            URLQueryItem(name: "symbol", value: korbitSymbol),
-            URLQueryItem(name: "interval", value: korbitInterval),
-            URLQueryItem(name: "limit", value: String(count)),
-            URLQueryItem(name: "end", value: String(endTimestamp))
-        ]
-
-        guard let endpoint = urlComponents.url?.absoluteString else {
-            return Single.error(NetworkError.invalidUrl)
+        return request(endpoint: "/v2/candles", queryParams: [
+            "symbol": korbitSymbol,
+            "interval": korbitInterval,
+            "limit": "\(count)",
+            "end": "\(endTimestamp)"
+        ]).map { (response: KorbitCandleResponses) -> [Candle] in
+            response.data.map { $0.toCandle(symbol: korbitSymbol) }
         }
-
-        return request(endpoint: endpoint)
-            .map { (response: KorbitCandleResponses) -> [Candle] in
-                response.data.map { $0.toCandle(symbol: korbitSymbol) }
-            }
     }
 }
 

@@ -11,6 +11,6 @@ protocol ServiceProtocol {
     var exchange: Exchange { get }
     
     func fetchMarketPrices() -> Single<[MarketPrice]>
-    func fetchMarketPrice(symbol: String) -> Single<MarketPrice>
+    func fetchMarketPrice(symbol: String) -> Single<[MarketPrice]>
     func fetchCandles(symbol: String, interval: CandleInterval, count: Int) -> Single<[Candle]>
 }
