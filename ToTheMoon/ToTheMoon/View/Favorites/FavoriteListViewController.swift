@@ -11,12 +11,17 @@ import RxSwift
 import RxCocoa
 
 final class FavoriteListViewController: UIViewController {
+    
+    // MARK: - UI Components
     private let contentView = FovoritesListTableView()
     private let noFavoritesView = NoFavoritesView()
     private let loadingView = LoadingView()
+    
+    // MARK: - Properties
     private let viewModel: FavoritesListViewModel
     private let disposeBag = DisposeBag()
     
+    // MARK: - Init
     init(viewModel: FavoritesListViewModel) {
         self.viewModel = viewModel
         super.init(nibName: nil, bundle: nil)
@@ -26,8 +31,9 @@ final class FavoriteListViewController: UIViewController {
         fatalError("init(coder:) has not been implemented")
     }
     
+    // MARK: - Life Cycle
     override func loadView() {
-        view = UIView() // 기본 View 설정
+        view = UIView()
         view.backgroundColor = .background
         
         [contentView, noFavoritesView, loadingView].forEach {
@@ -48,37 +54,47 @@ final class FavoriteListViewController: UIViewController {
     
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
-        viewModel.fetchFavoriteCoins()
+        viewModel.input.fetchTrigger.accept(())
     }
     
+    // MARK: - Bind ViewModel
     private func setupBindings() {
-        Observable.combineLatest(viewModel.favoriteCoins, viewModel.isLoading)
-            .observe(on: MainScheduler.instance)
-            .subscribe(onNext: { [weak self] (coins, isLoading) in
-                guard let self = self else { return }
-                
-                if isLoading {
-                    self.loadingView.startLoading()
-                    self.contentView.isHidden = true
-                    self.noFavoritesView.isHidden = true
-                } else {
-                    self.loadingView.stopLoading()
-                    let hasFavorites = !coins.isEmpty
-                    self.contentView.isHidden = !hasFavorites
-                    self.noFavoritesView.isHidden = hasFavorites
-                    self.contentView.tableView.reloadData()
-                }
-            })
-            .disposed(by: disposeBag)
-        
-        viewModel.favoriteCoins
-            .observe(on: MainScheduler.instance)
-            .bind(to: contentView.tableView.rx.items(cellIdentifier: CoinPriceTableViewCell.identifier, cellType: CoinPriceTableViewCell.self)) { _, coin, cell in
+        let output = viewModel.output
+        // ⭐ 즐겨찾기 코인 리스트 바인딩
+        output.favoriteCoins
+            .drive(contentView.tableView.rx.items(
+                cellIdentifier: CoinPriceTableViewCell.identifier,
+                cellType: CoinPriceTableViewCell.self)
+            ) { _, coin, cell in
+                print(coin)
+                self.contentView.tableView.reloadData()
                 cell.configure(with: coin)
             }
             .disposed(by: disposeBag)
+        
+        // ⭐ 로딩 상태 바인딩
+        output.isLoading
+            .drive(onNext: { [weak self] isLoading in
+                guard let self = self else { return }
+                self.loadingView.isHidden = !isLoading
+                self.contentView.isHidden = isLoading
+                self.noFavoritesView.isHidden = isLoading
+            })
+            .disposed(by: disposeBag)
+        
+        // ⭐ 즐겨찾기 코인 유무에 따른 뷰 표시
+        output.favoriteCoins
+            .map { !$0.isEmpty } // true: 코인 있음, false: 없음
+            .drive(onNext: { [weak self] hasFavorites in
+                guard let self = self else { return }
+                print("📌 hasFavorites:", hasFavorites)
+                self.contentView.isHidden = !hasFavorites
+                self.noFavoritesView.isHidden = hasFavorites
+            })
+            .disposed(by: disposeBag)
     }
     
+    // MARK: - 검색 화면 이동
     @objc private func navigateToSearch() {
         let getMarketPricesUseCase = GetMarketPricesUseCase(
             services: [
@@ -99,30 +115,32 @@ final class FavoriteListViewController: UIViewController {
     }
 }
 
+// MARK: - UITableViewDelegate
 extension FavoriteListViewController: UITableViewDelegate {
+    
+    // 셀 높이 설정
     func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
         return 70
     }
     
+    // ⭐ 스와이프 삭제 기능 적용 (ViewModel Input 사용)
     func tableView(_ tableView: UITableView, trailingSwipeActionsConfigurationForRowAt indexPath: IndexPath) -> UISwipeActionsConfiguration? {
         let deleteAction = UIContextualAction(style: .destructive, title: "삭제") { [weak self] _, _, completionHandler in
             guard let self = self else {
                 completionHandler(false)
                 return
             }
-            self.viewModel.favoriteCoins
-                .take(1)
-                .subscribe(onNext: { coins in
-                    guard indexPath.row < coins.count else {
-                        completionHandler(false) 
+            
+            self.viewModel.output.favoriteCoins
+                .drive(onNext: { [weak self] coins in
+                    guard let self = self, indexPath.row < coins.count else {
+                        completionHandler(false)
                         return
                     }
+                    
                     let coin = coins[indexPath.row]
-                    self.viewModel.removeFavoriteCoin(coin)
+                    self.viewModel.input.removeFavorite.accept(coin) // ✅ ViewModel의 Input을 통해 삭제 요청
                     completionHandler(true)
-                }, onError: { error in
-                    print("❌ 삭제할 코인을 가져오는 중 오류 발생: \(error.localizedDescription)")
-                    completionHandler(false)
                 })
                 .disposed(by: self.disposeBag)
         }
