@@ -52,14 +52,16 @@ final class FavoriteListViewController: UIViewController {
         noFavoritesView.addButton.addTarget(self, action: #selector(navigateToSearch), for: .touchUpInside)
     }
     
-    override func viewWillAppear(_ animated: Bool) {
-        super.viewWillAppear(animated)
-        viewModel.input.fetchTrigger.accept(())
-    }
-    
     // MARK: - Bind ViewModel
     private func setupBindings() {
         let output = viewModel.output
+
+        // `viewWillAppear`을 감지하여 fetchFavoriteCoins() 호출
+        self.rx.viewWillAppear
+            .subscribe(onNext: { [weak self] in
+                self?.viewModel.fetchFavoriteCoins()
+            })
+            .disposed(by: disposeBag)
         
         // 즐겨찾기 코인 리스트 바인딩
         output.favoriteCoins
@@ -112,4 +114,3 @@ extension FavoriteListViewController: UITableViewDelegate {
         return 70
     }
 }
-

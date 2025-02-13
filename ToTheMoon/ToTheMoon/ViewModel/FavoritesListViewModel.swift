@@ -17,7 +17,6 @@ final class FavoritesListViewModel {
     
     // MARK: - Input
     struct Input {
-        let fetchTrigger = PublishRelay<Void>()
         let removeFavorite = PublishRelay<MarketPrice>()
     }
     
@@ -49,14 +48,6 @@ final class FavoritesListViewModel {
     
     // MARK: - Bind Input to Output
     private func bindInputs() {
-        // 즐겨찾기 리스트 로드
-        input.fetchTrigger
-            .flatMapLatest { [weak self] in
-                self?.fetchFavoriteCoins() ?? .just([])
-            }
-            .bind(to: favoriteCoinsRelay)
-            .disposed(by: disposeBag)
-        
         // 즐겨찾기 코인 삭제
         input.removeFavorite
             .flatMapLatest { [weak self] coin -> Observable<Void> in
@@ -64,13 +55,13 @@ final class FavoritesListViewModel {
                 return self.manageFavoritesUseCase.removeCoin(coin)
             }
             .subscribe(onNext: { [weak self] in
-                self?.input.fetchTrigger.accept(())
+                self?.fetchFavoriteCoins()
             })
             .disposed(by: disposeBag)
     }
     
     // MARK: - Fetch Favorite Coins
-    private func fetchFavoriteCoins() -> Observable<[MarketPrice]> {
+    func fetchFavoriteCoins() {
         isLoadingRelay.accept(true)
 
         let savedCoinsObservable = manageFavoritesUseCase.fetchFavoriteCoins()
@@ -78,7 +69,7 @@ final class FavoritesListViewModel {
 
         let allMarketPricesSingle = getMarketPricesUseCase.execute()
         
-        return Observable.combineLatest(savedCoinsObservable, allMarketPricesSingle.asObservable())
+        Observable.combineLatest(savedCoinsObservable, allMarketPricesSingle.asObservable())
             .map { savedCoins, marketPrices in
                 return marketPrices.filter { marketPrice in
                     savedCoins.contains { $0.symbol == marketPrice.symbol && $0.exchangename == marketPrice.exchange }
@@ -86,8 +77,11 @@ final class FavoritesListViewModel {
             }
             .do(onNext: { [weak self] filteredCoins in
                 self?.isLoadingRelay.accept(false)
+                self?.favoriteCoinsRelay.accept(filteredCoins)
             }, onError: { [weak self] error in
                 self?.isLoadingRelay.accept(false)
             })
+            .subscribe()
+            .disposed(by: disposeBag)
     }
 }
