@@ -45,7 +45,7 @@ final class FavoriteListViewController: UIViewController {
     // MARK: - Bind ViewModel
     private func setupBindings() {
         let output = viewModel.output
-
+        
         // `viewWillAppear`을 감지하여 fetchFavoriteCoins() 호출
         self.rx.viewWillAppear
             .subscribe(onNext: { [weak self] in
@@ -61,16 +61,18 @@ final class FavoriteListViewController: UIViewController {
             })
             .disposed(by: disposeBag)
         
-        // Rx 방식으로 검색 버튼 이벤트 바인딩
-        noFavoritesView?.addButton.rx.tap
-            .bind(to: viewModel.input.searchTrigger)
+        // 검색 화면 이동 트리거
+        output.navigateToSearch
+            .emit(onNext: { [weak self] in
+                self?.navigateToSearch()
+            })
             .disposed(by: disposeBag)
     }
     
     // MARK: - UI 업데이트 (상황에 맞는 뷰 추가 및 제거)
     private func updateUI(isLoading: Bool, hasFavorites: Bool, coins: [MarketPrice]) {
         removeAllSubviews()
-
+        
         if isLoading {
             showLoadingView()
         } else if hasFavorites {
@@ -114,7 +116,7 @@ final class FavoriteListViewController: UIViewController {
         noFavoritesView.snp.makeConstraints { make in
             make.edges.equalToSuperview()
         }
-
+        
         // Rx 방식으로 검색 버튼 이벤트 바인딩
         noFavoritesView.addButton.rx.tap
             .bind(to: viewModel.input.searchTrigger)
