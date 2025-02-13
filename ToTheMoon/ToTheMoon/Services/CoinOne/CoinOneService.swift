@@ -14,7 +14,7 @@ enum ChangeState: String {
     case fall = "FALL"
 }
 
-final class CoinOneService: BaseService {
+final class CoinOneService: BaseService, ServiceProtocol{
     let exchange: Exchange = .coinone
 
     init() {

@@ -17,7 +17,15 @@ final class FavoritesContainerViewController: UIViewController {
     let selectedSegment = BehaviorRelay<SegmentType>(value: .favoriteList)
     private let disposeBag = DisposeBag()
     
-    private lazy var getMarketPricesUseCase = GetMarketPricesUseCase()
+    private lazy var getMarketPricesUseCase = GetMarketPricesUseCase(
+        services: [
+            BithumbService(),
+            CoinOneService(),
+            KorbitService(),
+            UpbitService()
+        ],
+        symbolService: SymbolService()
+    )
     
     private var childControllers: [SegmentType: UIViewController] = [:]
     
@@ -40,15 +48,15 @@ final class FavoritesContainerViewController: UIViewController {
     }
     
     private func setupCollectionViewLayout() {
-         guard let layout = topFavoritesView.tabCollectionView.collectionViewLayout as? UICollectionViewFlowLayout else { return }
-         
-         let tabCount = CGFloat(tabs.count)
-         let collectionViewWidth = UIScreen.main.bounds.width
-         let tabWidth = (collectionViewWidth / tabCount) - 16
-         
-         layout.itemSize = CGSize(width: tabWidth, height: 40)
-         layout.sectionInset = .zero
-     }
+        guard let layout = topFavoritesView.tabCollectionView.collectionViewLayout as? UICollectionViewFlowLayout else { return }
+        
+        let tabCount = CGFloat(tabs.count)
+        let collectionViewWidth = UIScreen.main.bounds.width
+        let tabWidth = (collectionViewWidth / tabCount) - 16
+        
+        layout.itemSize = CGSize(width: tabWidth, height: 40)
+        layout.sectionInset = .zero
+    }
     
     private func setupTabCollectionView() {
         topFavoritesView.tabCollectionView.delegate = self
@@ -84,7 +92,7 @@ final class FavoritesContainerViewController: UIViewController {
     private func setUnderlinePosition(to index: Int) {
         let tabWidth = topFavoritesView.tabCollectionView.frame.width / CGFloat(tabs.count)
         let leadingOffset = tabWidth * CGFloat(index)
-
+        
         topFavoritesView.underlineView.snp.remakeConstraints { make in
             make.bottom.equalTo(topFavoritesView.tabCollectionView)
             make.height.equalTo(2)
@@ -141,7 +149,15 @@ final class FavoritesContainerViewController: UIViewController {
     }
     
     private func navigateToSearchViewController() {
-        let getMarketPricesUseCase = GetMarketPricesUseCase()
+        let getMarketPricesUseCase = GetMarketPricesUseCase(
+            services: [
+                BithumbService(),
+                CoinOneService(),
+                KorbitService(),
+                UpbitService()
+            ],
+            symbolService: SymbolService()
+        )
         let manageFavoritesUseCase = ManageFavoritesUseCase()
         let searchViewModel = SearchViewModel(
             getMarketPricesUseCase: getMarketPricesUseCase,

@@ -80,7 +80,15 @@ final class FavoriteListViewController: UIViewController {
     }
     
     @objc private func navigateToSearch() {
-        let getMarketPricesUseCase = GetMarketPricesUseCase()
+        let getMarketPricesUseCase = GetMarketPricesUseCase(
+            services: [
+                BithumbService(),
+                CoinOneService(),
+                KorbitService(),
+                UpbitService()
+            ],
+            symbolService: SymbolService()
+        )
         let manageFavoritesUseCase = ManageFavoritesUseCase()
         let searchViewModel = SearchViewModel(
             getMarketPricesUseCase: getMarketPricesUseCase,
