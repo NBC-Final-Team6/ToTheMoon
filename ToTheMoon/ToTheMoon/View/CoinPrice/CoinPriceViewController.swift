@@ -146,9 +146,7 @@ class CoinPriceViewController: UIViewController {
         // 에러 처리
         viewModel.outputs.error
             .observe(on: MainScheduler.instance)
-            .subscribe(onNext: { error in
-                // TODO: 에러 처리 구현
-            })
+            .subscribe(onNext: { error in })
             .disposed(by: disposeBag)
     }
 }
