@@ -60,57 +60,47 @@ final class FavoriteListViewController: UIViewController {
     // MARK: - Bind ViewModel
     private func setupBindings() {
         let output = viewModel.output
-        // ⭐ 즐겨찾기 코인 리스트 바인딩
+        
+        // 즐겨찾기 코인 리스트 바인딩
         output.favoriteCoins
             .drive(contentView.tableView.rx.items(
                 cellIdentifier: CoinPriceTableViewCell.identifier,
                 cellType: CoinPriceTableViewCell.self)
             ) { _, coin, cell in
-                print(coin)
-                self.contentView.tableView.reloadData()
                 cell.configure(with: coin)
             }
             .disposed(by: disposeBag)
         
-        // ⭐ 로딩 상태 바인딩
+        // 로딩 상태 바인딩
         output.isLoading
-            .drive(onNext: { [weak self] isLoading in
+            .drive(loadingView.rx.isHidden)
+            .disposed(by: disposeBag)
+        
+        // 관심목록 UI 상태 업데이트
+        output.favoriteCoins
+            .map { !$0.isEmpty }
+            .drive(onNext: { [weak self] hasFavorites in
                 guard let self = self else { return }
-                self.loadingView.isHidden = !isLoading
-                self.contentView.isHidden = isLoading
-                self.noFavoritesView.isHidden = isLoading
+                self.contentView.isHidden = !hasFavorites
+                self.noFavoritesView.isHidden = hasFavorites
+                self.loadingView.isHidden = true
             })
             .disposed(by: disposeBag)
         
-        // ⭐ 즐겨찾기 코인 유무에 따른 뷰 표시
-        output.favoriteCoins
-            .map { !$0.isEmpty } // true: 코인 있음, false: 없음
-            .drive(onNext: { [weak self] hasFavorites in
-                guard let self = self else { return }
-                print("📌 hasFavorites:", hasFavorites)
-                self.contentView.isHidden = !hasFavorites
-                self.noFavoritesView.isHidden = hasFavorites
-            })
+        contentView.tableView.rx.modelDeleted(MarketPrice.self)
+            .bind(to: viewModel.input.removeFavorite)
             .disposed(by: disposeBag)
     }
     
     // MARK: - 검색 화면 이동
     @objc private func navigateToSearch() {
-        let getMarketPricesUseCase = GetMarketPricesUseCase(
-            services: [
-                BithumbService(),
-                CoinOneService(),
-                KorbitService(),
-                UpbitService()
-            ],
-            symbolService: SymbolService()
-        )
-        let manageFavoritesUseCase = ManageFavoritesUseCase()
-        let searchViewModel = SearchViewModel(
-            getMarketPricesUseCase: getMarketPricesUseCase,
-            manageFavoritesUseCase: manageFavoritesUseCase
-        )
-        let searchVC = SearchViewController(viewModel: searchViewModel)
+        let searchVC = SearchViewController(viewModel: SearchViewModel(
+            getMarketPricesUseCase: GetMarketPricesUseCase(
+                services: [BithumbService(), CoinOneService(), KorbitService(), UpbitService()],
+                symbolService: SymbolService()
+            ),
+            manageFavoritesUseCase: ManageFavoritesUseCase()
+        ))
         navigationController?.pushViewController(searchVC, animated: true)
     }
 }
@@ -118,34 +108,8 @@ final class FavoriteListViewController: UIViewController {
 // MARK: - UITableViewDelegate
 extension FavoriteListViewController: UITableViewDelegate {
     
-    // 셀 높이 설정
     func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
         return 70
-    }
-    
-    // ⭐ 스와이프 삭제 기능 적용 (ViewModel Input 사용)
-    func tableView(_ tableView: UITableView, trailingSwipeActionsConfigurationForRowAt indexPath: IndexPath) -> UISwipeActionsConfiguration? {
-        let deleteAction = UIContextualAction(style: .destructive, title: "삭제") { [weak self] _, _, completionHandler in
-            guard let self = self else {
-                completionHandler(false)
-                return
-            }
-            
-            self.viewModel.output.favoriteCoins
-                .drive(onNext: { [weak self] coins in
-                    guard let self = self, indexPath.row < coins.count else {
-                        completionHandler(false)
-                        return
-                    }
-                    
-                    let coin = coins[indexPath.row]
-                    self.viewModel.input.removeFavorite.accept(coin) // ✅ ViewModel의 Input을 통해 삭제 요청
-                    completionHandler(true)
-                })
-                .disposed(by: self.disposeBag)
-        }
-        deleteAction.backgroundColor = UIColor.red
-        return UISwipeActionsConfiguration(actions: [deleteAction])
     }
 }
 

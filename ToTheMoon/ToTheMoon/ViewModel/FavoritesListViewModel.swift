@@ -1,3 +1,10 @@
+//
+//  FavoritesViewModel.swift
+//  ToTheMoon
+//
+//  Created by 황석범 on 1/21/25.
+//
+
 import RxSwift
 import RxCocoa
 
@@ -10,8 +17,8 @@ final class FavoritesListViewModel {
     
     // MARK: - Input
     struct Input {
-        let fetchTrigger: PublishRelay<Void>
-        let removeFavorite: PublishRelay<MarketPrice>
+        let fetchTrigger = PublishRelay<Void>()
+        let removeFavorite = PublishRelay<MarketPrice>()
     }
     
     // MARK: - Output
@@ -21,7 +28,7 @@ final class FavoritesListViewModel {
     }
     
     // MARK: - Properties
-    let input: Input
+    let input = Input()
     let output: Output
     
     private let favoriteCoinsRelay = BehaviorRelay<[MarketPrice]>(value: [])
@@ -31,69 +38,56 @@ final class FavoritesListViewModel {
     init(manageFavoritesUseCase: ManageFavoritesUseCaseProtocol, getMarketPricesUseCase: GetMarketPricesUseCase) {
         self.manageFavoritesUseCase = manageFavoritesUseCase
         self.getMarketPricesUseCase = getMarketPricesUseCase
-        
-        let fetchTrigger = PublishRelay<Void>()
-        let removeFavorite = PublishRelay<MarketPrice>()
-        
-        self.input = Input(fetchTrigger: fetchTrigger, removeFavorite: removeFavorite)
+
         self.output = Output(
             favoriteCoins: favoriteCoinsRelay.asDriver(onErrorJustReturn: []),
             isLoading: isLoadingRelay.asDriver(onErrorJustReturn: false)
         )
         
-        bind()
+        bindInputs()
     }
     
     // MARK: - Bind Input to Output
-    private func bind() {
-        // ⭐ 즐겨찾기 데이터 로딩
+    private func bindInputs() {
+        // 즐겨찾기 리스트 로드
         input.fetchTrigger
-            .subscribe(onNext: { [weak self] in
-                self?.fetchFavoriteCoins()
-            })
+            .flatMapLatest { [weak self] in
+                self?.fetchFavoriteCoins() ?? .just([])
+            }
+            .bind(to: favoriteCoinsRelay)
             .disposed(by: disposeBag)
         
-        // ⭐ 즐겨찾기 코인 삭제 처리
+        // 즐겨찾기 코인 삭제
         input.removeFavorite
             .flatMapLatest { [weak self] coin -> Observable<Void> in
                 guard let self = self else { return .empty() }
                 return self.manageFavoritesUseCase.removeCoin(coin)
             }
             .subscribe(onNext: { [weak self] in
-                self?.fetchFavoriteCoins()
-            }, onError: { error in
-                print("❌ 즐겨찾기 삭제 실패: \(error.localizedDescription)")
+                self?.input.fetchTrigger.accept(())
             })
             .disposed(by: disposeBag)
     }
     
     // MARK: - Fetch Favorite Coins
-    private func fetchFavoriteCoins() {
-        isLoadingRelay.accept(true) // ✅ 데이터 로딩 시작
-        
+    private func fetchFavoriteCoins() -> Observable<[MarketPrice]> {
+        isLoadingRelay.accept(true)
+
         let savedCoinsObservable = manageFavoritesUseCase.fetchFavoriteCoins()
-            .do(onNext: { savedCoins in
-                print("✅ fetchFavoriteCoins() 내부에서 저장된 코인 가져오기 성공: \(savedCoins)")
-            }, onError: { error in
-                print("❌ fetchFavoriteCoins() 내부 오류: \(error.localizedDescription)")
-            })
             .asObservable()
-        
+
         let allMarketPricesSingle = getMarketPricesUseCase.execute()
         
-        Observable.combineLatest(savedCoinsObservable, allMarketPricesSingle.asObservable())
+        return Observable.combineLatest(savedCoinsObservable, allMarketPricesSingle.asObservable())
             .map { savedCoins, marketPrices in
                 return marketPrices.filter { marketPrice in
                     savedCoins.contains { $0.symbol == marketPrice.symbol && $0.exchangename == marketPrice.exchange }
                 }
             }
-            .subscribe(onNext: { [weak self] filteredMarketPrices in
-                self?.favoriteCoinsRelay.accept(filteredMarketPrices)
-                self?.isLoadingRelay.accept(false) // ✅ 데이터 로딩 완료
-            }, onError: { error in
-                print("❌ 코인 가격 가져오기 실패: \(error.localizedDescription)")
-                self.isLoadingRelay.accept(false) // ✅ 오류 발생 시 로딩 상태 해제
+            .do(onNext: { [weak self] filteredCoins in
+                self?.isLoadingRelay.accept(false)
+            }, onError: { [weak self] error in
+                self?.isLoadingRelay.accept(false)
             })
-            .disposed(by: disposeBag)
     }
 }
