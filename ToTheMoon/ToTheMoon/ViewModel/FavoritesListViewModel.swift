@@ -18,12 +18,14 @@ final class FavoritesListViewModel {
     // MARK: - Input
     struct Input {
         let removeFavorite = PublishRelay<MarketPrice>()
+        let searchTrigger = PublishRelay<Void>() 
     }
     
     // MARK: - Output
     struct Output {
         let favoriteCoins: Driver<[MarketPrice]>
         let isLoading: Driver<Bool>
+        let navigateToSearch: Signal<Void>
     }
     
     // MARK: - Properties
@@ -40,7 +42,8 @@ final class FavoritesListViewModel {
 
         self.output = Output(
             favoriteCoins: favoriteCoinsRelay.asDriver(onErrorJustReturn: []),
-            isLoading: isLoadingRelay.asDriver(onErrorJustReturn: false)
+            isLoading: isLoadingRelay.asDriver(onErrorJustReturn: false),
+            navigateToSearch: input.searchTrigger.asSignal()
         )
         
         bindInputs()
@@ -48,12 +51,12 @@ final class FavoritesListViewModel {
     
     // MARK: - Bind Input to Output
     private func bindInputs() {
-        // 즐겨찾기 코인 삭제
         input.removeFavorite
             .flatMapLatest { [weak self] coin -> Observable<Void> in
                 guard let self = self else { return .empty() }
                 return self.manageFavoritesUseCase.removeCoin(coin)
             }
+            .observe(on: MainScheduler.instance)
             .subscribe(onNext: { [weak self] in
                 self?.fetchFavoriteCoins()
             })
@@ -75,10 +78,11 @@ final class FavoritesListViewModel {
                     savedCoins.contains { $0.symbol == marketPrice.symbol && $0.exchangename == marketPrice.exchange }
                 }
             }
+            .observe(on: MainScheduler.instance)
             .do(onNext: { [weak self] filteredCoins in
                 self?.isLoadingRelay.accept(false)
                 self?.favoriteCoinsRelay.accept(filteredCoins)
-            }, onError: { [weak self] error in
+            }, onError: { [weak self] _ in
                 self?.isLoadingRelay.accept(false)
             })
             .subscribe()
