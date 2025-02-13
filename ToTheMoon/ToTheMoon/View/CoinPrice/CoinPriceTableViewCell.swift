@@ -45,7 +45,7 @@ class CoinPriceTableViewCell: UITableViewCell {
         return label
     }()
     
-    private let priceChangeLabel: UILabel = {
+    let priceChangeLabel: UILabel = {
         let label = UILabel()
         label.font = UIFont.small.bold()
         label.textAlignment = .right

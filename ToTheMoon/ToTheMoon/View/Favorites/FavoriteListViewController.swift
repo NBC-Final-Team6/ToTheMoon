@@ -11,12 +11,17 @@ import RxSwift
 import RxCocoa
 
 final class FavoriteListViewController: UIViewController {
-    private let contentView = FovoritesListTableView()
-    private let noFavoritesView = NoFavoritesView()
-    private let loadingView = LoadingView()
+    
+    // MARK: - UI Components (초기에는 nil)
+    private var contentView: FovoritesListTableView?
+    private var noFavoritesView: NoFavoritesView?
+    private var loadingView: LoadingView?
+    
+    // MARK: - Properties
     private let viewModel: FavoritesListViewModel
     private let disposeBag = DisposeBag()
     
+    // MARK: - Init
     init(viewModel: FavoritesListViewModel) {
         self.viewModel = viewModel
         super.init(nibName: nil, bundle: nil)
@@ -26,108 +31,150 @@ final class FavoriteListViewController: UIViewController {
         fatalError("init(coder:) has not been implemented")
     }
     
+    // MARK: - Life Cycle
     override func loadView() {
-        view = UIView() // 기본 View 설정
+        view = UIView()
         view.backgroundColor = .background
-        
-        [contentView, noFavoritesView, loadingView].forEach {
-            view.addSubview($0)
-            $0.snp.makeConstraints { make in
-                make.edges.equalToSuperview()
-            }
-        }
-        view.layoutIfNeeded()
     }
     
     override func viewDidLoad() {
         super.viewDidLoad()
         setupBindings()
-        contentView.tableView.delegate = self
-        noFavoritesView.addButton.addTarget(self, action: #selector(navigateToSearch), for: .touchUpInside)
     }
     
-    override func viewWillAppear(_ animated: Bool) {
-        super.viewWillAppear(animated)
-        viewModel.fetchFavoriteCoins()
-    }
-    
+    // MARK: - Bind ViewModel
     private func setupBindings() {
-        Observable.combineLatest(viewModel.favoriteCoins, viewModel.isLoading)
-            .observe(on: MainScheduler.instance)
-            .subscribe(onNext: { [weak self] (coins, isLoading) in
-                guard let self = self else { return }
-                
-                if isLoading {
-                    self.loadingView.startLoading()
-                    self.contentView.isHidden = true
-                    self.noFavoritesView.isHidden = true
-                } else {
-                    self.loadingView.stopLoading()
-                    let hasFavorites = !coins.isEmpty
-                    self.contentView.isHidden = !hasFavorites
-                    self.noFavoritesView.isHidden = hasFavorites
-                    self.contentView.tableView.reloadData()
-                }
+        let output = viewModel.output
+
+        // `viewWillAppear`을 감지하여 fetchFavoriteCoins() 호출
+        self.rx.viewWillAppear
+            .subscribe(onNext: { [weak self] in
+                self?.viewModel.fetchFavoriteCoins()
             })
             .disposed(by: disposeBag)
         
-        viewModel.favoriteCoins
-            .observe(on: MainScheduler.instance)
-            .bind(to: contentView.tableView.rx.items(cellIdentifier: CoinPriceTableViewCell.identifier, cellType: CoinPriceTableViewCell.self)) { _, coin, cell in
-                cell.configure(with: coin)
-            }
+        // UI 상태 업데이트 (로딩, 데이터 유무 반영)
+        Driver
+            .combineLatest(output.isLoading, output.favoriteCoins)
+            .drive(onNext: { [weak self] isLoading, favoriteCoins in
+                self?.updateUI(isLoading: isLoading, hasFavorites: !favoriteCoins.isEmpty, coins: favoriteCoins)
+            })
+            .disposed(by: disposeBag)
+        
+        // Rx 방식으로 검색 버튼 이벤트 바인딩
+        noFavoritesView?.addButton.rx.tap
+            .bind(to: viewModel.input.searchTrigger)
             .disposed(by: disposeBag)
     }
     
-    @objc private func navigateToSearch() {
-        let getMarketPricesUseCase = GetMarketPricesUseCase(
-            services: [
-                BithumbService(),
-                CoinOneService(),
-                KorbitService(),
-                UpbitService()
-            ],
-            symbolService: SymbolService()
-        )
-        let manageFavoritesUseCase = ManageFavoritesUseCase()
-        let searchViewModel = SearchViewModel(
-            getMarketPricesUseCase: getMarketPricesUseCase,
-            manageFavoritesUseCase: manageFavoritesUseCase
-        )
-        let searchVC = SearchViewController(viewModel: searchViewModel)
+    // MARK: - UI 업데이트 (상황에 맞는 뷰 추가 및 제거)
+    private func updateUI(isLoading: Bool, hasFavorites: Bool, coins: [MarketPrice]) {
+        removeAllSubviews()
+
+        if isLoading {
+            showLoadingView()
+        } else if hasFavorites {
+            showContentView(with: coins)
+        } else {
+            showNoFavoritesView()
+        }
+    }
+    
+    // MARK: - 로딩 화면 표시
+    private func showLoadingView() {
+        let loadingView = LoadingView()
+        self.loadingView = loadingView
+        view.addSubview(loadingView)
+        loadingView.snp.makeConstraints { make in
+            make.edges.equalToSuperview()
+        }
+    }
+    
+    // MARK: - 데이터가 있을 때 contentView 표시
+    private func showContentView(with coins: [MarketPrice]) {
+        let contentView = FovoritesListTableView()
+        self.contentView = contentView
+        view.addSubview(contentView)
+        contentView.snp.makeConstraints { make in
+            make.edges.equalToSuperview()
+        }
+        
+        // 테이블 뷰 Rx 바인딩 (삭제 포함)
+        bindTableView(to: contentView, coins: coins)
+        
+        // Rx 방식으로 delegate 설정
+        contentView.tableView.rx.setDelegate(self)
+            .disposed(by: disposeBag)
+    }
+    
+    private func showNoFavoritesView() {
+        let noFavoritesView = NoFavoritesView()
+        self.noFavoritesView = noFavoritesView
+        view.addSubview(noFavoritesView)
+        noFavoritesView.snp.makeConstraints { make in
+            make.edges.equalToSuperview()
+        }
+
+        // Rx 방식으로 검색 버튼 이벤트 바인딩
+        noFavoritesView.addButton.rx.tap
+            .bind(to: viewModel.input.searchTrigger)
+            .disposed(by: disposeBag)
+    }
+    
+    // MARK: - Rx 바인딩: 테이블 뷰 데이터 + 스와이프 삭제
+    private func bindTableView(to contentView: FovoritesListTableView, coins: [MarketPrice]) {
+        let tableView = contentView.tableView
+        
+        // 테이블 뷰 데이터 바인딩
+        Observable.just(coins)
+            .observe(on: MainScheduler.instance)
+            .bind(to: tableView.rx.items(
+                cellIdentifier: CoinPriceTableViewCell.identifier,
+                cellType: CoinPriceTableViewCell.self)
+            ) { _, coin, cell in
+                cell.configure(with: coin)
+            }
+            .disposed(by: disposeBag)
+        
+        // 스와이프 삭제 이벤트 추가
+        tableView.rx.modelDeleted(MarketPrice.self)
+            .bind(to: viewModel.input.removeFavorite)
+            .disposed(by: disposeBag)
+    }
+    
+    // MARK: - 기존 UI 제거 (새로운 UI 추가 전)
+    private func removeAllSubviews() {
+        contentView?.removeFromSuperview()
+        noFavoritesView?.removeFromSuperview()
+        loadingView?.removeFromSuperview()
+        
+        contentView = nil
+        noFavoritesView = nil
+        loadingView = nil
+    }
+    
+    // MARK: - 검색 화면 이동
+    private func navigateToSearch() {
+        let searchVC = SearchViewController(viewModel: SearchViewModel(
+            getMarketPricesUseCase: GetMarketPricesUseCase(
+                services: [BithumbService(), CoinOneService(), KorbitService(), UpbitService()],
+                symbolService: SymbolService()
+            ),
+            manageFavoritesUseCase: ManageFavoritesUseCase()
+        ))
         navigationController?.pushViewController(searchVC, animated: true)
     }
 }
 
+// MARK: - UITableViewDelegate
 extension FavoriteListViewController: UITableViewDelegate {
+    
     func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
         return 70
     }
     
-    func tableView(_ tableView: UITableView, trailingSwipeActionsConfigurationForRowAt indexPath: IndexPath) -> UISwipeActionsConfiguration? {
-        let deleteAction = UIContextualAction(style: .destructive, title: "삭제") { [weak self] _, _, completionHandler in
-            guard let self = self else {
-                completionHandler(false)
-                return
-            }
-            self.viewModel.favoriteCoins
-                .take(1)
-                .subscribe(onNext: { coins in
-                    guard indexPath.row < coins.count else {
-                        completionHandler(false) 
-                        return
-                    }
-                    let coin = coins[indexPath.row]
-                    self.viewModel.removeFavoriteCoin(coin)
-                    completionHandler(true)
-                }, onError: { error in
-                    print("❌ 삭제할 코인을 가져오는 중 오류 발생: \(error.localizedDescription)")
-                    completionHandler(false)
-                })
-                .disposed(by: self.disposeBag)
-        }
-        deleteAction.backgroundColor = UIColor.red
-        return UISwipeActionsConfiguration(actions: [deleteAction])
+    // 스와이프 삭제 활성화
+    private func tableView(_ tableView: UITableView, canEditRowAt indexPath: IndexPath) -> Bool {
+        return true
     }
 }
-
