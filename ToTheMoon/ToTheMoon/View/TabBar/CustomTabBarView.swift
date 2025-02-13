@@ -16,6 +16,7 @@ class CustomTabBarView: UIView {
     private let icons = ["cart.fill", "chart.line.uptrend.xyaxis", "gearshape.fill"]
 
     let selectedTab = PublishRelay<Int>()
+    private let disposeBag = DisposeBag()
 
     override init(frame: CGRect) {
         super.init(frame: frame)
@@ -71,8 +72,6 @@ class CustomTabBarView: UIView {
                 .bind(to: selectedTab)
                 .disposed(by: disposeBag)
 
-
-            button.tag = index
             buttons.append(button)
             self.addSubview(button)
         }
@@ -92,6 +91,15 @@ class CustomTabBarView: UIView {
             }
         }
     }
+    
+    func bindSelection(to selectedTab: Observable<Int>) {
+        selectedTab
+            .observe(on: MainScheduler.instance)
+            .subscribe(onNext: { [weak self] selectedIndex in
+                self?.updateButtonSelection(selectedIndex: selectedIndex)
+            })
+            .disposed(by: disposeBag)
+    }
 
 
     public func updateButtonSelection(selectedIndex: Int) {
@@ -104,5 +112,4 @@ class CustomTabBarView: UIView {
             label?.textColor = index == selectedIndex ? .personel : .tabBarText
         }
     }
-    private let disposeBag = DisposeBag()
 }
