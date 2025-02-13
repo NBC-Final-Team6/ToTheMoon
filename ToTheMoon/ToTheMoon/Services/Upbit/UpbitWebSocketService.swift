@@ -45,13 +45,41 @@ final class UpbitWebSocketService {
 
                 return UpbitWebSocketManager.shared.connect(
                     to: URL(string: self.baseURL)!,
-                    decodingType: UpbitWebSocketTickerResponse.self,  // ✅ UpbitWebSocketTickerResponse 사용
+                    decodingType: UpbitWebSocketTickerResponse.self,
                     requestPayload: requestPayload
                 )
             }
-            .map { response in [response] }  // ✅ 단일 객체를 배열로 변환
-            .map { responseArray in responseArray.toMarketPrices(exchange: self.exchange) } // ✅ MarketPrice 변환
+            .map { response in [response] }
+            .map { responseArray in responseArray.toMarketPrices(exchange: self.exchange) }
     }
+    
+    func fetchKrwTicker(for symbol: String) -> Observable<MarketPrice> {
+           let requestPayload: [AnyEncodable] = [
+               AnyEncodable(["ticket": AnyEncodable("UNIQUE_TICKET_ID")]),
+               AnyEncodable([
+                   "type": AnyEncodable("ticker"),
+                   "codes": AnyEncodable([AnyEncodable("KRW-\(symbol)")]),
+                   "isOnlyRealtime": AnyEncodable(true)
+               ])
+           ]
+
+           return UpbitWebSocketManager.shared.connect(
+               to: URL(string: self.baseURL)!,
+               decodingType: UpbitWebSocketTickerResponse.self,
+               requestPayload: requestPayload
+           ).map { response in
+               MarketPrice(
+                   symbol: response.code,
+                   price: response.tradePrice,
+                   exchange: self.exchange.rawValue,
+                   change: response.change,
+                   changeRate: response.changeRate * 100,
+                   quoteVolume: response.accTradeVolume,
+                   highPrice: response.highPrice,
+                   lowPrice: response.lowPrice
+               )
+           }
+       }
 }
 
 extension Array where Element == UpbitWebSocketTickerResponse {

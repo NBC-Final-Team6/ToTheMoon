@@ -10,7 +10,41 @@ import RxSwift
 @main
 class AppDelegate: UIResponder, UIApplicationDelegate {
     
+    let disposeBag = DisposeBag()
+    
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
+//        let up = UpbitWebSocketService()
+//        up.fetchKrwTicker(for: "BTC" )
+//            .subscribe(onNext: { marketPrices in
+//                print("✅ btc 실시간 가격 업데이트: \(marketPrices)")
+//            }, onError: { error in
+//                print("❌ WebSocket 에러: \(error)")
+//            })
+//            .disposed(by: disposeBag)
+//        
+//        up.fetchKrwTicker(for: "XRP" )
+//            .subscribe(onNext: { marketPrices in
+//                print("✅ xrp 실시간 가격 업데이트: \(marketPrices)")
+//            }, onError: { error in
+//                print("❌ WebSocket 에러: \(error)")
+//            })
+//            .disposed(by: disposeBag)
+//
+        let coinoneService = CoinoneWebSocketService()
+
+        let btcSubscription = coinoneService.fetchKrwTicker(for: "BTC")
+            .subscribe(onNext: { marketPrice in
+                print("📈 BTC 실시간 가격 업데이트: \(marketPrice.price)")
+            }, onError: { error in
+                print("❌ WebSocket BTC 에러: \(error)")
+            })
+
+        let xrpSubscription = coinoneService.fetchKrwTicker(for: "XRP")
+            .subscribe(onNext: { marketPrice in
+                print("📈 XRP 실시간 가격 업데이트: \(marketPrice.price)")
+            }, onError: { error in
+                print("❌ WebSocket XRP 에러: \(error)")
+            })
         
         return true
     }
