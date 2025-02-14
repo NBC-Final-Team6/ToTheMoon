@@ -31,7 +31,6 @@ final class BithumbWebSocketManager: BaseWebSocketManager {
             let newSymbols = Set(formattedSymbols)
 
             if newSymbols == self.subscribedSymbols {
-                print("✅ 동일한 코인 구독 요청, WebSocket 재연결 생략.")
                 return Disposables.create()
             }
 
@@ -69,7 +68,7 @@ final class BithumbWebSocketManager: BaseWebSocketManager {
             .do(onNext: { _ in
                 self.subscribedSymbols = symbols
             })
-            .retry(3) // ✅ 연결 실패 시 3번 재시도
+            .retry(3) // 연결 실패 시 3번 재시도
             .subscribe(observer)
     }
 
@@ -89,7 +88,6 @@ final class BithumbWebSocketManager: BaseWebSocketManager {
                 self.activeSocket?.disconnect() // 기존 활성 소켓 종료
                 self.activeSocket = self.backupSocket // 백업 소켓을 활성 소켓으로 변경
                 self.backupSocket = nil
-                print("🔄 기존 웹소켓 해제 후 새로운 웹소켓 활성화 완료")
             })
             .retry(3)
             .subscribe(observer)
@@ -123,7 +121,6 @@ final class BithumbWebSocketManager: BaseWebSocketManager {
     ) {
         switch event {
         case .connected:
-            print("✅ WebSocket 연결 성공. 새로운 구독 요청 처리 중...")
             self.switchToBackupWebSocket(newSymbols: newSymbols, decodingType: decodingType, observer: observer)
 
         case .binary(let data):
@@ -175,7 +172,6 @@ final class BithumbWebSocketManager: BaseWebSocketManager {
 
     // **WebSocket 재연결**
     private func reconnect<T: Decodable>(observer: AnyObserver<T>) {
-        print("🔄 WebSocket 재연결 중...")
         DispatchQueue.global().asyncAfter(deadline: .now() + 2) { [weak self] in
             guard let self = self else { return }
             self.connect(symbols: Array(self.subscribedSymbols), decodingType: T.self)

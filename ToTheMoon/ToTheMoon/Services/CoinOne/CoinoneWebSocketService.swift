@@ -8,7 +8,9 @@
 import Foundation
 import RxSwift
 
-final class CoinoneWebSocketService {
+final class CoinoneWebSocketService: WebSocketServiceProtocol {
+    var exchange: Exchange = .coinone
+    
     private let coinoneService = CoinOneService()
     private var cachedSymbols: [String] = []
     

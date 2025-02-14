@@ -6,10 +6,10 @@
 //
 
 enum Exchange: String {
-    case bithumb = "Bithumb"
-    case coinone = "CoinOne"
-    case korbit = "Korbit"
-    case upbit = "Upbit"
+    case bithumb = "bithumb"
+    case coinone = "coinone"
+    case korbit = "korbit"
+    case upbit = "upbit"
     
     // 거래소의 기본 URL을 반환
     var baseURL: String {

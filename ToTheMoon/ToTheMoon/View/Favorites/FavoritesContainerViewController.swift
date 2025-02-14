@@ -184,10 +184,22 @@ final class FavoritesContainerViewController: UIViewController {
         case .popularCurrency:
             return PopularCurrencyViewController()
         case .favoriteList:
+            let manageFavoritesUseCase = ManageFavoritesUseCase(coreDataManager: CoreDataManager.shared)
+            let webSocketServices: [WebSocketServiceProtocol] = [
+                BithumbWebSocketService(),
+                CoinoneWebSocketService(),
+                KorbitWebSocketService(),
+                UpbitWebSocketService()
+            ]
+            let fetchFavoriteCoinsUseCase = FetchFavoriteCoinsUseCase(
+                manageFavoritesUseCase: manageFavoritesUseCase,
+                webSocketServices: webSocketServices
+            )
+
             return FavoriteListViewController(
                 viewModel: FavoritesListViewModel(
-                    manageFavoritesUseCase: ManageFavoritesUseCase(),
-                    getMarketPricesUseCase: getMarketPricesUseCase
+                    manageFavoritesUseCase: manageFavoritesUseCase,
+                    fetchFavoriteCoinsUseCase: fetchFavoriteCoinsUseCase
                 )
             )
         }

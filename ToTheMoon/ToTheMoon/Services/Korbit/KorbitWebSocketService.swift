@@ -8,7 +8,9 @@
 import Foundation
 import RxSwift
 
-final class KorbitWebSocketService {
+final class KorbitWebSocketService: WebSocketServiceProtocol {
+    var exchange: Exchange = .korbit
+    
     private let korbitService = KorbitService()
     private var cachedSymbols: [String] = []
 

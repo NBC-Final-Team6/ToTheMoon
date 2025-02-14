@@ -8,7 +8,7 @@
 import Foundation
 import RxSwift
 
-final class BithumbWebSocketService {
+final class BithumbWebSocketService: WebSocketServiceProtocol {
     let exchange: Exchange = .bithumb
     private let bithumbService = BithumbService()
     private var cachedSymbols: [String] = []

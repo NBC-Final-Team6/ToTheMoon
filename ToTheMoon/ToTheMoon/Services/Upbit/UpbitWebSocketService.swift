@@ -8,7 +8,9 @@
 import Foundation
 import RxSwift
 
-final class UpbitWebSocketService {
+final class UpbitWebSocketService: WebSocketServiceProtocol {
+    var exchange: Exchange = .upbit
+    
     private let upbitService = UpbitService()
     private var cachedSymbols: [String] = []
 

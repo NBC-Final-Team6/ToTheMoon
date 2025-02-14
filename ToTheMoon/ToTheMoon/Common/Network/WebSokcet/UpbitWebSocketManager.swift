@@ -29,9 +29,8 @@ final class UpbitWebSocketManager: BaseWebSocketManager {
             
             let newSymbols = Set(symbols)
             
-            // 🔹 기존 구독과 비교하여 변경점 확인
+            // 기존 구독과 비교하여 변경점 확인
             if newSymbols == self.subscribedSymbols {
-                print("✅ 이미 동일한 코인 구독 중. 웹소켓 변경 안 함.")
                 return Disposables.create()
             }
             
@@ -40,7 +39,7 @@ final class UpbitWebSocketManager: BaseWebSocketManager {
                 return Disposables.create()
             }
             
-            let requestPayload = self.createRequestPayload(symbols: symbols)
+            _ = self.createRequestPayload(symbols: symbols)
             let request = URLRequest(url: url)
             let newSocket = WebSocket(request: request)
             self.backupSocket = newSocket
@@ -66,7 +65,6 @@ final class UpbitWebSocketManager: BaseWebSocketManager {
     ) {
         switch event {
         case .connected:
-            print("✅ WebSocket 연결 성공. 새로운 구독 요청 처리 중...")
             self.switchToBackupWebSocket(newSymbols: newSymbols)
             
         case .binary(let data):
@@ -95,7 +93,6 @@ final class UpbitWebSocketManager: BaseWebSocketManager {
     // **백업 소켓을 활성 소켓으로 변경**
     private func switchToBackupWebSocket(newSymbols: Set<String>) {
         guard let backupSocket = backupSocket else {
-            print("⚠️ 백업 WebSocket이 존재하지 않음")
             return
         }
         
@@ -103,8 +100,6 @@ final class UpbitWebSocketManager: BaseWebSocketManager {
         activeSocket?.disconnect()
         activeSocket = backupSocket
         self.backupSocket = nil
-        
-        print("🔄 기존 웹소켓 해제 후 새로운 웹소켓 활성화 완료")
         
         // 새 WebSocket이 연결된 후 기존 구독도 유지하면서 새로운 구독 추가
         sendSubscribeMessage(symbols: subscribedSymbols)
@@ -122,7 +117,6 @@ final class UpbitWebSocketManager: BaseWebSocketManager {
         do {
             let jsonData = try JSONEncoder().encode(subscribeMessage)
             socket.write(data: jsonData)
-            print("📤 WebSocket 구독 성공: \(symbols)")
         } catch {
             print("❌ WebSocket 구독 메시지 JSON 변환 실패: \(error.localizedDescription)")
         }
@@ -131,8 +125,6 @@ final class UpbitWebSocketManager: BaseWebSocketManager {
     // **구독 요청 JSON 생성**
     private func createRequestPayload(symbols: [String]) -> [AnyEncodable] {
         let formattedSymbols = symbols.map { "KRW-\($0.uppercased())" }
-        print("📤 요청된 심볼: \(formattedSymbols)") // ✅ 디버깅 로그 추가
-        
         return [
             AnyEncodable(["ticket": AnyEncodable("UNIQUE_TICKET_ID")]),
             AnyEncodable([
@@ -156,7 +148,6 @@ final class UpbitWebSocketManager: BaseWebSocketManager {
     
     // **WebSocket 재연결**
     private func reconnect<T: Decodable>(observer: AnyObserver<T>) {
-        print("🔄 WebSocket 재연결 중...")
         DispatchQueue.global().asyncAfter(deadline: .now() + 2) { [weak self] in
             guard let self = self else { return }
             

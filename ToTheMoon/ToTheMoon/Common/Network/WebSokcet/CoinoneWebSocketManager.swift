@@ -31,13 +31,12 @@ final class CoinoneWebSocketManager {
             
             let newSymbols = Set(symbols)
 
-            // 🔹 기존 구독과 비교하여 변경점 확인
+            // 기존 구독과 비교하여 변경점 확인
             if newSymbols == self.subscribedSymbols {
-                print("✅ 이미 동일한 코인 구독 중. 웹소켓 변경 안 함.")
                 return Disposables.create()
             }
 
-            // 🔹 새로운 WebSocket 준비 (backupSocket)
+            // 새로운 WebSocket 준비 (backupSocket)
             guard let url = URL(string: self.baseURL) else {
                 observer.onError(WebSocketError.invalidURL)
                 return Disposables.create()
@@ -68,7 +67,6 @@ final class CoinoneWebSocketManager {
         switch event {
         case .connected:
             isConnected = true
-            print("✅ WebSocket 연결 성공. 새로운 구독 요청 처리 중...")
             self.switchToBackupWebSocket(newSymbols: newSymbols)
 
         case .text(let text):
@@ -106,7 +104,6 @@ final class CoinoneWebSocketManager {
     // **백업 소켓을 활성 소켓으로 변경 (기존 소켓 유지)**
     private func switchToBackupWebSocket(newSymbols: Set<String>) {
         guard let backupSocket = backupSocket else {
-            print("⚠️ 백업 WebSocket이 존재하지 않음")
             return
         }
 
@@ -114,8 +111,6 @@ final class CoinoneWebSocketManager {
         activeSocket?.disconnect()
         activeSocket = backupSocket
         self.backupSocket = nil
-
-        print("🔄 기존 웹소켓 해제 후 새로운 웹소켓 활성화 완료")
 
         // 새 WebSocket이 연결된 후 구독 요청 전송
         for symbol in subscribedSymbols {
@@ -143,7 +138,6 @@ final class CoinoneWebSocketManager {
             let jsonData = try JSONSerialization.data(withJSONObject: subscribeMessage, options: [])
             if let jsonString = String(data: jsonData, encoding: .utf8) {
                 socket.write(string: jsonString)
-                print("📤 WebSocket 구독 성공: \(jsonString)")
             }
         } catch {
             print("❌ WebSocket 구독 메시지 JSON 변환 실패: \(error.localizedDescription)")
@@ -152,7 +146,6 @@ final class CoinoneWebSocketManager {
 
     // **WebSocket 재연결**
     private func reconnect<T: Decodable>(observer: AnyObserver<T>) {
-        print("🔄 WebSocket 재연결 중...")
         DispatchQueue.global().asyncAfter(deadline: .now() + 2) { [weak self] in
             guard let self = self else { return }
             

@@ -12,13 +12,13 @@ final class FavoritesListViewModel {
     
     // MARK: - Dependencies
     private let manageFavoritesUseCase: ManageFavoritesUseCaseProtocol
-    private let getMarketPricesUseCase: GetMarketPricesUseCase
+    private let fetchFavoriteCoinsUseCase: FetchFavoriteCoinsUseCase
     private let disposeBag = DisposeBag()
     
     // MARK: - Input
     struct Input {
         let removeFavorite = PublishRelay<MarketPrice>()
-        let searchTrigger = PublishRelay<Void>() 
+        let searchTrigger = PublishRelay<Void>()
     }
     
     // MARK: - Output
@@ -36,10 +36,10 @@ final class FavoritesListViewModel {
     private let isLoadingRelay = BehaviorRelay<Bool>(value: false)
     
     // MARK: - Init
-    init(manageFavoritesUseCase: ManageFavoritesUseCaseProtocol, getMarketPricesUseCase: GetMarketPricesUseCase) {
+    init(manageFavoritesUseCase: ManageFavoritesUseCaseProtocol, fetchFavoriteCoinsUseCase: FetchFavoriteCoinsUseCase) {
         self.manageFavoritesUseCase = manageFavoritesUseCase
-        self.getMarketPricesUseCase = getMarketPricesUseCase
-
+        self.fetchFavoriteCoinsUseCase = fetchFavoriteCoinsUseCase
+        
         self.output = Output(
             favoriteCoins: favoriteCoinsRelay.asDriver(onErrorJustReturn: []),
             isLoading: isLoadingRelay.asDriver(onErrorJustReturn: false),
@@ -63,29 +63,21 @@ final class FavoritesListViewModel {
             .disposed(by: disposeBag)
     }
     
-    // MARK: - Fetch Favorite Coins
+    // MARK: - Fetch Favorite Coins (WebSocket 사용)
     func fetchFavoriteCoins() {
         isLoadingRelay.accept(true)
-
-        let savedCoinsObservable = manageFavoritesUseCase.fetchFavoriteCoins()
-            .asObservable()
-
-        let allMarketPricesSingle = getMarketPricesUseCase.execute()
         
-        Observable.combineLatest(savedCoinsObservable, allMarketPricesSingle.asObservable())
-            .map { savedCoins, marketPrices in
-                return marketPrices.filter { marketPrice in
-                    savedCoins.contains { $0.symbol == marketPrice.symbol && $0.exchangename == marketPrice.exchange }
-                }
-            }
+        fetchFavoriteCoinsUseCase.fetchFavoriteCoinsRealtimeData()
             .observe(on: MainScheduler.instance)
-            .do(onNext: { [weak self] filteredCoins in
-                self?.isLoadingRelay.accept(false)
-                self?.favoriteCoinsRelay.accept(filteredCoins)
-            }, onError: { [weak self] _ in
-                self?.isLoadingRelay.accept(false)
-            })
-            .subscribe()
+            .subscribe(
+                onNext: { [weak self] marketPrices in
+                    self?.isLoadingRelay.accept(false)
+                    self?.favoriteCoinsRelay.accept(marketPrices)
+                },
+                onError: { [weak self] _ in
+                    self?.isLoadingRelay.accept(false)
+                }
+            )
             .disposed(by: disposeBag)
     }
 }
