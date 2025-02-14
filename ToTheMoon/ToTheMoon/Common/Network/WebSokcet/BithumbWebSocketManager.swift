@@ -40,7 +40,7 @@ final class BithumbWebSocketManager: BaseWebSocketManager {
                 return Disposables.create()
             }
 
-            let requestPayload = self.createRequestPayload(symbols: formattedSymbols)
+            _ = self.createRequestPayload(symbols: formattedSymbols)
 
             if self.activeSocket == nil {
                 return self.establishNewWebSocket(url: url, symbols: newSymbols, decodingType: decodingType, observer: observer)
