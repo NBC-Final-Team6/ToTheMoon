@@ -16,7 +16,6 @@ class ScreenModeView: UIView {
         let largeImage = UIImage(systemName: "chevron.left", withConfiguration: largeConfig)
         button.setImage(largeImage, for: .normal)
         button.tintColor = UIColor(named: "TextColor")
-        button.contentEdgeInsets = .zero
         return button
     }()
 
@@ -33,7 +32,8 @@ class ScreenModeView: UIView {
         let tableView = UITableView()
         tableView.backgroundColor = UIColor(named: "ContainerColor")
         tableView.separatorStyle = .singleLine
-        tableView.separatorInset = UIEdgeInsets(top: 0, left: 10, bottom: 0, right: 10)
+        tableView.separatorInset = .zero
+        tableView.layoutMargins = .zero
         tableView.layer.cornerRadius = 20
         tableView.separatorColor = UIColor(red: 30/255, green: 30/255, blue: 30/255, alpha: 1)
         tableView.isScrollEnabled = false
@@ -71,7 +71,7 @@ class ScreenModeView: UIView {
         tableView.snp.makeConstraints { make in
             make.top.equalTo(titleLabel.snp.bottom).offset(20)
             make.leading.trailing.equalToSuperview().inset(20)
-            make.height.equalTo(175)
+            make.height.equalTo(165)
         }
     }
 }
