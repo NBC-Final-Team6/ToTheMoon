@@ -1,5 +1,5 @@
 //
-//  Untitled.swift
+//  UpbitWebSocketService.swift
 //  ToTheMoon
 //
 //  Created by 황석범 on 2/10/25.
@@ -9,16 +9,14 @@ import Foundation
 import RxSwift
 
 final class UpbitWebSocketService {
-    let exchange: Exchange = .upbit
-    private let baseURL = Exchange.upbit.webSocketURL
     private let upbitService = UpbitService()
     private var cachedSymbols: [String] = []
 
     private func loadAllKrwSymbols() -> Single<[String]> {
         return upbitService.fetchMarketPrices()
             .map { markets in
-                let krwMarkets = markets.filter { $0.symbol.hasPrefix("KRW-") }
-                return krwMarkets.map { $0.symbol.replacingOccurrences(of: "KRW-", with: "") }
+                markets.filter { $0.symbol.hasPrefix("KRW-") }
+                    .map { $0.symbol.replacingOccurrences(of: "KRW-", with: "") }
             }
             .do(onSuccess: { [weak self] symbols in
                 self?.cachedSymbols = symbols
@@ -34,52 +32,24 @@ final class UpbitWebSocketService {
                     return Observable.error(NetworkError.invalidData)
                 }
 
-                let requestPayload: [AnyEncodable] = [
-                    AnyEncodable(["ticket": AnyEncodable("UNIQUE_TICKET_ID")]),
-                    AnyEncodable([
-                        "type": AnyEncodable("ticker"),
-                        "codes": AnyEncodable(symbols.map { "KRW-\($0)" }.map { AnyEncodable($0) }),
-                        "isOnlyRealtime": AnyEncodable(true)
-                    ])
-                ]
-
                 return UpbitWebSocketManager.shared.connect(
-                    to: URL(string: self.baseURL)!,
-                    decodingType: UpbitWebSocketTickerResponse.self,
-                    requestPayload: requestPayload
+                    symbols: symbols,
+                    decodingType: UpbitWebSocketTickerResponse.self
                 )
             }
-            .map { response in [response] }
-            .map { responseArray in responseArray.toMarketPrices(exchange: self.exchange) }
+            .map { [$0] }
+            .map { $0.toMarketPrices(exchange: .upbit) }
     }
     
-    func fetchKrwTicker(for symbol: String) -> Observable<MarketPrice> {
-           let requestPayload: [AnyEncodable] = [
-               AnyEncodable(["ticket": AnyEncodable("UNIQUE_TICKET_ID")]),
-               AnyEncodable([
-                   "type": AnyEncodable("ticker"),
-                   "codes": AnyEncodable([AnyEncodable("KRW-\(symbol)")]),
-                   "isOnlyRealtime": AnyEncodable(true)
-               ])
-           ]
-
-           return UpbitWebSocketManager.shared.connect(
-               to: URL(string: self.baseURL)!,
-               decodingType: UpbitWebSocketTickerResponse.self,
-               requestPayload: requestPayload
-           ).map { response in
-               MarketPrice(
-                   symbol: response.code,
-                   price: response.tradePrice,
-                   exchange: self.exchange.rawValue,
-                   change: response.change,
-                   changeRate: response.changeRate * 100,
-                   quoteVolume: response.accTradeVolume,
-                   highPrice: response.highPrice,
-                   lowPrice: response.lowPrice
-               )
-           }
-       }
+    // **특정 코인들의 WebSocket 구독**
+    func fetchKrwTicker(for symbols: [String]) -> Observable<[MarketPrice]> {
+        return UpbitWebSocketManager.shared.connect(
+            symbols: symbols,
+            decodingType: UpbitWebSocketTickerResponse.self
+        )
+        .map { [$0] }
+        .map { $0.toMarketPrices(exchange: .upbit) }
+    }
 }
 
 extension Array where Element == UpbitWebSocketTickerResponse {
