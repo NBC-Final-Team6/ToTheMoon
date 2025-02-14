@@ -37,6 +37,7 @@ class ScreenModeViewController: UIViewController {
                 cell.textLabel?.textColor = UIColor(named: "TextColor")
                 cell.backgroundColor = .clear
                 cell.accessoryType = (index == self.viewModel.selectedOptionIndex.value) ? .checkmark : .none
+                cell.tintColor = .personel
                 
                 cell.separatorInset = UIEdgeInsets(top: 0, left: 16, bottom: 0, right: 16)
                 cell.layoutMargins = UIEdgeInsets(top: 0, left: 16, bottom: 0, right: 16)
