@@ -173,6 +173,14 @@ class ChartView: UIView {
         stackView.alignment = .fill
         return stackView
     }()
+    
+    let favoriteButton: UIButton = {
+        let button = UIButton(type: .system)
+        let starImage = UIImage(systemName: "star") // 기본 아이콘 (비어있는 별)
+        button.setImage(starImage, for: .normal)
+        button.tintColor = .gray
+        return button
+    }()
 
     let highestPriceLabel = ChartView.createPriceLabel(text: "최고가")
     let highestPriceValueLabel = ChartView.createPriceValueLabel(textColor: .green)
@@ -197,6 +205,7 @@ class ChartView: UIView {
 
         addSubview(currentPriceLabel)
         addSubview(timeSelectorView)
+        addSubview(favoriteButton)
 
         // ✅ 스크롤뷰 추가
         addSubview(scrollView)
@@ -288,6 +297,12 @@ class ChartView: UIView {
 
         coinInfoStackView.snp.makeConstraints { make in
             make.top.leading.trailing.equalToSuperview().inset(10)
+        }
+        
+        favoriteButton.snp.makeConstraints { make in
+            make.trailing.equalToSuperview().inset(20) // 우측 정렬
+            make.centerY.equalTo(currentPriceLabel) // 현재가 레이블과 정렬
+            make.width.height.equalTo(24) // 아이콘 크기
         }
 
         supplyInfoStackView.snp.makeConstraints { make in

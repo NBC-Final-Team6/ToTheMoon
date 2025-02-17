@@ -7,13 +7,16 @@
 
 import UIKit
 import SnapKit
+import RxSwift
+import RxCocoa
 
 class CustomTabBarView: UIView {
     private var buttons: [UIButton] = []
     private let titles = ["관심 목록", "코인 시세", "앱 설정"]
     private let icons = ["cart.fill", "chart.line.uptrend.xyaxis", "gearshape.fill"]
 
-    var onTabSelected: ((Int) -> Void)?
+    let selectedTab = PublishRelay<Int>()
+    private let disposeBag = DisposeBag()
 
     override init(frame: CGRect) {
         super.init(frame: frame)
@@ -63,9 +66,12 @@ class CustomTabBarView: UIView {
             stackView.snp.makeConstraints { make in
                 make.center.equalToSuperview()
             }
+            
+            button.rx.tap
+                .map { index }
+                .bind(to: selectedTab)
+                .disposed(by: disposeBag)
 
-            button.tag = index
-            button.addTarget(self, action: #selector(buttonTapped(_:)), for: .touchUpInside)
             buttons.append(button)
             self.addSubview(button)
         }
@@ -85,10 +91,16 @@ class CustomTabBarView: UIView {
             }
         }
     }
-
-    @objc private func buttonTapped(_ sender: UIButton) {
-        onTabSelected?(sender.tag)
+    
+    func bindSelection(to selectedTab: Observable<Int>) {
+        selectedTab
+            .observe(on: MainScheduler.instance)
+            .subscribe(onNext: { [weak self] selectedIndex in
+                self?.updateButtonSelection(selectedIndex: selectedIndex)
+            })
+            .disposed(by: disposeBag)
     }
+
 
     public func updateButtonSelection(selectedIndex: Int) {
         for (index, button) in buttons.enumerated() {
