@@ -7,22 +7,25 @@
 
 import Foundation
 import RxSwift
+import UIKit
 
 final class FetchFavoriteCoinsUseCase {
     private let webSocketServices: [WebSocketServiceProtocol]
     private let manageFavoritesUseCase: ManageFavoritesUseCaseProtocol
+    private let symbolFormatter: SymbolFormatter
     private var disposeBag = DisposeBag()
     
     init(manageFavoritesUseCase: ManageFavoritesUseCaseProtocol, webSocketServices: [WebSocketServiceProtocol]) {
         self.manageFavoritesUseCase = manageFavoritesUseCase
         self.webSocketServices = webSocketServices
+        self.symbolFormatter = SymbolFormatter()
         observeFavoriteCoins()
     }
     
     private func observeFavoriteCoins() {
         manageFavoritesUseCase.fetchFavoriteCoins()
-            .distinctUntilChanged { $0 == $1 } // 같은 값이면 무시
-            .debounce(.milliseconds(300), scheduler: MainScheduler.instance) // 변경 감지 후 300ms 지연
+            .distinctUntilChanged { $0 == $1 }
+            .debounce(.milliseconds(300), scheduler: MainScheduler.instance)
             .subscribe(onNext: { [weak self] _ in
                 print("🔄 관심 코인 목록 변경 감지됨 → 웹소켓 재구독 실행")
                 self?.fetchFavoriteCoinsRealtimeData()
@@ -30,8 +33,6 @@ final class FetchFavoriteCoinsUseCase {
             .disposed(by: disposeBag)
     }
     
-    
-    // ToDo: 거래소 마다 1개 코인 데이터만 셀에서 보임, 코어 데이터에 없으면 요청 끊어야함 ...
     func fetchFavoriteCoinsRealtimeData() -> Observable<[MarketPrice]> {
         return manageFavoritesUseCase.fetchFavoriteCoins()
             .flatMapLatest { [weak self] favoriteCoins -> Observable<[MarketPrice]> in
@@ -42,7 +43,6 @@ final class FetchFavoriteCoinsUseCase {
                     print("   🔹 \(coin.exchangename ?? "nil") - \(coin.symbol ?? "nil")")
                 }
 
-                // 거래소별 코인 심볼을 분류
                 var symbolsByExchange: [Exchange: [String]] = [:]
                 for coin in favoriteCoins {
                     guard let exchange = Exchange(rawValue: coin.exchangename?.lowercased() ?? ""),
@@ -57,7 +57,6 @@ final class FetchFavoriteCoinsUseCase {
                     print("   🔸 \(exchange.rawValue): \(symbols)")
                 }
 
-                // ✅ 거래소별, 코인별 데이터를 개별적으로 관리하기 위한 딕셔너리
                 var marketPricesByExchange: [Exchange: [String: MarketPrice]] = [:]
 
                 let observables = self.webSocketServices.map { service -> Observable<[MarketPrice]> in
@@ -65,6 +64,10 @@ final class FetchFavoriteCoinsUseCase {
                         print("🔵 [DEBUG] \(service.exchange.rawValue) 웹소켓 요청 시작 → 심볼: \(symbols)")
                         
                         return service.fetchKrwTicker(for: symbols)
+                            .flatMap { [weak self] prices in
+                                guard let self = self else { return Observable.just(prices) }
+                                return self.attachImages(to: prices) // 🔥 이미지 추가
+                            }
                             .do(onNext: { prices in
                                 print("🟣 [DEBUG] \(service.exchange.rawValue) 웹소켓 응답 데이터:")
                                 prices.forEach { price in
@@ -74,34 +77,60 @@ final class FetchFavoriteCoinsUseCase {
                                 print("🚨 [DEBUG] \(service.exchange.rawValue) 웹소켓 에러 발생: \(error.localizedDescription)")
                             })
                             .map { newPrices -> [MarketPrice] in
-                                // ✅ 기존 데이터를 유지하면서 새로운 데이터를 갱신
                                 var updatedPrices = marketPricesByExchange[service.exchange] ?? [:]
                                 newPrices.forEach { price in
                                     updatedPrices[price.symbol] = price
                                 }
                                 marketPricesByExchange[service.exchange] = updatedPrices
-                                return Array(updatedPrices.values) // ✅ 변환하여 Observable로 반환
+                                return Array(updatedPrices.values)
                             }
                     } else {
                         print("⚠️ [DEBUG] \(service.exchange.rawValue) 관심 목록이 없음 → 웹소켓 해제")
-                        service.fetchKrwTicker(for: []) // 해당 거래소 웹소켓 해제
-                        return Observable.just([]) // 빈 Observable 반환
+                        service.fetchKrwTicker(for: [])
+                        return Observable.just([])
                     }
                 }
 
-                // ✅ 모든 거래소 데이터를 합쳐서 반환
                 return Observable.combineLatest(observables)
-                    .map { allPrices in
-                        return allPrices.flatMap { $0 } // ✅ 여러 거래소 데이터를 하나의 리스트로 병합
-                    }
+                    .map { allPrices in allPrices.flatMap { $0 } }
             }
     }
     
-    func cancelSubscriptions() {
-        disposeBag = DisposeBag() // ✅ 모든 구독 해제
-        webSocketServices.forEach { $0.disconnectWebSocket() } // ✅ 웹소켓 해제 추가
-        print("🔴 모든 웹소켓 구독 해제됨")
+    private func attachImages(to prices: [MarketPrice]) -> Observable<[MarketPrice]> {
+        let imageRequests = prices.map { marketPrice -> Single<MarketPrice> in
+            let normalizedSymbol = symbolFormatter.format(symbol: marketPrice.symbol).uppercased()
+            
+            var updatedMarketPrice = marketPrice
+            updatedMarketPrice.symbol = normalizedSymbol
+            
+            if let cachedImage = ImageRepository.getImage(for: normalizedSymbol) {
+                updatedMarketPrice.image = cachedImage
+                return Single.just(updatedMarketPrice)
+            }
+            
+            return fetchAndCacheImage(for: normalizedSymbol)
+                .map { image in
+                    updatedMarketPrice.image = image
+                    return updatedMarketPrice
+                }
+        }
+        
+        return Single.zip(imageRequests).asObservable()
     }
     
-    
+    private func fetchAndCacheImage(for symbol: String) -> Single<UIImage?> {
+        return SymbolService().fetchCoinThumbImage(coinSymbol: symbol)
+            .do(onSuccess: { image in
+                if let image = image {
+                    CoinImageCache.shared.setImage(for: symbol, image: image)
+                }
+            })
+            .catchAndReturn(nil)
+    }
+
+    func cancelSubscriptions() {
+        disposeBag = DisposeBag()
+        webSocketServices.forEach { $0.disconnectWebSocket() }
+        print("🔴 모든 웹소켓 구독 해제됨")
+    }
 }

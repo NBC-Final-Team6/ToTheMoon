@@ -68,9 +68,8 @@ final class FavoriteListViewController: UIViewController {
         
         // 화면이 나타날 때마다 데이터 가져오기
         self.rx.viewWillAppear
-            .subscribe(onNext: { [weak self] in
-                self?.viewModel.fetchFavoriteCoins()
-            })
+            .map { _ in }
+            .bind(to: viewModel.input.viewWillAppearTrigger)
             .disposed(by: disposeBag)
         
         // UI 상태 업데이트

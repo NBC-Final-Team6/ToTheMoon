@@ -19,6 +19,8 @@ final class FavoritesListViewModel {
     struct Input {
         let removeFavorite = PublishRelay<MarketPrice>()
         let searchTrigger = PublishRelay<Void>()
+        let viewWillAppearTrigger = PublishRelay<Void>()
+        let viewWillDisappearTrigger = PublishRelay<Void>()
     }
     
     // MARK: - Output
@@ -51,6 +53,18 @@ final class FavoritesListViewModel {
     
     // MARK: - Bind Input to Output
     private func bindInputs() {
+        input.viewWillAppearTrigger
+            .subscribe(onNext: { [weak self] in
+                self?.fetchFavoriteCoins()
+            })
+            .disposed(by: disposeBag)
+        
+        input.viewWillDisappearTrigger
+            .subscribe(onNext: { [weak self] in
+                self?.fetchFavoriteCoinsUseCase.cancelSubscriptions()
+            })
+            .disposed(by: disposeBag)
+        
         input.removeFavorite
             .flatMapLatest { [weak self] coin -> Observable<Void> in
                 guard let self = self else { return .empty() }
