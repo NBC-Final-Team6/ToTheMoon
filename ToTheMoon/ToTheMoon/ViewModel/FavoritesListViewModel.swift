@@ -75,7 +75,7 @@ final class FavoritesListViewModel {
         Observable.combineLatest(savedCoinsObservable, allMarketPricesSingle.asObservable())
             .map { savedCoins, marketPrices in
                 return marketPrices.filter { marketPrice in
-                    savedCoins.contains { $0.symbol == marketPrice.symbol && $0.exchangename == marketPrice.exchange }
+                    savedCoins.contains { $0.symbol == marketPrice.symbol.lowercased() && $0.exchangename == marketPrice.exchange.lowercased() }
                 }
             }
             .observe(on: MainScheduler.instance)
