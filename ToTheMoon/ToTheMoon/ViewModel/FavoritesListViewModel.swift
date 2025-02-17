@@ -47,7 +47,6 @@ final class FavoritesListViewModel {
         )
         
         bindInputs()
-        observeFavoriteCoins()
     }
     
     // MARK: - Bind Input to Output
@@ -64,45 +63,19 @@ final class FavoritesListViewModel {
             .disposed(by: disposeBag)
     }
     
-    // MARK: - CoreData 변경 감지 후 웹소켓 업데이트
-    private func observeFavoriteCoins() {
-        manageFavoritesUseCase.fetchFavoriteCoins()
-            .distinctUntilChanged { $0 == $1 } // ✅ 중복 데이터 방지
-            .debounce(.milliseconds(300), scheduler: MainScheduler.instance) // ✅ 변경 감지 후 300ms 대기
-            .subscribe(onNext: { [weak self] _ in
-                print("🔄 관심 코인 목록 변경 감지됨 → 웹소켓 재구독 실행")
-                self?.fetchFavoriteCoins()
-            })
-            .disposed(by: disposeBag)
-    }
-    
     // MARK: - Fetch Favorite Coins (웹소켓 사용)
     func fetchFavoriteCoins() {
         isLoadingRelay.accept(true)
         
         fetchFavoriteCoinsUseCase.fetchFavoriteCoinsRealtimeData()
             .observe(on: MainScheduler.instance)
-            .scan(favoriteCoinsRelay.value) { existingData, newMarketPrices in
-                var updatedData = existingData
-                
-                // ✅ 기존 데이터와 새로운 데이터를 병합하면서 업데이트
-                for marketPrice in newMarketPrices {
-                    if let index = updatedData.firstIndex(where: { $0.exchange == marketPrice.exchange && $0.symbol == marketPrice.symbol }) {
-                        updatedData[index] = marketPrice // 기존 데이터 업데이트
-                    } else {
-                        updatedData.append(marketPrice) // 새로운 데이터 추가
-                    }
-                }
-    
-                print("✅ [DEBUG] UI 업데이트 전 최종 데이터:")
-                updatedData.forEach { print("   💰 \($0.exchange) - \($0.symbol): \($0.price) KRW") }
-                
-                return updatedData
-            }
-            .subscribe(onNext: { [weak self] updatedPrices in
+            .subscribe(onNext: { [weak self] allMarketPrices in
+                self?.isLoadingRelay.accept(false)
                 guard let self = self else { return }
-                self.isLoadingRelay.accept(false)
-                self.favoriteCoinsRelay.accept(updatedPrices) // 기존 데이터 유지하면서 업데이트
+                // ✅ 모든 거래소의 데이터를 한 번에 업데이트
+                self.favoriteCoinsRelay.accept(allMarketPrices)
+                print("🟢 [DEBUG] 최종 MarketPrice 리스트 (UI 업데이트 직전):")
+                allMarketPrices.forEach { print("   💰 \($0.exchange) - \($0.symbol): \($0.price) KRW") }
             })
             .disposed(by: disposeBag)
     }

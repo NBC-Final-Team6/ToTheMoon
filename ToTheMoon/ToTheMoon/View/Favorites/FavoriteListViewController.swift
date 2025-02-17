@@ -12,10 +12,10 @@ import RxCocoa
 
 final class FavoriteListViewController: UIViewController {
     
-    // MARK: - UI Components (초기에는 nil)
-    private var contentView: FovoritesListTableView?
-    private var noFavoritesView: NoFavoritesView?
-    private var loadingView: LoadingView?
+    // MARK: - UI Components
+    private lazy var contentView = FovoritesListTableView()
+    private lazy var noFavoritesView = NoFavoritesView()
+    private lazy var loadingView = LoadingView()
     
     // MARK: - Properties
     private let viewModel: FavoritesListViewModel
@@ -35,6 +35,7 @@ final class FavoriteListViewController: UIViewController {
     override func loadView() {
         view = UIView()
         view.backgroundColor = .background
+        setupViews()
     }
     
     override func viewDidLoad() {
@@ -44,24 +45,36 @@ final class FavoriteListViewController: UIViewController {
     
     override func viewWillDisappear(_ animated: Bool) {
         super.viewWillDisappear(animated)
-        print("🔴 FavoriteListViewController will disappear - 웹소켓 연결 해제")
         viewModel.fetchFavoriteCoinsUseCase.cancelSubscriptions()
+    }
+    
+    // MARK: - UI 초기화
+    private func setupViews() {
+        
+        [ contentView, noFavoritesView, loadingView ].forEach { view.addSubview($0) }
+        
+        contentView.snp.makeConstraints { $0.edges.equalToSuperview() }
+        noFavoritesView.snp.makeConstraints { $0.edges.equalToSuperview() }
+        loadingView.snp.makeConstraints { $0.edges.equalToSuperview() }
+        
+        contentView.isHidden = true
+        noFavoritesView.isHidden = true
+        loadingView.isHidden = true
     }
     
     // MARK: - Bind ViewModel
     private func setupBindings() {
         let output = viewModel.output
         
-        // `viewWillAppear`을 감지하여 fetchFavoriteCoins() 호출
+        // 화면이 나타날 때마다 데이터 가져오기
         self.rx.viewWillAppear
             .subscribe(onNext: { [weak self] in
                 self?.viewModel.fetchFavoriteCoins()
             })
             .disposed(by: disposeBag)
         
-        // UI 상태 업데이트 (로딩, 데이터 유무 반영)
-        Driver
-            .combineLatest(output.isLoading, output.favoriteCoins)
+        // UI 상태 업데이트
+        Driver.combineLatest(output.isLoading, output.favoriteCoins)
             .drive(onNext: { [weak self] isLoading, favoriteCoins in
                 self?.updateUI(isLoading: isLoading, hasFavorites: !favoriteCoins.isEmpty, coins: favoriteCoins)
             })
@@ -73,70 +86,10 @@ final class FavoriteListViewController: UIViewController {
                 self?.navigateToSearch()
             })
             .disposed(by: disposeBag)
-    }
-    
-    // MARK: - UI 업데이트 (상황에 맞는 뷰 추가 및 제거)
-    private func updateUI(isLoading: Bool, hasFavorites: Bool, coins: [MarketPrice]) {
-        removeAllSubviews()
-        
-        if isLoading {
-            showLoadingView()
-        } else if hasFavorites {
-            showContentView(with: coins)
-        } else {
-            showNoFavoritesView()
-        }
-    }
-    
-    // MARK: - 로딩 화면 표시
-    private func showLoadingView() {
-        let loadingView = LoadingView()
-        self.loadingView = loadingView
-        view.addSubview(loadingView)
-        loadingView.snp.makeConstraints { make in
-            make.edges.equalToSuperview()
-        }
-    }
-    
-    // MARK: - 데이터가 있을 때 contentView 표시
-    private func showContentView(with coins: [MarketPrice]) {
-        let contentView = FovoritesListTableView()
-        self.contentView = contentView
-        view.addSubview(contentView)
-        contentView.snp.makeConstraints { make in
-            make.edges.equalToSuperview()
-        }
-        
-        // 테이블 뷰 Rx 바인딩 (삭제 포함)
-        bindTableView(to: contentView, coins: coins)
-        
-        // Rx 방식으로 delegate 설정
-        contentView.tableView.rx.setDelegate(self)
-            .disposed(by: disposeBag)
-    }
-    
-    private func showNoFavoritesView() {
-        let noFavoritesView = NoFavoritesView()
-        self.noFavoritesView = noFavoritesView
-        view.addSubview(noFavoritesView)
-        noFavoritesView.snp.makeConstraints { make in
-            make.edges.equalToSuperview()
-        }
-        
-        // Rx 방식으로 검색 버튼 이벤트 바인딩
-        noFavoritesView.addButton.rx.tap
-            .bind(to: viewModel.input.searchTrigger)
-            .disposed(by: disposeBag)
-    }
-    
-    // MARK: - Rx 바인딩: 테이블 뷰 데이터 + 스와이프 삭제
-    private func bindTableView(to contentView: FovoritesListTableView, coins: [MarketPrice]) {
-        let tableView = contentView.tableView
         
         // 테이블 뷰 데이터 바인딩
-        Observable.just(coins)
-            .observe(on: MainScheduler.instance)
-            .bind(to: tableView.rx.items(
+        output.favoriteCoins
+            .drive(contentView.tableView.rx.items(
                 cellIdentifier: CoinPriceTableViewCell.identifier,
                 cellType: CoinPriceTableViewCell.self)
             ) { _, coin, cell in
@@ -144,21 +97,21 @@ final class FavoriteListViewController: UIViewController {
             }
             .disposed(by: disposeBag)
         
+        // 테이블 뷰 델리게이트 self 설정
+        contentView.tableView.rx.setDelegate(self)
+                    .disposed(by: disposeBag)
+
         // 스와이프 삭제 이벤트 추가
-        tableView.rx.modelDeleted(MarketPrice.self)
+        contentView.tableView.rx.modelDeleted(MarketPrice.self)
             .bind(to: viewModel.input.removeFavorite)
             .disposed(by: disposeBag)
     }
     
-    // MARK: - 기존 UI 제거 (새로운 UI 추가 전)
-    private func removeAllSubviews() {
-        contentView?.removeFromSuperview()
-        noFavoritesView?.removeFromSuperview()
-        loadingView?.removeFromSuperview()
-        
-        contentView = nil
-        noFavoritesView = nil
-        loadingView = nil
+    // MARK: - UI 업데이트 (뷰 삭제 없이 상태만 변경)
+    private func updateUI(isLoading: Bool, hasFavorites: Bool, coins: [MarketPrice]) {
+        loadingView.isHidden = !isLoading
+        contentView.isHidden = !(hasFavorites && !isLoading)
+        noFavoritesView.isHidden = hasFavorites || isLoading
     }
     
     // MARK: - 검색 화면 이동

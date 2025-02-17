@@ -42,6 +42,7 @@ final class FetchFavoriteCoinsUseCase {
                     print("   🔹 \(coin.exchangename ?? "nil") - \(coin.symbol ?? "nil")")
                 }
 
+                // 거래소별 코인 심볼을 분류
                 var symbolsByExchange: [Exchange: [String]] = [:]
                 for coin in favoriteCoins {
                     guard let exchange = Exchange(rawValue: coin.exchangename?.lowercased() ?? ""),
@@ -56,9 +57,13 @@ final class FetchFavoriteCoinsUseCase {
                     print("   🔸 \(exchange.rawValue): \(symbols)")
                 }
 
+                // ✅ 거래소별, 코인별 데이터를 개별적으로 관리하기 위한 딕셔너리
+                var marketPricesByExchange: [Exchange: [String: MarketPrice]] = [:]
+
                 let observables = self.webSocketServices.map { service -> Observable<[MarketPrice]> in
                     if let symbols = symbolsByExchange[service.exchange], !symbols.isEmpty {
                         print("🔵 [DEBUG] \(service.exchange.rawValue) 웹소켓 요청 시작 → 심볼: \(symbols)")
+                        
                         return service.fetchKrwTicker(for: symbols)
                             .do(onNext: { prices in
                                 print("🟣 [DEBUG] \(service.exchange.rawValue) 웹소켓 응답 데이터:")
@@ -68,6 +73,15 @@ final class FetchFavoriteCoinsUseCase {
                             }, onError: { error in
                                 print("🚨 [DEBUG] \(service.exchange.rawValue) 웹소켓 에러 발생: \(error.localizedDescription)")
                             })
+                            .map { newPrices -> [MarketPrice] in
+                                // ✅ 기존 데이터를 유지하면서 새로운 데이터를 갱신
+                                var updatedPrices = marketPricesByExchange[service.exchange] ?? [:]
+                                newPrices.forEach { price in
+                                    updatedPrices[price.symbol] = price
+                                }
+                                marketPricesByExchange[service.exchange] = updatedPrices
+                                return Array(updatedPrices.values) // ✅ 변환하여 Observable로 반환
+                            }
                     } else {
                         print("⚠️ [DEBUG] \(service.exchange.rawValue) 관심 목록이 없음 → 웹소켓 해제")
                         service.fetchKrwTicker(for: []) // 해당 거래소 웹소켓 해제
@@ -75,8 +89,11 @@ final class FetchFavoriteCoinsUseCase {
                     }
                 }
 
+                // ✅ 모든 거래소 데이터를 합쳐서 반환
                 return Observable.combineLatest(observables)
-                    .map { $0.flatMap { $0 } } // 여러 거래소 데이터를 하나의 리스트로 병합
+                    .map { allPrices in
+                        return allPrices.flatMap { $0 } // ✅ 여러 거래소 데이터를 하나의 리스트로 병합
+                    }
             }
     }
     

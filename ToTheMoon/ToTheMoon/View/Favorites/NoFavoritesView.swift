@@ -71,8 +71,7 @@ final class NoFavoritesView: UIView {
         buttonStackView.addArrangedSubview(addButton)
         
         // 뷰 계층 구조 설정
-        addSubview(verticalStackView)
-        addSubview(buttonStackView)
+        [ verticalStackView, buttonStackView ].forEach{ addSubview($0) }
         
         // 제약 조건 설정
         verticalStackView.snp.makeConstraints { make in
