@@ -4,11 +4,9 @@
 //
 //  Created by 황석범 on 1/21/25.
 //
-
 import Foundation
 import RxSwift
 import RxCocoa
-
 final class SearchViewModel {
     private let getMarketPricesUseCase: GetMarketPricesUseCase
     private let manageFavoritesUseCase: ManageFavoritesUseCaseProtocol
@@ -56,7 +54,7 @@ final class SearchViewModel {
     private func loadSavedCoins() {
         manageFavoritesUseCase.fetchFavoriteCoins()
             .map { coins -> Set<String> in
-                Set(coins.map { "\($0.symbol)_\($0.exchangename)" })
+                Set(coins.map { "\($0.symbol)_\($0.exchange)" })
             }
             .bind(to: savedCoinsRelay)
             .disposed(by: disposeBag)
@@ -121,9 +119,10 @@ final class SearchViewModel {
     private func reloadSavedCoins() {
         manageFavoritesUseCase.fetchFavoriteCoins()
             .map { coins -> Set<String> in
-                Set(coins.map { "\($0.symbol)_\($0.exchangename)" })
+                Set(coins.map { "\($0.symbol)_\($0.exchange)" })
             }
             .bind(to: savedCoinsRelay)
             .disposed(by: disposeBag)
     }
 }
+

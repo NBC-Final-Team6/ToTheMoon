@@ -4,12 +4,10 @@
 //
 //  Created by 황석범 on 1/27/25.
 //
-
 import UIKit
 import SnapKit
 import RxSwift
 import RxCocoa
-
 final class FavoriteListViewController: UIViewController {
     
     // MARK: - UI Components
@@ -41,6 +39,11 @@ final class FavoriteListViewController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         setupBindings()
+    }
+    
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+        viewModel.fetchFavoriteCoinsChartData()
     }
     
     override func viewWillDisappear(_ animated: Bool) {
@@ -87,19 +90,25 @@ final class FavoriteListViewController: UIViewController {
             .disposed(by: disposeBag)
         
         // 테이블 뷰 데이터 바인딩
-        output.favoriteCoins
+        Driver.combineLatest(output.favoriteCoins, output.favoriteCoinsChartData)
+            .map { coins, candles in
+                return coins.map { coin in
+                    let relatedCandles = candles.filter { $0.symbol == coin.symbol }
+                    return (coin, relatedCandles)
+                }
+            }
             .drive(contentView.tableView.rx.items(
                 cellIdentifier: CoinPriceTableViewCell.identifier,
                 cellType: CoinPriceTableViewCell.self)
-            ) { _, coin, cell in
-                cell.configure(with: coin)
+            ) { index, item, cell in
+                let (coin, relatedCandles) = item
+                cell.configure(with: coin, candles: relatedCandles)
             }
             .disposed(by: disposeBag)
         
         // 테이블 뷰 델리게이트 self 설정
         contentView.tableView.rx.setDelegate(self)
                     .disposed(by: disposeBag)
-
         // 스와이프 삭제 이벤트 추가
         contentView.tableView.rx.modelDeleted(MarketPrice.self)
             .bind(to: viewModel.input.removeFavorite)
@@ -125,7 +134,6 @@ final class FavoriteListViewController: UIViewController {
         navigationController?.pushViewController(searchVC, animated: true)
     }
 }
-
 // MARK: - UITableViewDelegate
 extension FavoriteListViewController: UITableViewDelegate {
     
@@ -138,3 +146,5 @@ extension FavoriteListViewController: UITableViewDelegate {
         return true
     }
 }
+
+

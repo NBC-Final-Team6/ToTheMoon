@@ -4,14 +4,11 @@
 //
 //  Created by 황석범 on 1/21/25.
 //
-
-
 import RxSwift
 import RxCocoa
 import DGCharts
 import Foundation
 import UIKit
-
 final class ChartViewModel {
     
     // MARK: - Input & Output 구조체
@@ -132,8 +129,8 @@ final class ChartViewModel {
                         })
                         .disposed(by: self.disposeBag)
                 } else {
-                    // 즐겨찾기에 추가
-                    CoreDataManager.shared.createCoin(name: coin.symbol, symbol: coin.symbol, exchange: coin.exchange)
+                    // 즐겨찾기 추가
+                    CoreDataManager.shared.createCoin(marketPrice: coin)
                         .subscribe(onCompleted: {
                             print("Added \(coin.symbol) to favorites")
                             NotificationCenter.default.post(name: NSNotification.Name("FavoriteListUpdated"), object: nil)
@@ -144,11 +141,15 @@ final class ChartViewModel {
             .disposed(by: disposeBag)
     }
     
+    // 즐겨찾기 여부 확인
     func isFavorite(_ coin: MarketPrice) -> Observable<Bool> {
         return CoreDataManager.shared.fetchCoins()
             .map { coins in
-                coins.contains { $0.symbol == coin.symbol && $0.exchangename == coin.exchange }
+                coins.contains { $0.symbol == coin.symbol && $0.exchange == coin.exchange }
             }
             .distinctUntilChanged()
     }
 }
+
+
+
