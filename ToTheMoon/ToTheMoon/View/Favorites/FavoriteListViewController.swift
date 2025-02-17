@@ -42,6 +42,12 @@ final class FavoriteListViewController: UIViewController {
         setupBindings()
     }
     
+    override func viewWillDisappear(_ animated: Bool) {
+        super.viewWillDisappear(animated)
+        print("🔴 FavoriteListViewController will disappear - 웹소켓 연결 해제")
+        viewModel.fetchFavoriteCoinsUseCase.cancelSubscriptions()
+    }
+    
     // MARK: - Bind ViewModel
     private func setupBindings() {
         let output = viewModel.output

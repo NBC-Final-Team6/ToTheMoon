@@ -105,6 +105,7 @@ final class BithumbWebSocketManager: BaseWebSocketManager {
         }
 
         // 기존 WebSocket을 해제
+        self.activeSocket?.onEvent = { _ in }
         self.activeSocket?.disconnect()
         self.activeSocket = nil
 
@@ -127,18 +128,19 @@ final class BithumbWebSocketManager: BaseWebSocketManager {
             decodeBinaryResponse(data, decodingType: decodingType, observer: observer)
 
         case .disconnected(let reason, _):
+            print(1)
             observer.onError(WebSocketError.connectionFailed(NSError(
                 domain: "WebSocketDisconnected",
                 code: -1,
                 userInfo: [NSLocalizedDescriptionKey: reason]
             )))
-            reconnect(observer: observer)
+            //reconnect(observer: observer)
 
         case .error(let error):
             if let error = error {
                 print("❌ WebSocket 에러: \(error.localizedDescription)")
                 observer.onError(WebSocketError.connectionFailed(error))
-                reconnect(observer: observer)
+                //reconnect(observer: observer)
             }
 
         default:
@@ -182,6 +184,7 @@ final class BithumbWebSocketManager: BaseWebSocketManager {
 
     // **모든 WebSocket 연결 해제**
     func disconnectAll() {
+        super.disconnect()
         activeSocket?.disconnect()
         activeSocket = nil
         backupSocket?.disconnect()

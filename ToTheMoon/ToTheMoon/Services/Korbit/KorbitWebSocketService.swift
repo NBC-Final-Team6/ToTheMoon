@@ -13,7 +13,7 @@ final class KorbitWebSocketService: WebSocketServiceProtocol {
     
     private let korbitService = KorbitService()
     private var cachedSymbols: [String] = []
-
+    
     private func loadAllKrwSymbols() -> Single<[String]> {
         return korbitService.fetchMarketPrices()
             .map { marketPrices in
@@ -23,16 +23,16 @@ final class KorbitWebSocketService: WebSocketServiceProtocol {
                 self?.cachedSymbols = symbols
             })
     }
-
+    
     func fetchAllKrwTickers() -> Observable<[MarketPrice]> {
         let symbolsObservable: Single<[String]> = cachedSymbols.isEmpty ? loadAllKrwSymbols() : .just(cachedSymbols)
-
+        
         return symbolsObservable.asObservable()
             .flatMap { symbols -> Observable<KorbitWebSocketResponse> in
                 guard !symbols.isEmpty else {
                     return Observable.error(NetworkError.invalidData)
                 }
-
+                
                 return KorbitWebSocketManager.shared.connect(
                     symbols: symbols,
                     decodingType: KorbitWebSocketResponse.self
@@ -42,18 +42,27 @@ final class KorbitWebSocketService: WebSocketServiceProtocol {
     }
     
     private func formatSymbol(_ symbol: String) -> String {
-            return "\(symbol.lowercased())_krw"
-        }
+        return "\(symbol.lowercased())_krw"
+    }
     
     // **특정 코인들의 WebSocket 구독**
     func fetchKrwTicker(for symbols: [String]) -> Observable<[MarketPrice]> {
+        if symbols.isEmpty {
+            print("⚠️ [DEBUG] 요청된 심볼이 없음 → WebSocket 연결 해제")
+            KorbitWebSocketManager.shared.disconnectAll()
+            return Observable.just([])
+        }
         let formattedSymbols = symbols.map { formatSymbol($0) } // ✅ 심볼 변환 적용
-
+        
         return KorbitWebSocketManager.shared.connect(
             symbols: formattedSymbols, // 변환된 심볼 전달
             decodingType: KorbitWebSocketResponse.self
         )
         .map { $0.toMarketPrices(exchange: .korbit) }
+    }
+    
+    func disconnectWebSocket() {
+        KorbitWebSocketManager.shared.disconnectAll()
     }
 }
 
@@ -68,7 +77,7 @@ extension KorbitWebSocketResponse {
         let quoteVolume = Double(self.data.volume) ?? 0.0
         let changeRate = Double(self.data.priceChangePercent) ?? 0.0
         let change: String = changeRate > 0 ? "RISE" : (changeRate < 0 ? "FALL" : "EVEN")
-
+        
         return [
             MarketPrice(
                 symbol: formattedSymbol,

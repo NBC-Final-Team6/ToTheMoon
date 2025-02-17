@@ -12,4 +12,5 @@ protocol WebSocketServiceProtocol {
     var exchange: Exchange { get }
     func fetchAllKrwTickers() -> Observable<[MarketPrice]>
     func fetchKrwTicker(for symbols: [String]) -> Observable<[MarketPrice]>
+    func disconnectWebSocket()
 }

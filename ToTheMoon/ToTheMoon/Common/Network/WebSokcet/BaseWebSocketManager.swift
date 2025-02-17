@@ -75,6 +75,7 @@ class BaseWebSocketManager {
             }
             
         case .disconnected(let reason, _):
+            self.socket = nil
             observer.onError(WebSocketError.connectionFailed(NSError(
                 domain: "WebSocketDisconnected",
                 code: -1,
@@ -97,8 +98,10 @@ class BaseWebSocketManager {
     }
     
     func disconnect() {
+        socket?.onEvent = { _ in }
         socket?.disconnect()
         socket = nil
-        print("❌ WebSocket 연결 해제 완료")
+        disposeBag = DisposeBag() // 기존 Observable 모두 해제
+        print("❌ WebSocket 연결 해제 완료 (disposeBag 초기화)")
     }
 }

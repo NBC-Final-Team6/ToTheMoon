@@ -11,36 +11,80 @@ import RxSwift
 final class FetchFavoriteCoinsUseCase {
     private let webSocketServices: [WebSocketServiceProtocol]
     private let manageFavoritesUseCase: ManageFavoritesUseCaseProtocol
-
+    private var disposeBag = DisposeBag()
+    
     init(manageFavoritesUseCase: ManageFavoritesUseCaseProtocol, webSocketServices: [WebSocketServiceProtocol]) {
         self.manageFavoritesUseCase = manageFavoritesUseCase
         self.webSocketServices = webSocketServices
+        observeFavoriteCoins()
     }
-
+    
+    private func observeFavoriteCoins() {
+        manageFavoritesUseCase.fetchFavoriteCoins()
+            .distinctUntilChanged { $0 == $1 } // 같은 값이면 무시
+            .debounce(.milliseconds(300), scheduler: MainScheduler.instance) // 변경 감지 후 300ms 지연
+            .subscribe(onNext: { [weak self] _ in
+                print("🔄 관심 코인 목록 변경 감지됨 → 웹소켓 재구독 실행")
+                self?.fetchFavoriteCoinsRealtimeData()
+            })
+            .disposed(by: disposeBag)
+    }
+    
+    
+    // ToDo: 거래소 마다 1개 코인 데이터만 셀에서 보임, 코어 데이터에 없으면 요청 끊어야함 ...
     func fetchFavoriteCoinsRealtimeData() -> Observable<[MarketPrice]> {
         return manageFavoritesUseCase.fetchFavoriteCoins()
-            .flatMap { [weak self] favoriteCoins -> Observable<[MarketPrice]> in
+            .flatMapLatest { [weak self] favoriteCoins -> Observable<[MarketPrice]> in
                 guard let self = self else { return Observable.just([]) }
 
-                // 거래소별 코인 심볼 분류
+                print("🟢 [DEBUG] 관심 코인 리스트:")
+                favoriteCoins.forEach { coin in
+                    print("   🔹 \(coin.exchangename ?? "nil") - \(coin.symbol ?? "nil")")
+                }
+
                 var symbolsByExchange: [Exchange: [String]] = [:]
                 for coin in favoriteCoins {
                     guard let exchange = Exchange(rawValue: coin.exchangename?.lowercased() ?? ""),
-                          let symbol = coin.symbol else { continue }
+                          let symbol = coin.symbol?.uppercased() else {
+                        continue
+                    }
                     symbolsByExchange[exchange, default: []].append(symbol)
                 }
 
-                // 각 거래소별 웹소켓 서비스에서 데이터 가져오기
-                let observables = self.webSocketServices.compactMap { service -> Observable<[MarketPrice]>? in
-                    guard let symbols = symbolsByExchange[service.exchange], !symbols.isEmpty else {
-                        return Observable.just([])
-                    }
-                    return service.fetchKrwTicker(for: symbols)
+                print("🟡 [DEBUG] 거래소별 심볼 매핑:")
+                symbolsByExchange.forEach { exchange, symbols in
+                    print("   🔸 \(exchange.rawValue): \(symbols)")
                 }
 
-                // 모든 데이터 병합하여 반환
+                let observables = self.webSocketServices.map { service -> Observable<[MarketPrice]> in
+                    if let symbols = symbolsByExchange[service.exchange], !symbols.isEmpty {
+                        print("🔵 [DEBUG] \(service.exchange.rawValue) 웹소켓 요청 시작 → 심볼: \(symbols)")
+                        return service.fetchKrwTicker(for: symbols)
+                            .do(onNext: { prices in
+                                print("🟣 [DEBUG] \(service.exchange.rawValue) 웹소켓 응답 데이터:")
+                                prices.forEach { price in
+                                    print("   💰 \(price.exchange) - \(price.symbol): \(price.price) KRW")
+                                }
+                            }, onError: { error in
+                                print("🚨 [DEBUG] \(service.exchange.rawValue) 웹소켓 에러 발생: \(error.localizedDescription)")
+                            })
+                    } else {
+                        print("⚠️ [DEBUG] \(service.exchange.rawValue) 관심 목록이 없음 → 웹소켓 해제")
+                        service.fetchKrwTicker(for: []) // 해당 거래소 웹소켓 해제
+                        return Observable.just([]) // 빈 Observable 반환
+                    }
+                }
+
                 return Observable.combineLatest(observables)
-                    .map { $0.flatMap { $0 } } // 모든 배열을 하나의 배열로 합침
+                    .map { $0.flatMap { $0 } } // 여러 거래소 데이터를 하나의 리스트로 병합
             }
     }
+    
+    func cancelSubscriptions() {
+        disposeBag = DisposeBag() // ✅ 모든 구독 해제
+        webSocketServices.forEach { $0.disconnectWebSocket() } // ✅ 웹소켓 해제 추가
+        print("🔴 모든 웹소켓 구독 해제됨")
+    }
+    
+    
 }

@@ -144,11 +144,12 @@ final class KorbitWebSocketManager: BaseWebSocketManager {
 
      // **모든 WebSocket 연결 해제**
      func disconnectAll() {
+         super.disconnect()
          activeSocket?.disconnect()
          activeSocket = nil
          backupSocket?.disconnect()
          backupSocket = nil
          subscribedSymbols.removeAll()
-         print("❌ 모든 WebSocket 연결 해제 완료")
+         print("❌ 코빗 모든 WebSocket 연결 해제 완료")
      }
  }

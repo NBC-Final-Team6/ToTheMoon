@@ -43,11 +43,20 @@ final class BithumbWebSocketService: WebSocketServiceProtocol {
     
     // ** 특정 코인의 WebSocket 실시간 가격 데이터 구독**
     func fetchKrwTicker(for symbols: [String]) -> Observable<[MarketPrice]> {
+        if symbols.isEmpty {
+            print("⚠️ [DEBUG] 요청된 심볼이 없음 → WebSocket 연결 해제")
+            BithumbWebSocketManager.shared.disconnectAll()
+            return Observable.just([])
+        }
         return BithumbWebSocketManager.shared.connect(
             symbols: symbols,
             decodingType: BithumbWebSocketTickerResponse.self
         )
         .map { response in response.toMarketPrices(exchange: self.exchange) }
+    }
+    
+    func disconnectWebSocket() {
+        BithumbWebSocketManager.shared.disconnectAll()
     }
 }
 
