@@ -126,7 +126,7 @@ class CoreDataManager {
     func deleteCoin(symbol: String, exchange: String) -> Observable<Void> {
         return Observable.create { observer in
             let fetchRequest: NSFetchRequest<CoinEntities> = CoinEntities.fetchRequest()
-            fetchRequest.predicate = NSPredicate(format: "symbol == %@ AND exchangename == %@", symbol, exchange)
+            fetchRequest.predicate = NSPredicate(format: "symbol == %@ AND exchange == %@", symbol, exchange)
 
             do {
                 let coins = try self.context.fetch(fetchRequest)

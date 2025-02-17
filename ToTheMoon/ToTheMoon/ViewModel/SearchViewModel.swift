@@ -109,9 +109,9 @@ final class SearchViewModel {
                     return self.manageFavoritesUseCase.saveCoin(marketPrice)
                 }
             }
-            .ignoreElements() // ✅ Observable<Void>를 Completable로 변환
+            .ignoreElements() // Observable<Void>를 Completable로 변환
             .subscribe(onCompleted: { [weak self] in
-                self?.reloadSavedCoins() // ✅ 변경 사항 반영
+                self?.reloadSavedCoins() // 변경 사항 반영
             })
             .disposed(by: disposeBag)
     }

@@ -95,8 +95,7 @@ final class FavoritesListViewModel {
                 guard let self = self else { return }
                 // 모든 거래소의 데이터를 한 번에 업데이트
                 self.favoriteCoinsRelay.accept(allMarketPrices)
-                print("🟢 [DEBUG] 최종 MarketPrice 리스트 (UI 업데이트 직전):")
-                allMarketPrices.forEach { print("   💰 \($0.exchange) - \($0.symbol): \($0.price) KRW") }
+                //allMarketPrices.forEach { print("   💰 \($0.exchange) - \($0.symbol): \($0.price) KRW") }
             })
             .disposed(by: disposeBag)
     }
@@ -108,13 +107,11 @@ final class FavoritesListViewModel {
             .subscribe(onNext: { [weak self] candles in
                 guard let self = self else { return }
                 self.favoriteCoinsChartRelay.accept(candles)
-                print("📊 [DEBUG] 차트 데이터 수신 완료 - \(candles.count)개 캔들")
             })
             .disposed(by: disposeBag)
     }
     
     deinit {
-        print("🔴 FavoritesListViewModel deinit - 웹소켓 연결 해제")
         fetchFavoriteCoinsUseCase.cancelSubscriptions() // 뷰모델이 해제될 때 웹소켓 해제
     }
 }

@@ -6,6 +6,7 @@
 //
 import Foundation
 import RxSwift
+
 // 관심 코인의 차트 데이터를 가져오는 유즈케이스
 final class FetchFavoriteCoinsChartUseCase {
     private let exchangeServices: [ServiceProtocol] // 거래소 API 서비스 리스트
@@ -51,14 +52,6 @@ final class FetchFavoriteCoinsChartUseCase {
                 return Observable.combineLatest(observables)
                     .map { $0.flatMap { $0 } } // 최종적으로 모든 거래소의 데이터를 합쳐 반환
             }
-            .do(onNext: { candles in
-                print("📊 [DEBUG] 관심 코인 차트 데이터 수신 완료: \(candles.count)개")
-                candles.forEach { candle in
-                    print("   🔹 \(candle.symbol) - Open: \(candle.open), Close: \(candle.close)")
-                }
-            }, onError: { error in
-                print("🚨 [DEBUG] 차트 데이터 가져오기 실패: \(error.localizedDescription)")
-            })
     }
 }
 
