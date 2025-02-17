@@ -9,16 +9,13 @@ import Foundation
 import RxSwift
 
 final class KorbitWebSocketService {
-    let exchange: Exchange = .korbit
-    private let baseURL = Exchange.korbit.webSocketURL
     private let korbitService = KorbitService()
     private var cachedSymbols: [String] = []
 
     private func loadAllKrwSymbols() -> Single<[String]> {
         return korbitService.fetchMarketPrices()
             .map { marketPrices in
-                let krwMarkets = marketPrices.map { $0.symbol }
-                return krwMarkets
+                marketPrices.map { $0.symbol }
             }
             .do(onSuccess: { [weak self] symbols in
                 self?.cachedSymbols = symbols
@@ -34,19 +31,27 @@ final class KorbitWebSocketService {
                     return Observable.error(NetworkError.invalidData)
                 }
 
-                let requestPayload = KorbitWebSocketRequest(
-                    method: "subscribe",
-                    type: "ticker",
-                    symbols: symbols
-                )
-
                 return KorbitWebSocketManager.shared.connect(
-                    to: URL(string: self.baseURL)!,
-                    decodingType: KorbitWebSocketResponse.self,
-                    requestPayload: [requestPayload]
+                    symbols: symbols,
+                    decodingType: KorbitWebSocketResponse.self
                 )
             }
             .map { response in response.toMarketPrices(exchange: .korbit) }
+    }
+    
+    private func formatSymbol(_ symbol: String) -> String {
+            return "\(symbol.lowercased())_krw"
+        }
+    
+    // **특정 코인들의 WebSocket 구독**
+    func fetchKrwTicker(for symbols: [String]) -> Observable<[MarketPrice]> {
+        let formattedSymbols = symbols.map { formatSymbol($0) } // ✅ 심볼 변환 적용
+
+        return KorbitWebSocketManager.shared.connect(
+            symbols: formattedSymbols, // 변환된 심볼 전달
+            decodingType: KorbitWebSocketResponse.self
+        )
+        .map { $0.toMarketPrices(exchange: .korbit) }
     }
 }
 

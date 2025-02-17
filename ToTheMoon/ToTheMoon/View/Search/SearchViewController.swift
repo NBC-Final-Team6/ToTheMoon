@@ -87,8 +87,6 @@ final class SearchViewController: UIViewController {
             .observe(on: MainScheduler.instance)
             .subscribe(onNext: { [weak self] combinedResults in
                 guard let self = self else { return }
-                
-                print(combinedResults)
                 self.searchResults = combinedResults
                 self.searchMode = combinedResults.isEmpty ? .recent : .result
                 self.searchView.tableView.reloadData()

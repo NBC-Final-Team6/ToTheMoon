@@ -10,7 +10,6 @@ import RxSwift
 
 final class BithumbWebSocketService {
     let exchange: Exchange = .bithumb
-    private let baseURL = Exchange.bithumb.webSocketURL
     private let bithumbService = BithumbService()
     private var cachedSymbols: [String] = []
 
@@ -33,20 +32,22 @@ final class BithumbWebSocketService {
                 guard !symbols.isEmpty else {
                     return Observable.error(NetworkError.invalidData)
                 }
-                
-                let requestPayload = BithumbWebSocketTickerRequest(
-                    type: "ticker",
-                    symbols: symbols.map { "\($0)_KRW" },
-                    tickTypes: ["24H"]
-                )
 
                 return BithumbWebSocketManager.shared.connect(
-                    to: URL(string: self.baseURL)!,
-                    decodingType: BithumbWebSocketTickerResponse.self,
-                    requestPayload: requestPayload
+                    symbols: symbols,
+                    decodingType: BithumbWebSocketTickerResponse.self
                 )
             }
             .map { response in response.toMarketPrices(exchange: self.exchange) }
+    }
+    
+    // ** 특정 코인의 WebSocket 실시간 가격 데이터 구독**
+    func fetchKrwTicker(for symbols: [String]) -> Observable<[MarketPrice]> {
+        return BithumbWebSocketManager.shared.connect(
+            symbols: symbols,
+            decodingType: BithumbWebSocketTickerResponse.self
+        )
+        .map { response in response.toMarketPrices(exchange: self.exchange) }
     }
 }
 
