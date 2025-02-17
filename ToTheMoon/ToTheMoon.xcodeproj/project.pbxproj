@@ -38,6 +38,11 @@
 			path = ToTheMoon;
 			sourceTree = "<group>";
 		};
+		99F34D0A2D5ECF6300B3CEA1 /* ToTheMoonTests */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = ToTheMoonTests;
+			sourceTree = "<group>";
+		};
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -61,6 +66,7 @@
 			isa = PBXGroup;
 			children = (
 				9935C6D22D3FDC5E00722D84 /* ToTheMoon */,
+				99F34D0A2D5ECF6300B3CEA1 /* ToTheMoonTests */,
 				9935C6D12D3FDC5E00722D84 /* Products */,
 			);
 			sourceTree = "<group>";
