@@ -10,6 +10,7 @@ import SnapKit
 import DGCharts
 
 class SimpleChartView: UIView {
+    
     private lazy var lineChartView: LineChartView = {
         let chartView = LineChartView()
         chartView.rightAxis.enabled = false
@@ -49,10 +50,9 @@ class SimpleChartView: UIView {
         lineChartView.snp.makeConstraints { make in
             make.edges.equalToSuperview()
         }
-        
     }
     
-    func updateChart(with candles: [Candle], changeRate: Double) {
+    func updateChart(with candles: [Candle], change: String) {
         
         let entries = candles.enumerated().map { index, candle in
             ChartDataEntry(x: Double(index), y: candle.close)
@@ -69,7 +69,15 @@ class SimpleChartView: UIView {
         dataSet.drawValuesEnabled = false
         dataSet.lineWidth = 1.0
         
-        if let color = UIColor(named: "NumbersGreenColor") {
+        switch change {
+        case "FALL":
+            let color = UIColor(named: "NumbersRedColor") ?? UIColor.red
+            dataSet.setColor(color)
+            dataSet.fillColor = color
+            dataSet.drawFilledEnabled = true
+            dataSet.fillAlpha = 0.1
+        default: // "RISE" 또는 "EVEN"
+            let color = UIColor(named: "NumbersGreenColor") ?? UIColor.green
             dataSet.setColor(color)
             dataSet.fillColor = color
             dataSet.drawFilledEnabled = true

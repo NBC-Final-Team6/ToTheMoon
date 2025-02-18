@@ -130,7 +130,17 @@ class CoinPriceTableViewCell: UITableViewCell {
 
         if let candles = candles, !candles.isEmpty {
             let processedCandles = CandleChartDataManager.processCandles(candles)
-            chartView.updateChart(with: processedCandles, changeRate: item.changeRate)
+            
+            let change: String
+            if item.changeRate > 0 {
+                change = "RISE"
+            } else if item.changeRate < 0 {
+                change = "FALL"
+            } else {
+                change = "EVEN"
+            }
+            
+            chartView.updateChart(with: processedCandles, change: item.change)
         } else {
             chartView.clearChart()
         }
