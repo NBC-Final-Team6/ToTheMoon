@@ -122,23 +122,16 @@ class CoinPriceTableViewCell: UITableViewCell {
         if item.change == "RISE" {
             priceChangeLabel.text = "▲ \(String(format: "%.2f%%", item.changeRate))"
             priceChangeLabel.textColor = .numbersGreen
-        } else {
+        } else if item.change == "FALL" {
             priceChangeLabel.text = "▼ \(String(format: "%.2f%%", abs(item.changeRate)))"  // abs()함수: 절대값을 구하는 함수
             priceChangeLabel.textColor = .numbersRed
+        } else { // 변동 없는 경우 (EVEN)
+            priceChangeLabel.text = "\(String(format: "%.2f%%", item.changeRate))"
+            priceChangeLabel.textColor = .gray
         }
         
-
         if let candles = candles, !candles.isEmpty {
             let processedCandles = CandleChartDataManager.processCandles(candles)
-            
-            let change: String
-            if item.changeRate > 0 {
-                change = "RISE"
-            } else if item.changeRate < 0 {
-                change = "FALL"
-            } else {
-                change = "EVEN"
-            }
             
             chartView.updateChart(with: processedCandles, change: item.change)
         } else {

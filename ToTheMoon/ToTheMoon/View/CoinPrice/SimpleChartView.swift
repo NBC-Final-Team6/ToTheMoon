@@ -76,8 +76,14 @@ class SimpleChartView: UIView {
             dataSet.fillColor = color
             dataSet.drawFilledEnabled = true
             dataSet.fillAlpha = 0.1
-        default: // "RISE" 또는 "EVEN"
+        case "RISE":
             let color = UIColor(named: "NumbersGreenColor") ?? UIColor.green
+            dataSet.setColor(color)
+            dataSet.fillColor = color
+            dataSet.drawFilledEnabled = true
+            dataSet.fillAlpha = 0.1
+        default:
+            let color = UIColor.gray  // 변화가 없을 때 회색
             dataSet.setColor(color)
             dataSet.fillColor = color
             dataSet.drawFilledEnabled = true
