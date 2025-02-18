@@ -31,6 +31,7 @@ class NotificationSettingView: UIView {
     let notificationSwitch: UISwitch = {
         let toggle = UISwitch()
         toggle.isOn = true
+        toggle.onTintColor = .personel
         return toggle
     }()
 
