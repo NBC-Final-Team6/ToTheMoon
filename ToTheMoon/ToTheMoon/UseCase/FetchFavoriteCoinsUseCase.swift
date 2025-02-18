@@ -4,9 +4,11 @@
 //
 //  Created by 황석범 on 2/14/25.
 //
+
 import Foundation
 import RxSwift
 import UIKit
+
 final class FetchFavoriteCoinsUseCase {
     private let webSocketServices: [WebSocketServiceProtocol]
     private let manageFavoritesUseCase: ManageFavoritesUseCaseProtocol
@@ -33,45 +35,30 @@ final class FetchFavoriteCoinsUseCase {
     
     func fetchFavoriteCoinsRealtimeData() -> Observable<[MarketPrice]> {
         let coreDataObservable = manageFavoritesUseCase.fetchFavoriteCoins()
-            .do(onNext: { coreDataPrices in
-                print("🟠 [DEBUG] CoreData에서 가져온 관심 코인 리스트:")
-                coreDataPrices.forEach { print("   💾 \( $0.exchange) - \( $0.symbol): \( $0.price) KRW") }
-            })
+            .flatMapLatest { [weak self] coreDataPrices -> Observable<[MarketPrice]> in
+                guard let self = self else { return Observable.just([]) }
+                return self.attachImages(to: coreDataPrices)
+            }
+        
         let webSocketObservable = manageFavoritesUseCase.fetchFavoriteCoins()
             .flatMapLatest { [weak self] favoriteCoins -> Observable<[MarketPrice]> in
                 guard let self = self else { return Observable.just([]) }
-                print("🟢 [DEBUG] 관심 코인 리스트:")
-                favoriteCoins.forEach { coin in
-                    print("   🔹 \(coin.exchange) - \(coin.symbol)")
-                }
                 var symbolsByExchange: [Exchange: [String]] = [:]
                 for coin in favoriteCoins {
                     guard let exchange = Exchange(rawValue: coin.exchange.lowercased()) else {
                         continue
                     }
-                    let symbol = coin.symbol.uppercased() // Optional 바인딩 불필요
+                    let symbol = coin.symbol.uppercased()
                     symbolsByExchange[exchange, default: []].append(symbol)
-                }
-                print("🟡 [DEBUG] 거래소별 심볼 매핑:")
-                symbolsByExchange.forEach { exchange, symbols in
-                    print("   🔸 \(exchange.rawValue): \(symbols)")
                 }
                 var marketPricesByExchange: [Exchange: [String: MarketPrice]] = [:]
                 let observables = self.webSocketServices.map { service -> Observable<[MarketPrice]> in
                     if let symbols = symbolsByExchange[service.exchange], !symbols.isEmpty {
-                        print("🔵 [DEBUG] \(service.exchange.rawValue) 웹소켓 요청 시작 → 심볼: \(symbols)")
-                        
                         return service.fetchKrwTicker(for: symbols)
                             .flatMap { [weak self] prices in
                                 guard let self = self else { return Observable.just(prices) }
                                 return self.attachImages(to: prices)
                             }
-                            .do(onNext: { prices in
-                                print("🟣 [DEBUG] \(service.exchange.rawValue) 웹소켓 응답 데이터:")
-                                prices.forEach { print("   💰 \( $0.exchange) - \( $0.symbol): \( $0.price) KRW") }
-                            }, onError: { error in
-                                print("🚨 [DEBUG] \(service.exchange.rawValue) 웹소켓 에러 발생: \(error.localizedDescription)")
-                            })
                             .map { newPrices -> [MarketPrice] in
                                 var updatedPrices = marketPricesByExchange[service.exchange] ?? [:]
                                 newPrices.forEach { price in
@@ -81,7 +68,6 @@ final class FetchFavoriteCoinsUseCase {
                                 return Array(updatedPrices.values)
                             }
                     } else {
-                        print("⚠️ [DEBUG] \(service.exchange.rawValue) 관심 목록이 없음 → 웹소켓 해제")
                         service.fetchKrwTicker(for: [])
                         return Observable.just([])
                     }
