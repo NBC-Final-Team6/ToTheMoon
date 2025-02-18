@@ -9,6 +9,7 @@ import UIKit
 import SnapKit
 import RxSwift
 import RxCocoa
+import RxDataSources
 
 final class FavoriteListViewController: UIViewController {
     
@@ -21,6 +22,18 @@ final class FavoriteListViewController: UIViewController {
     // MARK: - Properties
     private let viewModel: FavoritesListViewModel
     private let disposeBag = DisposeBag()
+    
+    private let isWebSocketConnectedRelay = BehaviorRelay<Bool>(value: true)
+    
+    private lazy var dataSource = RxTableViewSectionedAnimatedDataSource<AnimatableSectionModel<String, MarketPriceWithCandles>>(
+        animationConfiguration: AnimationConfiguration(insertAnimation: .none, reloadAnimation: .none, deleteAnimation: .none), configureCell: { _, tableView, indexPath, item in
+            let cell = tableView.dequeueReusableCell(withIdentifier: CoinPriceTableViewCell.identifier, for: indexPath) as! CoinPriceTableViewCell
+            cell.configure(with: item.marketPrice, candles: item.candles)
+            return cell
+        })
+//        ,
+//        canEditRowAtIndexPath: { _, _ in return true } // 개별 삭제 
+//    )
     
     // MARK: - Init
     init(viewModel: FavoritesListViewModel) {
@@ -106,21 +119,23 @@ final class FavoriteListViewController: UIViewController {
             .drive(topFavoritesView.countLabel.rx.text)
             .disposed(by: disposeBag)
         
+        contentView.tableView.rx.modelSelected(MarketPriceWithCandles.self)
+            .subscribe(onNext: { [weak self] selectedItem in
+                guard let self = self else { return }
+                self.navigateToChartView(for: selectedItem.marketPrice)
+            })
+            .disposed(by: disposeBag)
+        
         // 테이블 뷰 데이터 바인딩
         Driver.combineLatest(output.favoriteCoins, output.favoriteCoinsChartData)
-            .map { coins, candles in
-                return coins.map { coin in
+            .map { (coins: [MarketPrice], candles: [Candle]) -> [AnimatableSectionModel<String, MarketPriceWithCandles>] in
+                let items = coins.map { coin in
                     let relatedCandles = candles.filter { $0.symbol == coin.symbol }
-                    return (coin, relatedCandles)
+                    return MarketPriceWithCandles(marketPrice: coin, candles: relatedCandles)
                 }
+                return [AnimatableSectionModel(model: "Favorites", items: items)]
             }
-            .drive(contentView.tableView.rx.items(
-                cellIdentifier: CoinPriceTableViewCell.identifier,
-                cellType: CoinPriceTableViewCell.self)
-            ) { index, item, cell in
-                let (coin, relatedCandles) = item
-                cell.configure(with: coin, candles: relatedCandles)
-            }
+            .drive(contentView.tableView.rx.items(dataSource: dataSource))
             .disposed(by: disposeBag)
         
         // 테이블 뷰 델리게이트 설정
@@ -128,8 +143,22 @@ final class FavoriteListViewController: UIViewController {
             .disposed(by: disposeBag)
         
         // 스와이프 삭제 이벤트 추가
-        contentView.tableView.rx.modelDeleted(MarketPrice.self)
+        contentView.tableView.rx.modelDeleted((MarketPrice, [Candle]).self)
+            .map { $0.0 }
             .bind(to: viewModel.input.removeFavorite)
+            .disposed(by: disposeBag)
+        
+        // 전체 삭제 버튼 클릭 시 모두 삭제
+        topFavoritesView.deleteButton.rx.tap
+            .subscribe(onNext: { [weak self] in
+                guard let self = self else { return }
+                    self.viewModel.fetchFavoriteCoinsUseCase.cancelSubscriptions()
+                    self.viewModel.input.removeAllFavorites.accept(())
+                    
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                        self.viewModel.fetchFavoriteCoins()
+                    }
+            })
             .disposed(by: disposeBag)
     }
     
@@ -151,6 +180,15 @@ final class FavoriteListViewController: UIViewController {
         ))
         navigationController?.pushViewController(searchVC, animated: true)
     }
+    
+    // MARK: - 차트 화면 이동
+    private func navigateToChartView(for marketPrice: MarketPrice) {
+        let exchange = Exchange(rawValue: marketPrice.exchange) ?? nil
+        let chartViewModel = ChartViewModel(exchange: exchange, selectedCoins: [marketPrice])
+        let coinPriceViewModel = CoinPriceViewModel()
+        let chartVC = ChartViewController(viewModel: chartViewModel, coinPriceViewModel: coinPriceViewModel)
+        navigationController?.pushViewController(chartVC, animated: true)
+    }
 }
 
 // MARK: - UITableViewDelegate
@@ -158,10 +196,6 @@ extension FavoriteListViewController: UITableViewDelegate {
     
     func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
         return 70
-    }
-    
-    func tableView(_ tableView: UITableView, canEditRowAt indexPath: IndexPath) -> Bool {
-        return true
     }
 }
 

@@ -36,7 +36,7 @@ final class TopFavoritesView: UIView {
     
     let deleteButton: UIButton = {
         let button = UIButton(type: .system)
-        button.setTitle("선택삭제", for: .normal)
+        button.setTitle("전체삭제", for: .normal)
         button.tintColor = .text
         return button
     }()
