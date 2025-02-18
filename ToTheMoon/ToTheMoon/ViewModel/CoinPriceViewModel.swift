@@ -42,7 +42,7 @@ class CoinPriceViewModel: CoinPriceViewModelInput, CoinPriceViewModelOutput, Coi
     private let symbolService = SymbolService()
     
     private var loadingSymbols = Set<String>()
-    private let currentExchangeRelay = BehaviorRelay<Exchange>(value: .upbit)
+    private let currentExchangeRelay = BehaviorRelay<Exchange>(value: .bithumb)
     private var priceTimer: Disposable?
     private var candleTimer: Disposable?
     private var coinImages: [String: UIImage] = [:]
@@ -116,14 +116,10 @@ class CoinPriceViewModel: CoinPriceViewModelInput, CoinPriceViewModelOutput, Coi
             })
     }
     
-    // 캔들 데이터는 1분마다 갱신
+    // 캔들 데이터는 최초 1회 요청
     private func setupCandleTimer() {
         candleTimer?.dispose()
-        candleTimer = Observable<Int>
-            .interval(.seconds(60), scheduler: MainScheduler.instance)
-            .subscribe(onNext: { [weak self] _ in
-                self?.fetchAllCandlesOnce()
-            })
+        fetchAllCandlesOnce()
     }
     
     private func setupImageBinding() {
@@ -233,13 +229,13 @@ class CoinPriceViewModel: CoinPriceViewModelInput, CoinPriceViewModelOutput, Coi
         
         switch currentExchangeRelay.value {
         case .upbit:
-            service = upbitService.fetchCandles(symbol: symbol, interval: .minute, count: 180)
+            service = upbitService.fetchCandles(symbol: symbol, interval: .hour, count: 24)
         case .bithumb:
-            service = bithumbService.fetchCandles(symbol: symbol, interval: .minute, count: 180)
+            service = bithumbService.fetchCandles(symbol: symbol, interval: .hour, count: 24)
         case .coinone:
-            service = coinoneService.fetchCandles(symbol: symbol, interval: .minute, count: 180)
+            service = coinoneService.fetchCandles(symbol: symbol, interval: .hour, count: 24)
         case .korbit:
-            service = korbitService.fetchCandles(symbol: symbol, interval: .minute, count: 180)
+            service = korbitService.fetchCandles(symbol: symbol, interval: .hour, count: 24)
         }
         
         service
