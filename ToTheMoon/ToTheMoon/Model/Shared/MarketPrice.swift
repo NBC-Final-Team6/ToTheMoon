@@ -7,8 +7,9 @@
 
 import Foundation
 import UIKit
+import RxDataSources
 
-struct MarketPrice: Hashable {
+struct MarketPrice: Hashable, IdentifiableType, Equatable {
     var symbol: String       // 심볼(종목) 이름, 예: "BTC" (비트코인), "ETH" (이더리움)
     let price: Double        // 현재 시장 가격
     let exchange: String     // 거래소 이름, 예: "Upbit", "Bithumb"
@@ -24,7 +25,18 @@ struct MarketPrice: Hashable {
         hasher.combine(exchange)
     }
     
+    var identity: String {
+            return symbol
+        }
+    
     static func == (lhs: MarketPrice, rhs: MarketPrice) -> Bool {
-        return lhs.symbol == rhs.symbol && lhs.exchange == rhs.exchange
-    }
+            return lhs.symbol == rhs.symbol &&
+                   lhs.price == rhs.price &&
+                   lhs.exchange == rhs.exchange &&
+                   lhs.change == rhs.change &&
+                   lhs.changeRate == rhs.changeRate &&
+                   lhs.quoteVolume == rhs.quoteVolume &&
+                   lhs.highPrice == rhs.highPrice &&
+                   lhs.lowPrice == rhs.lowPrice
+        }
 }

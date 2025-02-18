@@ -7,7 +7,7 @@
 
 import Foundation
 
-struct Candle {
+struct Candle: Equatable {
     let symbol: String         // 심볼(종목) 이름, 예: "BTC" (비트코인), "ETH" (이더리움)
     let open: Double           // 해당 시간 간격(캔들)의 시작 가격
     let close: Double          // 해당 시간 간격(캔들)의 종료 가격
