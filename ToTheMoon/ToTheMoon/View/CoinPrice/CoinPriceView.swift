@@ -20,6 +20,14 @@ class CoinPriceView: UIView {
         return label
     }()
     
+    // 검색 버튼
+    let searchButton: UIButton = {
+        let button = UIButton(type: .system)
+        button.setImage(UIImage(systemName: "magnifyingglass"), for: .normal)
+        button.tintColor = .text
+        return button
+    }()
+    
     // 거래소 5개 합친 스택뷰
     private let stackView: UIStackView = {
         let stackview = UIStackView()
@@ -52,12 +60,17 @@ class CoinPriceView: UIView {
     private func setupView() {
         backgroundColor = .background
         
-        [titleLabel, stackView, coinPriceTableView]
+        [titleLabel, searchButton, stackView, coinPriceTableView]
             .forEach { addSubview($0) }
         
         titleLabel.snp.makeConstraints { make in
             make.top.equalTo(safeAreaLayoutGuide)
             make.centerX.equalToSuperview()
+        }
+        
+        searchButton.snp.makeConstraints { make in
+            make.centerY.equalTo(titleLabel)
+            make.trailing.equalToSuperview().offset(-20)
         }
         
         stackView.snp.makeConstraints { make in

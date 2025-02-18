@@ -7,6 +7,8 @@
 
 import UIKit
 import SnapKit
+import RxSwift
+import RxCocoa
 
 class CustomTabBarViewController: UIViewController {
     private let customTabBar = CustomTabBarView()
@@ -15,12 +17,13 @@ class CustomTabBarViewController: UIViewController {
     private let settingsNavVC = UINavigationController(rootViewController: SettingViewController())
 
     private var currentViewController: UIViewController?
+    private let disposeBag = DisposeBag()
 
 
     override func viewDidLoad() {
         super.viewDidLoad()
         setupUI()
-        setupTabBarActions()
+        setupTabBarBinding()
         selectTab(at: 0)
         navigationController?.navigationBar.isHidden = true
     }
@@ -43,10 +46,12 @@ class CustomTabBarViewController: UIViewController {
         }
     }
 
-    private func setupTabBarActions() {
-        customTabBar.onTabSelected = { [weak self] selectedIndex in
-            self?.handleTabSelection(selectedIndex: selectedIndex)
-        }
+    private func setupTabBarBinding() {
+        customTabBar.selectedTab
+            .subscribe(onNext: { [weak self] selectedIndex in
+                self?.handleTabSelection(selectedIndex: selectedIndex)
+            })
+            .disposed(by: disposeBag)
     }
 
     private func handleTabSelection(selectedIndex: Int) {

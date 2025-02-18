@@ -9,6 +9,7 @@ import RxCocoa
 import DGCharts
 import Foundation
 import UIKit
+
 final class ChartViewModel {
     
     // MARK: - Input & Output 구조체
@@ -150,6 +151,3 @@ final class ChartViewModel {
             .distinctUntilChanged()
     }
 }
-
-
-
