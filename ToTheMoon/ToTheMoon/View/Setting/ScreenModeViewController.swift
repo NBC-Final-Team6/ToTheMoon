@@ -6,89 +6,78 @@
 //
 
 import UIKit
+import SnapKit
+import RxSwift
+import RxCocoa
 
 class ScreenModeViewController: UIViewController {
     
     private let screenModeView = ScreenModeView()
-    private let options = ["기본값", "라이트 모드", "다크 모드"]
-    private var selectedOptionIndex = 0
+    private let viewModel = ScreenModeViewModel()
+    private let disposeBag = DisposeBag()
     
     override func loadView() {
         self.view = screenModeView
     }
-   
+    
     override func viewDidLoad() {
         super.viewDidLoad()
-        setupActions()
-        setupTableView()
+        bindViewModel()
         navigationController?.navigationBar.isHidden = true
-        selectedOptionIndex = UserDefaults.standard.integer(forKey: "SelectedScreenMode")
+        
+        screenModeView.tableView.estimatedRowHeight = 0
+        screenModeView.tableView.rowHeight = 55
     }
     
-    private func setupActions() {
-        screenModeView.backButton.addTarget(self, action: #selector(backButtonTapped), for: .touchUpInside)
-    }
-    
-    private func setupTableView() {
-        screenModeView.tableView.delegate = self
-        screenModeView.tableView.dataSource = self
-    }
-
-    @objc private func backButtonTapped() {
-        self.navigationController?.popViewController(animated: true)
-    }
-}
-
-extension ScreenModeViewController: UITableViewDataSource {
-    func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        return options.count
-    }
-    
-    func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        let cell = tableView.dequeueReusableCell(withIdentifier: "ScreenModeCell", for: indexPath)
-        cell.textLabel?.text = options[indexPath.row]
-        cell.textLabel?.font = .large.regular()
-        cell.textLabel?.textColor = UIColor(named: "TextColor")
-        cell.backgroundColor = .clear
-        cell.accessoryType = (indexPath.row == selectedOptionIndex) ? .checkmark : .none
-        return cell
-    }
-}
-
-extension ScreenModeViewController: UITableViewDelegate {
-    func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
-        selectedOptionIndex = indexPath.row
-        tableView.reloadData()
-        print("선택된 화면 모드: \(options[selectedOptionIndex])")
-        UserDefaults.standard.set(selectedOptionIndex, forKey: "SelectedScreenMode")
-        if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
-           let window = windowScene.windows.first {
-            applyScreenMode(to: window, modeIndex: selectedOptionIndex)
-        }
-    }
-    
-    func tableView(_ tableView: UITableView, willDisplay cell: UITableViewCell, forRowAt indexPath: IndexPath) {
-        if indexPath.row == options.count - 1 {
-            cell.separatorInset = UIEdgeInsets(top: 0, left: 0, bottom: 0, right: cell.bounds.width)
-        } else {
-            cell.separatorInset = UIEdgeInsets(top: 0, left: 10, bottom: 0, right: 10)
-        }
-    }
-}
-
-private func applyScreenMode(to window: UIWindow, modeIndex: Int) {
-    switch modeIndex {
-    case 1:
-        window.overrideUserInterfaceStyle = .light
-    case 2:
-        window.overrideUserInterfaceStyle = .dark
-    default:
-        window.overrideUserInterfaceStyle = .unspecified
+    private func bindViewModel() {
+        viewModel.options
+            .bind(to: screenModeView.tableView.rx.items(cellIdentifier: "ScreenModeCell")) { index, title, cell in
+                cell.textLabel?.text = title
+                cell.textLabel?.font = .large.regular()
+                cell.textLabel?.textColor = UIColor(named: "TextColor")
+                cell.backgroundColor = .clear
+                cell.accessoryType = (index == self.viewModel.selectedOptionIndex.value) ? .checkmark : .none
+                cell.tintColor = .personel
+                
+                cell.separatorInset = UIEdgeInsets(top: 0, left: 16, bottom: 0, right: 16)
+                cell.layoutMargins = UIEdgeInsets(top: 0, left: 16, bottom: 0, right: 16)
+                
+                if index == self.viewModel.options.value.count - 1 {
+                    cell.separatorInset = UIEdgeInsets(top: 0, left: 0, bottom: -1, right: cell.bounds.width)
+                }
+            }
+            .disposed(by: disposeBag)
+        
+        screenModeView.tableView.rx.itemSelected
+            .map { $0.row }
+            .bind(to: viewModel.selectedOptionIndex)
+            .disposed(by: disposeBag)
+        
+        viewModel.selectedOptionIndex
+            .subscribe(onNext: { [weak self] selectedIndex in
+                guard let self = self else { return }
+                self.screenModeView.tableView.reloadData()
+                self.viewModel.saveSelectedOption()
+                
+                if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
+                   let window = windowScene.windows.first {
+                    self.viewModel.applyScreenMode(to: window, modeIndex: selectedIndex)
+                }
+            })
+            .disposed(by: disposeBag)
+        
+        screenModeView.backButton.rx.tap
+            .bind { [weak self] in
+                self?.navigationController?.popViewController(animated: true)
+            }
+            .disposed(by: disposeBag)
+        
+        screenModeView.tableView.rx.willDisplayCell
+            .subscribe(onNext: { [weak self] cell, indexPath in
+                guard let self = self else { return }
+                let isLastCell = indexPath.row == self.viewModel.options.value.count - 1
+                cell.separatorInset = isLastCell ? UIEdgeInsets(top: 0, left: 0, bottom: 0, right: cell.bounds.width) : UIEdgeInsets(top: 0, left: 16, bottom: 0, right: 16)
+            })
+            .disposed(by: disposeBag)
     }
 }
-
-func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
-    return 55
-    
-}
-

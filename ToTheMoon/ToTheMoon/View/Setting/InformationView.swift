@@ -16,7 +16,6 @@ class InformationView: UIView {
         let largeImage = UIImage(systemName: "chevron.left", withConfiguration: largeConfig)
         button.setImage(largeImage, for: .normal)
         button.tintColor = UIColor(named: "TextColor")
-        button.contentEdgeInsets = .zero
         return button
     }()
 
@@ -41,7 +40,8 @@ class InformationView: UIView {
         let tableView = UITableView()
         tableView.backgroundColor = .clear
         tableView.separatorStyle = .singleLine
-        tableView.separatorInset = UIEdgeInsets(top: 0, left: 16, bottom: 0, right: 16)
+        tableView.separatorInset = .zero
+        tableView.layoutMargins = .zero
         tableView.separatorColor = UIColor(named: "SeparatorColor")
         tableView.layer.cornerRadius = 20
         tableView.isScrollEnabled = false
