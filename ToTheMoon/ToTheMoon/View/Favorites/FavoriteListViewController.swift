@@ -32,7 +32,7 @@ final class FavoriteListViewController: UIViewController {
             return cell
         })
 //        ,
-//        canEditRowAtIndexPath: { _, _ in return true } // 개별 삭제 
+//        canEditRowAtIndexPath: { _, _ in return true } // 개별 삭제
 //    )
     
     // MARK: - Init
@@ -107,6 +107,12 @@ final class FavoriteListViewController: UIViewController {
         
         // 검색 화면 이동 트리거
         topFavoritesView.searchButton.rx.tap
+            .subscribe(onNext: { [weak self] in
+                self?.navigateToSearch()
+            })
+            .disposed(by: disposeBag)
+        
+        noFavoritesView.addButton.rx.tap
             .subscribe(onNext: { [weak self] in
                 self?.navigateToSearch()
             })
