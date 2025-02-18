@@ -7,6 +7,8 @@
 
 import UIKit
 import SnapKit
+import RxSwift
+import RxCocoa
 
 class SettingView: UIView {
     
@@ -28,8 +30,6 @@ class SettingView: UIView {
         return tableView
     }()
     
-    var onItemSelected: ((Int) -> Void)?
-    
     override init(frame: CGRect) {
         super.init(frame: frame)
         setupUI()
@@ -45,7 +45,6 @@ class SettingView: UIView {
         addSubview(titleLabel)
         addSubview(tableView)
         
-        
         titleLabel.snp.makeConstraints { make in
             make.top.equalTo(safeAreaLayoutGuide).offset(10)
             make.centerX.equalToSuperview()
@@ -55,27 +54,5 @@ class SettingView: UIView {
             make.top.equalTo(titleLabel.snp.bottom).offset(20)
             make.leading.trailing.bottom.equalToSuperview()
         }
-    }
-}
-
-extension SettingView: UITableViewDataSource, UITableViewDelegate {
-    func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        return 3
-    }
-
-    func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        let cell = tableView.dequeueReusableCell(withIdentifier: "SettingCell") ?? UITableViewCell(style: .default, reuseIdentifier: "SettingCell")
-        let titles = ["알림 설정", "화면 모드 설정", "앱 정보"]
-        cell.textLabel?.text = titles[indexPath.row]
-        cell.textLabel?.font = .large.regular()
-        cell.textLabel?.textColor = UIColor(named: "TextColor")
-        cell.backgroundColor = UIColor(named: "BackgroundColor")
-        cell.accessoryType = .disclosureIndicator
-        return cell
-    }
-
-    func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
-        tableView.deselectRow(at: indexPath, animated: true)
-        onItemSelected?(indexPath.row)
     }
 }

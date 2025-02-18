@@ -6,11 +6,14 @@
 //
 
 import UIKit
+import RxSwift
+import RxCocoa
 
-class SettingViewController: UIViewController, UITableViewDelegate {
+class SettingViewController: UIViewController {
     
     private let settingView = SettingView()
-    private let settings: [String] = ["알림 설정", "화면 모드 설정", "앱 정보"]
+    private let viewModel = SettingViewModel()
+    private let disposeBag = DisposeBag()
     
     override func loadView() {
         self.view = settingView
@@ -18,61 +21,52 @@ class SettingViewController: UIViewController, UITableViewDelegate {
     
     override func viewDidLoad() {
         super.viewDidLoad()
-        setupTableView()
+        bindViewModel()
         navigationController?.navigationBar.isHidden = true
     }
     
-    private func setupTableView() {
-        settingView.tableView.delegate = self
-        settingView.tableView.dataSource = self
-    }
-    
-    
-}
-
-
-
-extension SettingViewController: UITableViewDataSource {
-    
-    func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        return settings.count
-    }
-    
-    func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        let cell = tableView.dequeueReusableCell(withIdentifier: "SettingCell", for: indexPath)
-        cell.textLabel?.text = settings[indexPath.row]
-        cell.textLabel?.font = .large.regular()
-        cell.textLabel?.textColor = UIColor(named: "TextColor")
-        cell.backgroundColor = .clear
-        return cell
-    }
-    
-    func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
-        return 50
-    }
-    
-    func tableView(_ tableView: UITableView, willDisplay cell: UITableViewCell, forRowAt indexPath: IndexPath) {
-        let inset: CGFloat = 20
-        cell.separatorInset = UIEdgeInsets(top: 0, left: inset, bottom: 0, right: inset)
-    }
-    
-    func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
-        tableView.deselectRow(at: indexPath, animated: true)
-        switch indexPath.row {
-        case 0:
-            let notificationVC = NotificationSettingViewController()
-            navigationController?.pushViewController(notificationVC, animated: true)
-        case 1:
-            let screenModeVC = ScreenModeViewController()
-            navigationController?.pushViewController(screenModeVC, animated: true)
-        case 2:
-            let informationVC = InformationViewController()
-            navigationController?.pushViewController(informationVC, animated: true)
-        default:
-            break
-        }
+    private func bindViewModel() {
+        viewModel.settings
+            .bind(to: settingView.tableView.rx.items(cellIdentifier: "SettingCell")) { index, title, cell in
+                cell.textLabel?.text = title
+                cell.textLabel?.font = .large.regular()
+                cell.textLabel?.textColor = UIColor(named: "TextColor")
+                cell.backgroundColor = UIColor(named: "BackgroundColor")
+                cell.accessoryType = .disclosureIndicator
+            }
+            .disposed(by: disposeBag)
+        
+        settingView.tableView.rx.willDisplayCell
+            .subscribe(onNext: { cell, _ in
+                cell.separatorInset = UIEdgeInsets(top: 0, left: 16, bottom: 0, right: 16)
+                cell.layoutMargins = .zero
+            })
+            .disposed(by: disposeBag)
+        
+        
+        settingView.tableView.rx.itemSelected
+            .map { $0.row }
+            .bind(to: viewModel.selectedItem)
+            .disposed(by: disposeBag)
+        
+        viewModel.selectedItem
+            .subscribe(onNext: { [weak self] index in
+                guard let self = self else { return }
+                let viewController: UIViewController
+                switch index {
+                case 0:
+                    viewController = NotificationSettingViewController()
+                case 1:
+                    viewController = ScreenModeViewController()
+                case 2:
+                    viewController = InformationViewController()
+                default:
+                    return
+                }
+                self.navigationController?.pushViewController(viewController, animated: true)
+            })
+            .disposed(by: disposeBag)
     }
 }
-
 
 

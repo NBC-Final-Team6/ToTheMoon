@@ -17,6 +17,7 @@ final class FavoritesListViewModel {
     // MARK: - Input
     struct Input {
         let removeFavorite = PublishRelay<MarketPrice>()
+        let removeAllFavorites = PublishRelay<Void>()
         let searchTrigger = PublishRelay<Void>()
         let viewWillAppearTrigger = PublishRelay<Void>()
         let viewWillDisappearTrigger = PublishRelay<Void>()
@@ -25,6 +26,7 @@ final class FavoritesListViewModel {
     // MARK: - Output
     struct Output {
         let favoriteCoins: Driver<[MarketPrice]>
+        let favoriteCoinsCount: Driver<Int>
         let favoriteCoinsChartData: Driver<[Candle]>
         let isLoading: Driver<Bool>
         let navigateToSearch: Signal<Void>
@@ -35,6 +37,7 @@ final class FavoritesListViewModel {
     let output: Output
     
     private let favoriteCoinsRelay = BehaviorRelay<[MarketPrice]>(value: [])
+    private let favoriteCoinsCountRelay = BehaviorRelay<Int>(value: 0)
     private let favoriteCoinsChartRelay = BehaviorRelay<[Candle]>(value: [])
     private let isLoadingRelay = BehaviorRelay<Bool>(value: false)
     
@@ -50,12 +53,14 @@ final class FavoritesListViewModel {
         
         self.output = Output(
             favoriteCoins: favoriteCoinsRelay.asDriver(onErrorJustReturn: []),
+            favoriteCoinsCount: favoriteCoinsCountRelay.asDriver(onErrorJustReturn: 0),
             favoriteCoinsChartData: favoriteCoinsChartRelay.asDriver(onErrorJustReturn: []),
             isLoading: isLoadingRelay.asDriver(onErrorJustReturn: false),
             navigateToSearch: input.searchTrigger.asSignal()
         )
         
         bindInputs()
+        bindFavoriteCoinsCount()
     }
     
     // MARK: - Bind Input to Output
@@ -81,6 +86,31 @@ final class FavoritesListViewModel {
             .subscribe(onNext: { [weak self] in
                 self?.fetchFavoriteCoins()
             })
+            .disposed(by: disposeBag)
+        
+        input.removeAllFavorites
+            .withLatestFrom(favoriteCoinsRelay)
+            .flatMap { [weak self] coins -> Observable<Void> in
+                guard let self = self else { return .empty() }
+                
+                return Observable.from(coins)
+                    .concatMap { coin in
+                        self.manageFavoritesUseCase.removeCoin(coin)
+                    }
+            }
+            .observe(on: MainScheduler.instance)
+            .subscribe(onNext: { [weak self] in
+                print("✅ 모든 관심 코인 삭제 완료")
+                self?.fetchFavoriteCoins() // 삭제 후 UI 업데이트
+            })
+            .disposed(by: disposeBag)
+    }
+    
+    private func bindFavoriteCoinsCount() {
+        favoriteCoinsRelay
+            .map { $0.count }
+            .distinctUntilChanged()
+            .bind(to: favoriteCoinsCountRelay)
             .disposed(by: disposeBag)
     }
     

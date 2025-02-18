@@ -6,81 +6,80 @@
 //
 
 import UIKit
+import RxSwift
+import RxCocoa
 
 class NotificationSettingViewController: UIViewController {
-
+    
     private let notificationView = NotificationSettingView()
-    private let options = ["소리만", "소리와 진동", "진동", "무음"]
-    private var selectedOptionIndex = 0
-
+    private let viewModel = NotificationSettingViewModel()
+    private let disposeBag = DisposeBag()
+    
     override func loadView() {
         self.view = notificationView
     }
-
+    
     override func viewDidLoad() {
         super.viewDidLoad()
-        setupActions()
-        setupTableView()
+        bindViewModel()
         navigationController?.navigationBar.isHidden = true
-        selectedOptionIndex = UserDefaults.standard.integer(forKey: "SelectedNotificationStyle")
-    }
-
-    private func setupActions() {
-        notificationView.backButton.addTarget(self, action: #selector(backButtonTapped), for: .touchUpInside)
-
-        notificationView.notificationSwitch.addTarget(self, action: #selector(switchValueChanged), for: .valueChanged)
-    }
-
-    private func setupTableView() {
-        notificationView.tableView.delegate = self
-        notificationView.tableView.dataSource = self
+        
+        notificationView.tableView.estimatedRowHeight = 0
+        notificationView.tableView.rowHeight = 55
     }
     
-    @objc private func backButtonTapped() {
-        self.navigationController?.popViewController(animated: true)
-    }
-
-    @objc private func switchValueChanged() {
-        let isOn = notificationView.notificationSwitch.isOn
-        print("알림 허용: \(isOn ? "켜짐" : "꺼짐")")
-        UserDefaults.standard.set(isOn, forKey: "NotificationEnabled")
-    }
-}
-
-extension NotificationSettingViewController: UITableViewDataSource {
-    func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        return options.count
-    }
-
-    func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        let cell = tableView.dequeueReusableCell(withIdentifier: "NotificationStyleCell", for: indexPath)
-        cell.textLabel?.text = options[indexPath.row]
-        cell.textLabel?.font = .large.regular()
-        cell.textLabel?.textColor = UIColor(named: "TextColor")
-        cell.backgroundColor = .clear
-
-        cell.accessoryType = (indexPath.row == selectedOptionIndex) ? .checkmark : .none
-        return cell
-    }
-}
-
-extension NotificationSettingViewController: UITableViewDelegate {
-    func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
-        selectedOptionIndex = indexPath.row
-        tableView.reloadData()
-        print("선택된 알림 스타일: \(options[selectedOptionIndex])")
-        UserDefaults.standard.set(selectedOptionIndex, forKey: "SelectedNotificationStyle")
-    }
-
-    func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
-        return 55
-    }
-    
-    func tableView(_ tableView: UITableView, willDisplay cell: UITableViewCell, forRowAt indexPath: IndexPath) {
-        if indexPath.row == options.count - 1 {
-            cell.separatorInset = UIEdgeInsets(top: 0, left: 0, bottom: 0, right: cell.bounds.width)
-        } else {
-            cell.separatorInset = UIEdgeInsets(top: 0, left: 10, bottom: 0, right: 10)
-        }
+    private func bindViewModel() {
+        viewModel.options
+            .bind(to: notificationView.tableView.rx.items(cellIdentifier: "NotificationStyleCell")) { index, title, cell in
+                cell.textLabel?.text = title
+                cell.textLabel?.font = .large.regular()
+                cell.textLabel?.textColor = UIColor(named: "TextColor")
+                cell.backgroundColor = .clear
+                cell.accessoryType = (index == self.viewModel.selectedOptionIndex.value) ? .checkmark : .none
+                cell.tintColor = .personel
+                
+                cell.separatorInset = UIEdgeInsets(top: 0, left: 16, bottom: 0, right: 16)
+                cell.layoutMargins = UIEdgeInsets(top: 0, left: 16, bottom: 0, right: 16)
+                
+                
+                if index == self.viewModel.options.value.count - 1 {
+                    cell.separatorInset = UIEdgeInsets(top: 0, left: 0, bottom: -1, right: cell.bounds.width)
+                }
+            }
+            .disposed(by: disposeBag)
+        
+        notificationView.tableView.rx.itemSelected
+            .map { $0.row }
+            .bind(to: viewModel.selectedOptionIndex)
+            .disposed(by: disposeBag)
+        
+        viewModel.selectedOptionIndex
+            .subscribe(onNext: { [weak self] selectedIndex in
+                guard let self = self else { return }
+                self.notificationView.tableView.reloadData()
+            })
+            .disposed(by: disposeBag)
+        
+        notificationView.notificationSwitch.rx.isOn
+            .bind(to: viewModel.notificationEnabled)
+            .disposed(by: disposeBag)
+        
+        viewModel.notificationEnabled
+            .bind(to: notificationView.notificationSwitch.rx.isOn)
+            .disposed(by: disposeBag)
+        
+        notificationView.backButton.rx.tap
+            .bind { [weak self] in
+                self?.navigationController?.popViewController(animated: true)
+            }
+            .disposed(by: disposeBag)
+        
+        notificationView.tableView.rx.willDisplayCell
+            .subscribe(onNext: { [weak self] cell, indexPath in
+                guard let self = self else { return }
+                let isLastCell = indexPath.row == self.viewModel.options.value.count - 1
+                cell.separatorInset = isLastCell ? UIEdgeInsets(top: 0, left: 0, bottom: 0, right: cell.bounds.width) : UIEdgeInsets(top: 0, left: 16, bottom: 0, right: 16)
+            })
+            .disposed(by: disposeBag)
     }
 }

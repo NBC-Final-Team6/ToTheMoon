@@ -6,73 +6,59 @@
 //
 
 import UIKit
+import SnapKit
+import RxSwift
+import RxCocoa
 
 class InformationViewController: UIViewController {
-
+    
     private let informationView = InformationView()
-    private let data = ["현재 버전: 0.001", "최신 버전: 0.001"]
-
+    private let viewModel = InformationViewModel()
+    private let disposeBag = DisposeBag()
+    
     override func loadView() {
         self.view = informationView
     }
-
+    
     override func viewDidLoad() {
         super.viewDidLoad()
-        setupActions()
-        setupTableView()
+        bindViewModel()
         navigationController?.navigationBar.isHidden = true
+        
+        informationView.tableView.estimatedRowHeight = 0
+        informationView.tableView.rowHeight = 55
     }
-
-    private func setupActions() {
-        informationView.backButton.addTarget(self, action: #selector(backButtonTapped), for: .touchUpInside)
-    }
-
-    private func setupTableView() {
-        informationView.tableView.delegate = self
-        informationView.tableView.dataSource = self
-    }
-
-    @objc private func backButtonTapped() {
-        self.navigationController?.popViewController(animated: true)
-    }
-}
-
-extension InformationViewController: UITableViewDataSource {
-    func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        return data.count
-    }
-
-    func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        let cell = tableView.dequeueReusableCell(withIdentifier: "InformationCell", for: indexPath)
-        cell.textLabel?.text = data[indexPath.row]
-        cell.textLabel?.font = .large.regular()
-        cell.textLabel?.textColor = UIColor(named: "TextColor")
-        cell.backgroundColor = .clear
-
-        let backgroundView = UIView()
-        backgroundView.backgroundColor = UIColor(named: "ContainerColor")
-        backgroundView.layer.cornerRadius = 0
-        if indexPath.row == 0 {
-            backgroundView.layer.cornerRadius = 20
-            backgroundView.layer.maskedCorners = [.layerMinXMinYCorner, .layerMaxXMinYCorner]
-        } else if indexPath.row == data.count - 1 {
-            backgroundView.layer.cornerRadius = 20
-            backgroundView.layer.maskedCorners = [.layerMinXMaxYCorner, .layerMaxXMaxYCorner]
-        }
-        cell.backgroundView = backgroundView
-        return cell
-    }
-}
-
-extension InformationViewController: UITableViewDelegate {
-    func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
-        return 55
-    }
-    func tableView(_ tableView: UITableView, willDisplay cell: UITableViewCell, forRowAt indexPath: IndexPath) {
-        if indexPath.row == data.count - 1 {
-            cell.separatorInset = UIEdgeInsets(top: 0, left: 0, bottom: 0, right: cell.bounds.width)
-        } else {
-            cell.separatorInset = UIEdgeInsets(top: 0, left: 16, bottom: 0, right: 16)
-        }
+    
+    private func bindViewModel() {
+        viewModel.data
+            .bind(to: informationView.tableView.rx.items(cellIdentifier: "InformationCell")) { index, text, cell in
+                cell.textLabel?.text = text
+                cell.textLabel?.font = .large.regular()
+                cell.textLabel?.textColor = UIColor(named: "TextColor")
+                cell.backgroundColor = .clear
+                cell.textLabel?.textAlignment = .left
+                
+                cell.separatorInset = UIEdgeInsets(top: 0, left: 16, bottom: 0, right: 16)
+                cell.layoutMargins = UIEdgeInsets(top: 0, left: 16, bottom: 0, right: 16)
+                
+                if index == self.viewModel.data.value.count - 1 {
+                    cell.separatorInset = UIEdgeInsets(top: 0, left: 0, bottom: -1, right: cell.bounds.width)
+                }
+            }
+            .disposed(by: disposeBag)
+        
+        informationView.backButton.rx.tap
+            .bind { [weak self] in
+                self?.navigationController?.popViewController(animated: true)
+            }
+            .disposed(by: disposeBag)
+        
+        informationView.tableView.rx.willDisplayCell
+            .subscribe(onNext: { [weak self] cell, indexPath in
+                guard let self = self else { return }
+                let isLastCell = indexPath.row == self.viewModel.data.value.count - 1
+                cell.separatorInset = isLastCell ? UIEdgeInsets(top: 0, left: 0, bottom: 0, right: cell.bounds.width) : UIEdgeInsets(top: 0, left: 16, bottom: 0, right: 16)
+            })
+            .disposed(by: disposeBag)
     }
 }
