@@ -116,14 +116,10 @@ class CoinPriceViewModel: CoinPriceViewModelInput, CoinPriceViewModelOutput, Coi
             })
     }
     
-    // 캔들 데이터는 1분마다 갱신
+    // 캔들 데이터는 최초 1회 요청
     private func setupCandleTimer() {
         candleTimer?.dispose()
-        candleTimer = Observable<Int>
-            .interval(.seconds(60), scheduler: MainScheduler.instance)
-            .subscribe(onNext: { [weak self] _ in
-                self?.fetchAllCandlesOnce()
-            })
+        fetchAllCandlesOnce()
     }
     
     private func setupImageBinding() {
