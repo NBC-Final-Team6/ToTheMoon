@@ -214,6 +214,8 @@ class ChartViewController: UIViewController {
         switch newInterval {
         case .minute:
             chartView.minuteButton.backgroundColor = .blue.withAlphaComponent(0.3)
+        case .hour:
+            chartView.minuteButton.backgroundColor = .blue.withAlphaComponent(0.3)
         case .day:
             chartView.dayButton.backgroundColor = .blue.withAlphaComponent(0.3)
         case .week:

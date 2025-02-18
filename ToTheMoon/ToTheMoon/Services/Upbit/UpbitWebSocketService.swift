@@ -8,7 +8,9 @@
 import Foundation
 import RxSwift
 
-final class UpbitWebSocketService {
+final class UpbitWebSocketService: WebSocketServiceProtocol {
+    var exchange: Exchange = .upbit
+    
     private let upbitService = UpbitService()
     private var cachedSymbols: [String] = []
 
@@ -31,7 +33,7 @@ final class UpbitWebSocketService {
                 guard !symbols.isEmpty else {
                     return Observable.error(NetworkError.invalidData)
                 }
-
+                
                 return UpbitWebSocketManager.shared.connect(
                     symbols: symbols,
                     decodingType: UpbitWebSocketTickerResponse.self
@@ -43,12 +45,22 @@ final class UpbitWebSocketService {
     
     // **특정 코인들의 WebSocket 구독**
     func fetchKrwTicker(for symbols: [String]) -> Observable<[MarketPrice]> {
+        
+        if symbols.isEmpty {
+            print("⚠️ [DEBUG] 요청된 심볼이 없음 → WebSocket 연결 해제")
+            UpbitWebSocketManager.shared.disconnectAll()
+            return Observable.just([])
+        }
         return UpbitWebSocketManager.shared.connect(
             symbols: symbols,
             decodingType: UpbitWebSocketTickerResponse.self
         )
         .map { [$0] }
         .map { $0.toMarketPrices(exchange: .upbit) }
+    }
+    
+    func disconnectWebSocket() {
+        UpbitWebSocketManager.shared.disconnectAll()
     }
 }
 

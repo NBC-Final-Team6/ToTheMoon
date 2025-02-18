@@ -4,18 +4,15 @@
 //
 //  Created by 황석범 on 1/31/25.
 //
-
 import Foundation
 import RxSwift
-
 protocol ManageFavoritesUseCaseProtocol {
     func saveCoin(_ coin: MarketPrice) -> Observable<Void>
     func removeCoin(_ coin: MarketPrice) -> Observable<Void>
     func isCoinSaved(_ symbol: String, exchange: String) -> Observable<Bool>
-    func fetchFavoriteCoins() -> Observable<[Coin]>
+    func fetchFavoriteCoins() -> Observable<[MarketPrice]>
     func toggleFavorite(_ coin: MarketPrice) -> Observable<Void>
 }
-
 final class ManageFavoritesUseCase: ManageFavoritesUseCaseProtocol {
     
     // MARK: - Dependencies
@@ -29,43 +26,30 @@ final class ManageFavoritesUseCase: ManageFavoritesUseCaseProtocol {
     // MARK: - Public Methods
     //즐겨찾기 추가 (대소문자 무시 적용)
     func saveCoin(_ coin: MarketPrice) -> Observable<Void> {
-        let (normalizedSymbol, normalizedExchange) = normalizeCoinInfo(symbol: coin.symbol, exchange: coin.exchange)
-        return coreDataManager.createCoin(name: coin.symbol, symbol: normalizedSymbol, exchange: normalizedExchange)
-    }
-
+            return coreDataManager.createCoin(marketPrice: coin)
+        }
     //즐겨찾기 삭제 (대소문자 무시 적용)
     func removeCoin(_ coin: MarketPrice) -> Observable<Void> {
-        let (normalizedSymbol, normalizedExchange) = normalizeCoinInfo(symbol: coin.symbol, exchange: coin.exchange)
-        return coreDataManager.deleteCoin(symbol: normalizedSymbol, exchange: normalizedExchange)
+        return coreDataManager.deleteCoin(symbol: coin.symbol, exchange: coin.exchange)
     }
-
     // 즐겨찾기 여부 확인 (대소문자 무시 적용)
     func isCoinSaved(_ symbol: String, exchange: String) -> Observable<Bool> {
-        let (normalizedSymbol, normalizedExchange) = normalizeCoinInfo(symbol: symbol, exchange: exchange)
-        
-        return coreDataManager.fetchCoins()
-            .map { coins in
-                coins.contains {
-                    self.normalizeCoinInfo(symbol: $0.symbol, exchange: $0.exchangename) == (normalizedSymbol, normalizedExchange)
+            return coreDataManager.fetchCoins()
+                .map { coins in
+                    coins.contains { $0.symbol == symbol && $0.exchange == exchange }
                 }
-            }
-    }
-
+        }
     // 저장된 모든 코인 가져오기 (대소문자 변환 적용)
-    func fetchFavoriteCoins() -> Observable<[Coin]> {
-        return coreDataManager.fetchCoins()
-            .map { self.normalizeCoins(coins: $0) }
-    }
-
+    func fetchFavoriteCoins() -> Observable<[MarketPrice]> {
+            return coreDataManager.fetchCoins()
+        }
     // 즐겨찾기 추가/삭제 토글 (대소문자 무시 적용)
     func toggleFavorite(_ coin: MarketPrice) -> Observable<Void> {
-        let (normalizedSymbol, normalizedExchange) = normalizeCoinInfo(symbol: coin.symbol, exchange: coin.exchange)
-        
-        return isCoinSaved(normalizedSymbol, exchange: normalizedExchange)
-            .flatMap { isSaved -> Observable<Void> in
-                isSaved ? self.removeCoin(coin) : self.saveCoin(coin)
-            }
-    }
+            return isCoinSaved(coin.symbol, exchange: coin.exchange)
+                .flatMap { isSaved -> Observable<Void> in
+                    isSaved ? self.removeCoin(coin) : self.saveCoin(coin)
+                }
+        }
     
     // MARK: - Private Utility Methods
     
@@ -77,11 +61,21 @@ final class ManageFavoritesUseCase: ManageFavoritesUseCaseProtocol {
     }
     
     // 저장된 코인 목록을 표준화된 형태로 변환
-    private func normalizeCoins(coins: [Coin]) -> [Coin] {
+    private func normalizeCoins(coins: [MarketPrice]) -> [MarketPrice] {
         return coins.map { coin in
-            coin.symbol = coin.symbol?.lowercased().trimmingCharacters(in: .whitespaces)
-            coin.exchangename = coin.exchangename?.lowercased().trimmingCharacters(in: .whitespaces)
-            return coin
+            return MarketPrice(
+                symbol: coin.symbol.lowercased().trimmingCharacters(in: .whitespaces),
+                price: coin.price,
+                exchange: coin.exchange.lowercased().trimmingCharacters(in: .whitespaces),
+                change: coin.change,
+                changeRate: coin.changeRate,
+                quoteVolume: coin.quoteVolume,
+                highPrice: coin.highPrice,
+                lowPrice: coin.lowPrice,
+                image: coin.image
+            )
         }
     }
 }
+
+

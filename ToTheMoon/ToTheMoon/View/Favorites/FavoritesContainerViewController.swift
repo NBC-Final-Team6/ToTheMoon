@@ -4,12 +4,10 @@
 //
 //  Created by 황석범 on 1/27/25.
 //
-
 import UIKit
 import SnapKit
 import RxSwift
 import RxCocoa
-
 final class FavoritesContainerViewController: UIViewController {
     private let topFavoritesView = TopFavoritesView()
     private let viewModel = FavoritesContainerViewModel()
@@ -184,13 +182,39 @@ final class FavoritesContainerViewController: UIViewController {
         case .popularCurrency:
             return PopularCurrencyViewController()
         case .favoriteList:
+            let manageFavoritesUseCase = ManageFavoritesUseCase(coreDataManager: CoreDataManager.shared)
+            let webSocketServices: [WebSocketServiceProtocol] = [
+                BithumbWebSocketService(),
+                CoinoneWebSocketService(),
+                KorbitWebSocketService(),
+                UpbitWebSocketService()
+            ]
+            
+            let exchangeServices: [ServiceProtocol] = [
+                BithumbService(),
+                CoinOneService(),
+                KorbitService(),
+                UpbitService()
+            ]
+            let fetchFavoriteCoinsUseCase = FetchFavoriteCoinsUseCase(
+                manageFavoritesUseCase: manageFavoritesUseCase,
+                webSocketServices: webSocketServices
+            )
+            
+            let fetchFavoriteCoinsChartUseCase = FetchFavoriteCoinsChartUseCase(
+                manageFavoritesUseCase: manageFavoritesUseCase,
+                exchangeServices: exchangeServices
+            )
+            
             return FavoriteListViewController(
                 viewModel: FavoritesListViewModel(
-                    manageFavoritesUseCase: ManageFavoritesUseCase(),
-                    getMarketPricesUseCase: getMarketPricesUseCase
+                    manageFavoritesUseCase: manageFavoritesUseCase,
+                    fetchFavoriteCoinsUseCase: fetchFavoriteCoinsUseCase,
+                    fetchFavoriteCoinsChartUseCase: fetchFavoriteCoinsChartUseCase
                 )
             )
         }
+        
     }
     
     private func addChildVC(_ viewController: UIViewController) {
@@ -209,12 +233,10 @@ final class FavoritesContainerViewController: UIViewController {
         viewController.removeFromParent()
     }
 }
-
 enum SegmentType: Int {
     case popularCurrency = 0
     case favoriteList
 }
-
 extension FavoritesContainerViewController: UICollectionViewDelegateFlowLayout {
     func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, sizeForItemAt indexPath: IndexPath) -> CGSize {
         let width = (collectionView.frame.width) / CGFloat(tabs.count)
@@ -225,3 +247,5 @@ extension FavoritesContainerViewController: UICollectionViewDelegateFlowLayout {
         return .zero
     }
 }
+
+

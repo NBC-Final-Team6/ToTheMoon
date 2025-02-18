@@ -14,8 +14,8 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
 
-//        let coinoneService = BithumbWebSocketService()
-//        
+        //let coinoneService = BithumbWebSocketService()
+        
 //        coinoneService.fetchAllKrwTickers()
 //            .subscribe(onNext: { marketPrice in
 //                print("📈  실시간 가격 업데이트: \(marketPrice)")
@@ -23,13 +23,26 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
 //                print("❌ WebSocket BTC 에러: \(error)")
 //            })
 //        
-//        let btcSubscription = coinoneService.fetchKrwTicker(for: ["BTC", "ETH"])
+//        let btcSubscription = coinoneService.fetchKrwTicker(for: ["BTC", "WBTC"])
 //            .subscribe(onNext: { marketPrice in
 //                print("📈 BTC 실시간 가격 업데이트: \(marketPrice)")
 //            }, onError: { error in
 //                print("❌ WebSocket BTC 에러: \(error)")
 //            })
 //        
+//        DispatchQueue.main.asyncAfter(deadline: .now() + 10) {
+//            coinoneService.fetchKrwTicker(for: ["XRP", "DOGE"])
+//                .subscribe(onNext: { marketPrice in
+//                    print("📈 BTC 실시간 가격 업데이트: \(marketPrice)")
+//                }, onError: { error in
+//                    print("❌ WebSocket BTC 에러: \(error)")
+//                })
+//        }
+//        
+//        DispatchQueue.main.asyncAfter(deadline: .now() + 15) {
+//            coinoneService.disconnectWebSocket()
+//        }
+//
 //        coinoneService.fetchKrwTicker(for: ["XRP", "DOGE"])
 //            .subscribe(onNext: { marketPrice in
 //                print("📈 BTC 실시간 가격 업데이트: \(marketPrice)")

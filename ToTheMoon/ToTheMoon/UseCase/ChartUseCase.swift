@@ -55,6 +55,9 @@ final class ChartUseCase {
                 switch interval {
                 case .minute:
                     dateFormat = "HH:mm"
+                case .hour:
+                    dateFormat = "HH시"
+
                 case .day:
                     dateFormat = "M월 d일"
                 case .week:
@@ -112,8 +115,8 @@ final class ChartUseCase {
 }
 
 // MARK: - CandleServiceType Conformance
-
 extension BithumbService: CandleServiceType {}
 extension CoinOneService: CandleServiceType {}
 extension KorbitService: CandleServiceType {}
 extension UpbitService: CandleServiceType {}
+
