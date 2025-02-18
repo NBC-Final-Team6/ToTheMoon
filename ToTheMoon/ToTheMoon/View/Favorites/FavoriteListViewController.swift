@@ -4,13 +4,16 @@
 //
 //  Created by 황석범 on 1/27/25.
 //
+
 import UIKit
 import SnapKit
 import RxSwift
 import RxCocoa
+
 final class FavoriteListViewController: UIViewController {
     
     // MARK: - UI Components
+    private lazy var topFavoritesView = TopFavoritesView()
     private lazy var contentView = FovoritesListTableView()
     private lazy var noFavoritesView = NoFavoritesView()
     private lazy var loadingView = LoadingView()
@@ -30,19 +33,15 @@ final class FavoriteListViewController: UIViewController {
     }
     
     // MARK: - Life Cycle
-    override func loadView() {
-        view = UIView()
-        view.backgroundColor = .background
-        setupViews()
-    }
-    
     override func viewDidLoad() {
         super.viewDidLoad()
+        setupViews()
         setupBindings()
     }
     
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
+        navigationController?.navigationBar.isHidden = true
         viewModel.fetchFavoriteCoinsChartData()
     }
     
@@ -53,12 +52,23 @@ final class FavoriteListViewController: UIViewController {
     
     // MARK: - UI 초기화
     private func setupViews() {
+        view.backgroundColor = .background
         
-        [ contentView, noFavoritesView, loadingView ].forEach { view.addSubview($0) }
+        [ topFavoritesView, contentView, noFavoritesView, loadingView ].forEach { view.addSubview($0) }
         
-        contentView.snp.makeConstraints { $0.edges.equalToSuperview() }
-        noFavoritesView.snp.makeConstraints { $0.edges.equalToSuperview() }
-        loadingView.snp.makeConstraints { $0.edges.equalToSuperview() }
+        topFavoritesView.snp.makeConstraints { make in
+            make.top.equalTo(view.safeAreaLayoutGuide)
+            make.leading.trailing.equalToSuperview()
+            make.height.equalTo(100)
+        }
+        
+        contentView.snp.makeConstraints { make in
+            make.top.equalTo(topFavoritesView.snp.bottom)
+            make.leading.trailing.bottom.equalToSuperview()
+        }
+        
+        noFavoritesView.snp.makeConstraints { $0.edges.equalTo(contentView) }
+        loadingView.snp.makeConstraints { $0.edges.equalTo(contentView) }
         
         contentView.isHidden = true
         noFavoritesView.isHidden = true
@@ -83,10 +93,17 @@ final class FavoriteListViewController: UIViewController {
             .disposed(by: disposeBag)
         
         // 검색 화면 이동 트리거
-        output.navigateToSearch
-            .emit(onNext: { [weak self] in
+        topFavoritesView.searchButton.rx.tap
+            .subscribe(onNext: { [weak self] in
                 self?.navigateToSearch()
             })
+            .disposed(by: disposeBag)
+        
+        // 관심 목록 개수 업데이트
+        output.favoriteCoins
+            .map { "(\($0.count))" }
+            .distinctUntilChanged()
+            .drive(topFavoritesView.countLabel.rx.text)
             .disposed(by: disposeBag)
         
         // 테이블 뷰 데이터 바인딩
@@ -106,9 +123,10 @@ final class FavoriteListViewController: UIViewController {
             }
             .disposed(by: disposeBag)
         
-        // 테이블 뷰 델리게이트 self 설정
+        // 테이블 뷰 델리게이트 설정
         contentView.tableView.rx.setDelegate(self)
-                    .disposed(by: disposeBag)
+            .disposed(by: disposeBag)
+        
         // 스와이프 삭제 이벤트 추가
         contentView.tableView.rx.modelDeleted(MarketPrice.self)
             .bind(to: viewModel.input.removeFavorite)
@@ -134,6 +152,7 @@ final class FavoriteListViewController: UIViewController {
         navigationController?.pushViewController(searchVC, animated: true)
     }
 }
+
 // MARK: - UITableViewDelegate
 extension FavoriteListViewController: UITableViewDelegate {
     
@@ -141,8 +160,7 @@ extension FavoriteListViewController: UITableViewDelegate {
         return 70
     }
     
-    // 스와이프 삭제 활성화
-    private func tableView(_ tableView: UITableView, canEditRowAt indexPath: IndexPath) -> Bool {
+    func tableView(_ tableView: UITableView, canEditRowAt indexPath: IndexPath) -> Bool {
         return true
     }
 }

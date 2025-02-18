@@ -18,32 +18,34 @@ final class TopFavoritesView: UIView {
         return label
     }()
     
+    let titleLabel: UILabel = {
+        let label = UILabel()
+        label.text = "관심목록"
+        label.textColor = .text
+        label.font = .large.bold()
+        return label
+    }()
+    
+    let countLabel: UILabel = {
+        let label = UILabel()
+        label.text = "(0)"
+        label.textColor = .text
+        label.font = .medium.regular()
+        return label
+    }()
+    
+    let deleteButton: UIButton = {
+        let button = UIButton(type: .system)
+        button.setTitle("선택삭제", for: .normal)
+        button.tintColor = .text
+        return button
+    }()
+    
     let searchButton: UIButton = {
         let button = UIButton(type: .system)
         button.setImage(UIImage(systemName: "magnifyingglass"), for: .normal)
         button.tintColor = .text
         return button
-    }()
-    
-    let tabCollectionView: UICollectionView = {
-        let layout = UICollectionViewFlowLayout()
-        layout.scrollDirection = .horizontal
-        layout.minimumLineSpacing = 0
-        layout.minimumInteritemSpacing = 0
-        layout.sectionInset = .zero
-        
-        let collectionView = UICollectionView(frame: .zero, collectionViewLayout: layout)
-        collectionView.showsHorizontalScrollIndicator = false
-        collectionView.backgroundColor = .clear
-        collectionView.contentInset = .zero
-        collectionView.register(TabCell.self, forCellWithReuseIdentifier: "TabCell")
-        return collectionView
-    }()
-    
-    let underlineView: UIView = {
-        let view = UIView()
-        view.backgroundColor = .personel
-        return view
     }()
     
     let contentView: UIView = {
@@ -66,8 +68,9 @@ final class TopFavoritesView: UIView {
         
         [logoLabel,
          searchButton,
-         tabCollectionView,
-         underlineView,
+         titleLabel,
+         countLabel,
+         deleteButton,
          contentView].forEach { addSubview($0) }
         
         logoLabel.snp.makeConstraints { make in
@@ -80,20 +83,23 @@ final class TopFavoritesView: UIView {
             make.trailing.equalToSuperview().offset(-16)
         }
         
-        tabCollectionView.snp.makeConstraints { make in
-            make.top.equalTo(logoLabel.snp.bottom).offset(20)
-            make.leading.equalToSuperview().offset(16)
-            make.trailing.equalToSuperview().offset(-16)
-            make.height.equalTo(40)
+        titleLabel.snp.makeConstraints { make in
+            make.top.equalTo(logoLabel.snp.bottom).offset(28)
+            make.leading.equalToSuperview().offset(20)
         }
         
-        underlineView.snp.makeConstraints { make in
-            make.bottom.equalTo(tabCollectionView.snp.bottom)
-            make.height.equalTo(2)
+        countLabel.snp.makeConstraints { make in
+            make.centerY.equalTo(titleLabel)
+            make.leading.equalTo(titleLabel.snp.trailing).offset(8)
+        }
+        
+        deleteButton.snp.makeConstraints { make in
+            make.centerY.equalTo(titleLabel)
+            make.trailing.equalToSuperview().offset(-20)
         }
         
         contentView.snp.makeConstraints { make in
-            make.top.equalTo(tabCollectionView.snp.bottom).offset(8)
+            make.top.equalTo(titleLabel.snp.bottom).offset(8)
             make.leading.trailing.bottom.equalToSuperview()
         }
     }

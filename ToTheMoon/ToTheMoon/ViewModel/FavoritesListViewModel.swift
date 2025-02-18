@@ -25,6 +25,7 @@ final class FavoritesListViewModel {
     // MARK: - Output
     struct Output {
         let favoriteCoins: Driver<[MarketPrice]>
+        let favoriteCoinsCount: Driver<Int>
         let favoriteCoinsChartData: Driver<[Candle]>
         let isLoading: Driver<Bool>
         let navigateToSearch: Signal<Void>
@@ -35,6 +36,7 @@ final class FavoritesListViewModel {
     let output: Output
     
     private let favoriteCoinsRelay = BehaviorRelay<[MarketPrice]>(value: [])
+    private let favoriteCoinsCountRelay = BehaviorRelay<Int>(value: 0)
     private let favoriteCoinsChartRelay = BehaviorRelay<[Candle]>(value: [])
     private let isLoadingRelay = BehaviorRelay<Bool>(value: false)
     
@@ -50,12 +52,14 @@ final class FavoritesListViewModel {
         
         self.output = Output(
             favoriteCoins: favoriteCoinsRelay.asDriver(onErrorJustReturn: []),
+            favoriteCoinsCount: favoriteCoinsCountRelay.asDriver(onErrorJustReturn: 0),
             favoriteCoinsChartData: favoriteCoinsChartRelay.asDriver(onErrorJustReturn: []),
             isLoading: isLoadingRelay.asDriver(onErrorJustReturn: false),
             navigateToSearch: input.searchTrigger.asSignal()
         )
         
         bindInputs()
+        bindFavoriteCoinsCount()
     }
     
     // MARK: - Bind Input to Output
@@ -81,6 +85,14 @@ final class FavoritesListViewModel {
             .subscribe(onNext: { [weak self] in
                 self?.fetchFavoriteCoins()
             })
+            .disposed(by: disposeBag)
+    }
+    
+    private func bindFavoriteCoinsCount() {
+        favoriteCoinsRelay
+            .map { $0.count }
+            .distinctUntilChanged()
+            .bind(to: favoriteCoinsCountRelay)
             .disposed(by: disposeBag)
     }
     
