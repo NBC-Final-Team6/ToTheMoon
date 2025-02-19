@@ -12,7 +12,7 @@ import RxCocoa
 import DGCharts
 import SnapKit
 
-class ChartViewController: UIViewController {
+class ChartViewController: UIViewController, UIGestureRecognizerDelegate {
     
     private let chartView = ChartView()
     private let viewModel: ChartViewModel
@@ -57,6 +57,10 @@ class ChartViewController: UIViewController {
             action: #selector(backButtonTapped)
         )
         navigationItem.leftBarButtonItem = backButton
+        
+        // ✅ 스와이프 제스처 활성화 (뒤로 가기 허용)
+        navigationController?.interactivePopGestureRecognizer?.delegate = self
+        navigationController?.interactivePopGestureRecognizer?.isEnabled = true
     }
     
     @objc private func backButtonTapped() {
