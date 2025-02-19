@@ -12,6 +12,7 @@ import RxCocoa
 protocol CoinPriceViewModelInput {
     func selectExchange(_ exchange: Exchange)
     func selectCoinPrice(at index: Int)
+    func selectCoinPrice(_ coin: MarketPrice?)
 }
 
 protocol CoinPriceViewModelOutput {
@@ -85,12 +86,21 @@ class CoinPriceViewModel: CoinPriceViewModelInput, CoinPriceViewModelOutput, Coi
         currentExchangeRelay.accept(exchange)
         fetchCoinPrices()
         fetchAllCandlesOnce()
+        selectedCoinPriceSubject.onNext(nil)
     }
     
     // 코인 선택
     func selectCoinPrice(at index: Int) {
-        guard index < coinPricesRelay.value.count else { return }
-        selectedCoinPriceSubject.onNext(coinPricesRelay.value[index])
+        let coins = coinPricesRelay.value
+        guard index >= 0, index < coins.count else {
+            selectedCoinPriceSubject.onNext(nil)
+            return
+        }
+        selectedCoinPriceSubject.onNext(coins[index])
+    }
+    
+    func selectCoinPrice(_ coin: MarketPrice?) {
+        selectedCoinPriceSubject.onNext(coin)
     }
     
     private func setupBindings() {

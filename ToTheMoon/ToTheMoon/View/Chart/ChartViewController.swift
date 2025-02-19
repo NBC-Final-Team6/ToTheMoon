@@ -18,15 +18,13 @@ class ChartViewController: UIViewController {
     private let viewModel: ChartViewModel
     private let disposeBag = DisposeBag()
     private var uiDisposeBag = DisposeBag()
-    private let coinPriceViewModel: CoinPriceViewModel
     
     // 현재 선택된 시간 간격 (초기값 .day)
     private var selectedTimeFrame: CandleInterval = .day
     
-    init(viewModel: ChartViewModel, coinPriceViewModel: CoinPriceViewModel) {
+    init(viewModel: ChartViewModel) {
         print("DEBUG: Initializing ChartViewController with viewModel: \(viewModel)")
         self.viewModel = viewModel
-        self.coinPriceViewModel = coinPriceViewModel
         super.init(nibName: nil, bundle: nil)
     }
     
