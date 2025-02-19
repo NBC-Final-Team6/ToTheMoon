@@ -67,8 +67,9 @@ class CoinPriceViewModel: CoinPriceViewModelInput, CoinPriceViewModelOutput, Coi
     var candlesDict: Observable<[String: [Candle]]> { return candlesDictRelay.asObservable() }
     
     init() {
+        currentExchangeRelay.accept(.bithumb)
         setupBindings()
-        setupPriceTimer()
+        //        setupPriceTimer()
         setupCandleTimer()
         setupImageBinding()
         fetchAllCandlesOnce()
@@ -80,11 +81,23 @@ class CoinPriceViewModel: CoinPriceViewModelInput, CoinPriceViewModelOutput, Coi
         candleTimer?.dispose()
     }
     
+    func startTimers() {
+        setupPriceTimer()
+        fetchCoinPrices()
+    }
+    
+    func stopTimers() {
+        priceTimer?.dispose()
+        priceTimer = nil
+    }
+    
     // 거래소 변경
     func selectExchange(_ exchange: Exchange) {
         currentExchangeRelay.accept(exchange)
-        fetchCoinPrices()
-        fetchAllCandlesOnce()
+        DispatchQueue.main.async { [weak self] in
+            self?.fetchCoinPrices()
+            self?.fetchAllCandlesOnce()
+        }
     }
     
     // 코인 선택
@@ -179,6 +192,7 @@ class CoinPriceViewModel: CoinPriceViewModelInput, CoinPriceViewModelOutput, Coi
             .disposed(by: disposeBag)
     }
     
+    // MARK: - fetchCoinPrices
     // 코인 가격 데이터 가져오기
     private func fetchCoinPrices() {
         let service: Single<[MarketPrice]>
@@ -224,6 +238,7 @@ class CoinPriceViewModel: CoinPriceViewModelInput, CoinPriceViewModelOutput, Coi
             .disposed(by: disposeBag)
     }
     
+    // MARK: - fetchCandles
     private func fetchCandles(for symbol: String) {
         let service: Single<[Candle]>
         
