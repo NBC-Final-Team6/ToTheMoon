@@ -13,7 +13,7 @@ import RxCocoa
 class CustomTabBarViewController: UIViewController {
     private let customTabBar = CustomTabBarView()
     private let coinPricesNavVC = UINavigationController(rootViewController: CoinPriceViewController())
-    private let favoritesNavVC = UINavigationController(rootViewController: FavoritesContainerViewController())
+    private lazy var favoritesNavVC = UINavigationController(rootViewController: favoritesListViewController)
     private let settingsNavVC = UINavigationController(rootViewController: SettingViewController())
 
     private var currentViewController: UIViewController?

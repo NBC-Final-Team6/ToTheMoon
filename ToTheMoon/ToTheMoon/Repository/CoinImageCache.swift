@@ -42,7 +42,7 @@ final class CoinImageCache {
         // 2️⃣ 디스크 캐시 확인 (파일 존재 여부 체크)
         let fileURL = directory.appendingPathComponent("\(coinID.lowercased()).png")
         guard fileManager.fileExists(atPath: fileURL.path) else {
-            print("❌ [CACHE MISS] 디스크에 이미지 없음: \(coinID)")
+            //print("❌ [CACHE MISS] 디스크에 이미지 없음: \(coinID)")
             return nil
         }
 
@@ -54,7 +54,7 @@ final class CoinImageCache {
                 return image
             }
         } catch {
-            print("❌ [ERROR] 디스크에서 이미지 로드 실패: \(error.localizedDescription)")
+           // print("❌ [ERROR] 디스크에서 이미지 로드 실패: \(error.localizedDescription)")
         }
 
         return nil // 캐시 없음
