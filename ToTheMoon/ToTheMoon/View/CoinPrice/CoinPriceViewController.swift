@@ -41,6 +41,19 @@ class CoinPriceViewController: UIViewController {
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
         navigationController?.navigationBar.isHidden = true
+        
+        if let viewModel = viewModel as? CoinPriceViewModel {
+            viewModel.startTimers()
+        }
+    }
+    
+    override func viewWillDisappear(_ animated: Bool) {
+        super.viewWillDisappear(animated)
+        
+        // 화면이 사라질 때 타이머 중지
+        if let viewModel = viewModel as? CoinPriceViewModel {
+            viewModel.stopTimers()
+        }
     }
     
     private func setupSwipeGestures() {
@@ -56,7 +69,7 @@ class CoinPriceViewController: UIViewController {
     }
     
     @objc private func handleSwipe(_ gesture: UISwipeGestureRecognizer) {
-        let exchanges: [Exchange] = [.upbit, .bithumb, .coinone, .korbit]
+        let exchanges: [Exchange] = [.bithumb, .upbit, .coinone, .korbit]
         let currentExchange = viewModel.outputs.currentExchangeValue
         let currentIndex = exchanges.firstIndex(of: currentExchange) ?? 0
         
