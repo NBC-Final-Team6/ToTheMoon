@@ -19,8 +19,18 @@ final class PopularCurrencyViewModel {
     
     let showAlertMessage = PublishSubject<String>()
 
-    init(getMarketPricesUseCase: GetMarketPricesUseCase = GetMarketPricesUseCase(),
-         manageFavoritesUseCase: ManageFavoritesUseCaseProtocol = ManageFavoritesUseCase()) {
+    init(
+        getMarketPricesUseCase: GetMarketPricesUseCase = GetMarketPricesUseCase(
+            services: [
+                BithumbService(),
+                CoinOneService(),
+                KorbitService(),
+                UpbitService()
+            ],
+            symbolService: SymbolService()
+        ),
+        manageFavoritesUseCase: ManageFavoritesUseCaseProtocol = ManageFavoritesUseCase()
+    ) {
         self.getMarketPricesUseCase = getMarketPricesUseCase
         self.manageFavoritesUseCase = manageFavoritesUseCase
         fetchPopularCoins()

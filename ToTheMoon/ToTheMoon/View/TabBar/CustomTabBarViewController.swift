@@ -27,6 +27,41 @@ class CustomTabBarViewController: UIViewController {
         selectTab(at: 0)
         navigationController?.navigationBar.isHidden = true
     }
+    
+    private lazy var favoritesListViewController: FavoriteListViewController = {
+        let manageFavoritesUseCase = ManageFavoritesUseCase(coreDataManager: CoreDataManager.shared)
+        let webSocketServices: [WebSocketServiceProtocol] = [
+            BithumbWebSocketService(),
+            CoinoneWebSocketService(),
+            KorbitWebSocketService(),
+            UpbitWebSocketService()
+        ]
+        
+        let exchangeServices: [ServiceProtocol] = [
+            BithumbService(),
+            CoinOneService(),
+            KorbitService(),
+            UpbitService()
+        ]
+        
+        let fetchFavoriteCoinsUseCase = FetchFavoriteCoinsUseCase(
+            manageFavoritesUseCase: manageFavoritesUseCase,
+            webSocketServices: webSocketServices
+        )
+        
+        let fetchFavoriteCoinsChartUseCase = FetchFavoriteCoinsChartUseCase(
+            manageFavoritesUseCase: manageFavoritesUseCase,
+            exchangeServices: exchangeServices
+        )
+        
+        return FavoriteListViewController(
+            viewModel: FavoritesListViewModel(
+                manageFavoritesUseCase: manageFavoritesUseCase,
+                fetchFavoriteCoinsUseCase: fetchFavoriteCoinsUseCase,
+                fetchFavoriteCoinsChartUseCase: fetchFavoriteCoinsChartUseCase
+            )
+        )
+    }()
 
     private func setupUI() {
         let backgroundView = UIView()

@@ -71,12 +71,12 @@ final class NoFavoritesView: UIView {
         buttonStackView.addArrangedSubview(addButton)
         
         // 뷰 계층 구조 설정
-        addSubview(verticalStackView)
-        addSubview(buttonStackView)
+        [ verticalStackView, buttonStackView ].forEach{ addSubview($0) }
         
         // 제약 조건 설정
         verticalStackView.snp.makeConstraints { make in
-            make.top.equalToSuperview().offset(40)
+            make.top.greaterThanOrEqualToSuperview().offset(16)
+            make.top.lessThanOrEqualToSuperview().offset(48)
             make.horizontalEdges.equalToSuperview().inset(16) // 좌우 여백
         }
         
@@ -86,14 +86,16 @@ final class NoFavoritesView: UIView {
         }
         
         buttonStackView.snp.makeConstraints { make in
-            make.top.equalTo(verticalStackView.snp.bottom).offset(40)
+            make.top.greaterThanOrEqualTo(verticalStackView.snp.bottom).offset(8)
+            make.top.lessThanOrEqualTo(verticalStackView.snp.bottom).offset(48)
             make.centerX.equalToSuperview()
             make.leading.trailing.equalToSuperview().inset(48) // 좌우 여백
+            make.bottom.equalTo(safeAreaLayoutGuide).offset(-32)
         }
         
         addButton.snp.makeConstraints { make in
             make.height.equalTo(50)
-            make.width.greaterThanOrEqualTo(150) // 최소 너비 설정
+            make.width.greaterThanOrEqualTo(120) // 최소 너비 설정
         }
     }
 }

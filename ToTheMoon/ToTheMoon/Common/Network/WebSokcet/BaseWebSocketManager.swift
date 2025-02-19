@@ -23,7 +23,7 @@ class BaseWebSocketManager {
             
             let request = URLRequest(url: url, timeoutInterval: 5)
             self.socket = WebSocket(request: request)
-
+            
             if let jsonData = try? JSONEncoder().encode(requestPayload),
                let jsonString = String(data: jsonData, encoding: .utf8) {
                 self.requestString = jsonString
@@ -31,13 +31,13 @@ class BaseWebSocketManager {
                 observer.onError(WebSocketError.encodingFailed)
                 return Disposables.create()
             }
-
+            
             self.socket?.onEvent = { [weak self] event in
                 self?.handleWebSocketEvent(event: event, observer: observer)
             }
-
+            
             self.socket?.connect()
-
+            
             return Disposables.create {
                 self.socket?.disconnect()
                 self.socket = nil
@@ -45,12 +45,12 @@ class BaseWebSocketManager {
             }
         }
     }
-
+    
     func sendMessage(_ message: String) {
         socket?.write(string: message, completion: {
         })
     }
-
+    
     func handleWebSocketEvent<T: Decodable>(event: WebSocketEvent, observer: AnyObserver<T>) {
         switch event {
         case .connected:
@@ -75,6 +75,7 @@ class BaseWebSocketManager {
             }
             
         case .disconnected(let reason, _):
+            self.socket = nil
             observer.onError(WebSocketError.connectionFailed(NSError(
                 domain: "WebSocketDisconnected",
                 code: -1,
@@ -83,5 +84,23 @@ class BaseWebSocketManager {
         default:
             break
         }
+    }
+    
+    private func decodeWebSocketResponse<T: Decodable>(text: String, observer: AnyObserver<T>) {
+        do {
+            let data = text.data(using: .utf8) ?? Data()
+            let decodedObject = try JSONDecoder().decode(T.self, from: data)
+            observer.onNext(decodedObject)
+        } catch {
+            print("❌ WebSocket 데이터 디코딩 실패: \(error.localizedDescription)")
+            observer.onError(WebSocketError.decodingFailed(error))
+        }
+    }
+    
+    func disconnect() {
+        socket?.onEvent = { _ in }
+        socket?.disconnect()
+        socket = nil
+        disposeBag = DisposeBag() // 기존 Observable 모두 해제
     }
 }

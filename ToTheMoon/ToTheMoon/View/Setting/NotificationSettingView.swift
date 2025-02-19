@@ -16,7 +16,6 @@ class NotificationSettingView: UIView {
         let largeImage = UIImage(systemName: "chevron.left", withConfiguration: largeConfig)
         button.setImage(largeImage, for: .normal)
         button.tintColor = UIColor(named: "TextColor")
-        button.contentEdgeInsets = .zero
         return button
     }()
 
@@ -32,6 +31,7 @@ class NotificationSettingView: UIView {
     let notificationSwitch: UISwitch = {
         let toggle = UISwitch()
         toggle.isOn = true
+        toggle.onTintColor = .personel
         return toggle
     }()
 
@@ -54,11 +54,10 @@ class NotificationSettingView: UIView {
         let tableView = UITableView()
         tableView.backgroundColor = UIColor(named: "ContainerColor")
         tableView.separatorStyle = .singleLine
-        tableView.separatorInset = UIEdgeInsets(top: 0, left: 10, bottom: 0, right: 10)
-        tableView.separatorColor = UIColor(red: 30/255, green: 30/255, blue: 30/255, alpha: 1)
+        tableView.separatorInset = UIEdgeInsets(top: 0, left: 16, bottom: 0, right: 16)
+        tableView.register(UITableViewCell.self, forCellReuseIdentifier: "NotificationStyleCell")
         tableView.layer.cornerRadius = 20
         tableView.isScrollEnabled = false
-        tableView.register(UITableViewCell.self, forCellReuseIdentifier: "NotificationStyleCell")
         return tableView
     }()
 

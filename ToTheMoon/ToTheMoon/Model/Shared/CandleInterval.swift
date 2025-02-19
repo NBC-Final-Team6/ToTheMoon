@@ -4,18 +4,25 @@
 //
 //  Created by 황석범 on 1/24/25.
 //
-
+//
+//  Untitled.swift
+//  ToTheMoon
+//
+//  Created by 황석범 on 1/24/25.
+//
 enum CandleInterval {
-    case minute     
+    case minute
+    case hour
     case day
     case week
     case month
-
     /// 업비트와 빗썸에서 사용하는 rawValue
     var upbitAndBithumbRawValue: String {
         switch self {
         case .minute:
             return "minutes/1" // 1분 단위는 "/1"로 고정
+        case .hour:
+            return "minutes/60" // 1시간 단위는 60분
         case .day:
             return "days" // day → days
         case .week:
@@ -30,6 +37,8 @@ enum CandleInterval {
         switch self {
         case .minute:
             return "1m"
+        case .hour:
+            return "1h" // 1시간 단위 추가
         case .day:
             return "1d"
         case .week:
@@ -38,12 +47,13 @@ enum CandleInterval {
             return "1mon"
         }
     }
-
     /// 코빗에서 사용하는 rawValue
     var korbitRawValue: String {
         switch self {
         case .minute:
             return "1" // 항상 1분 단위로 고정
+        case .hour:
+            return "1H" // 1시간 단위 추가
         case .day:
             return "1D" // 1일
         case .week:
@@ -52,6 +62,9 @@ enum CandleInterval {
             return "1M" // 1개월
         }
     }
-    
-    
 }
+
+
+
+
+
