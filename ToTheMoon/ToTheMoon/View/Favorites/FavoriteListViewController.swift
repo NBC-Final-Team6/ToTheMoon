@@ -157,13 +157,7 @@ final class FavoriteListViewController: UIViewController {
         // 전체 삭제 버튼 클릭 시 모두 삭제
         topFavoritesView.deleteButton.rx.tap
             .subscribe(onNext: { [weak self] in
-                guard let self = self else { return }
-                    self.viewModel.fetchFavoriteCoinsUseCase.cancelSubscriptions()
-                    self.viewModel.input.removeAllFavorites.accept(())
-                    
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-                        self.viewModel.fetchFavoriteCoins()
-                    }
+                self?.showDeleteConfirmationAlert()
             })
             .disposed(by: disposeBag)
     }
@@ -173,6 +167,27 @@ final class FavoriteListViewController: UIViewController {
         loadingView.isHidden = !isLoading
         contentView.isHidden = !(hasFavorites && !isLoading)
         noFavoritesView.isHidden = hasFavorites || isLoading
+    }
+    
+    private func showDeleteConfirmationAlert() {
+        let alert = UIAlertController(title: "경고", message: "정말로 삭제하시겠습니까?", preferredStyle: .alert)
+        
+        let confirmAction = UIAlertAction(title: "삭제", style: .destructive) { [weak self] _ in
+            guard let self = self else { return }
+            self.viewModel.fetchFavoriteCoinsUseCase.cancelSubscriptions()
+            self.viewModel.input.removeAllFavorites.accept(())
+            
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                self.viewModel.fetchFavoriteCoins()
+            }
+        }
+        
+        let cancelAction = UIAlertAction(title: "취소", style: .cancel, handler: nil)
+        
+        alert.addAction(confirmAction)
+        alert.addAction(cancelAction)
+        
+        self.present(alert, animated: true, completion: nil)
     }
     
     // MARK: - 검색 화면 이동
