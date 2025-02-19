@@ -102,6 +102,5 @@ class BaseWebSocketManager {
         socket?.disconnect()
         socket = nil
         disposeBag = DisposeBag() // 기존 Observable 모두 해제
-        print("❌ WebSocket 연결 해제 완료 (disposeBag 초기화)")
     }
 }
