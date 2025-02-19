@@ -163,6 +163,5 @@ final class CoinoneWebSocketManager {
         backupSocket = nil
         isConnected = false
         subscribedSymbols.removeAll()
-        print("❌ 코인원 모든 WebSocket 연결 해제 완료")
     }
 }
