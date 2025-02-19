@@ -33,6 +33,10 @@ class SettingViewController: UIViewController {
                 cell.textLabel?.textColor = UIColor(named: "TextColor")
                 cell.backgroundColor = UIColor(named: "BackgroundColor")
                 cell.accessoryType = .disclosureIndicator
+                
+                let selectedBackgroundView = UIView()
+                selectedBackgroundView.backgroundColor = UIColor.lightGray
+                cell.selectedBackgroundView = selectedBackgroundView
             }
             .disposed(by: disposeBag)
         
@@ -50,10 +54,16 @@ class SettingViewController: UIViewController {
             .disposed(by: disposeBag)
         
         viewModel.selectedItem
-            .subscribe(onNext: { [weak self] index in
+            .subscribe(onNext: { [weak self] row in
                 guard let self = self else { return }
+                
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
+                    let indexPath = IndexPath(row: row, section: 0)
+                    self.settingView.tableView.deselectRow(at: indexPath, animated: true)
+                }
+                
                 let viewController: UIViewController
-                switch index {
+                switch row {
                 case 0:
                     viewController = NotificationSettingViewController()
                 case 1:
@@ -68,5 +78,4 @@ class SettingViewController: UIViewController {
             .disposed(by: disposeBag)
     }
 }
-
 
