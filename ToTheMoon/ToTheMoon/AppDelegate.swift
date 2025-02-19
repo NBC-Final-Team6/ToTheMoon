@@ -10,19 +10,24 @@ import RxSwift
 @main
 class AppDelegate: UIResponder, UIApplicationDelegate {
     
-   // let disposeBag = DisposeBag()
+    let disposeBag = DisposeBag()
     
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
 
-        //let coinoneService = BithumbWebSocketService()
-        
-//        coinoneService.fetchAllKrwTickers()
-//            .subscribe(onNext: { marketPrice in
-//                print("📈  실시간 가격 업데이트: \(marketPrice)")
-//            }, onError: { error in
-//                print("❌ WebSocket BTC 에러: \(error)")
-//            })
+//        let coinoneService = BithumbService()
 //        
+// 
+//        Observable<Int>.interval(.seconds(1), scheduler: MainScheduler.instance)
+//            .flatMap { _ in
+//                coinoneService.fetchMarketPrices()
+//            }
+//            .subscribe(onNext: { marketPrice in
+//                print("📈 실시간 가격 업데이트: \(marketPrice)")
+//            }, onError: { error in
+//                print("❌ 오류 발생: \(error)")
+//            })
+//            .disposed(by: disposeBag)
+//
 //        let btcSubscription = coinoneService.fetchKrwTicker(for: ["BTC", "WBTC"])
 //            .subscribe(onNext: { marketPrice in
 //                print("📈 BTC 실시간 가격 업데이트: \(marketPrice)")
