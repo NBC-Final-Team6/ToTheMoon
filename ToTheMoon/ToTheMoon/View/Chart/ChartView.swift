@@ -183,9 +183,9 @@ class ChartView: UIView {
     }()
 
     let highestPriceLabel = ChartView.createPriceLabel(text: "최고가")
-    let highestPriceValueLabel = ChartView.createPriceValueLabel(textColor: .green)
+    let highestPriceValueLabel = ChartView.createPriceValueLabel(textColor: .numbersGreen)
     let lowestPriceLabel = ChartView.createPriceLabel(text: "최저가")
-    let lowestPriceValueLabel = ChartView.createPriceValueLabel(textColor: .red)
+    let lowestPriceValueLabel = ChartView.createPriceValueLabel(textColor: .numbersRed)
     let changeRateLabel = ChartView.createPriceLabel(text: "변동률")
     let changeRateValueLabel = ChartView.createPriceValueLabel(textColor: .text)
 

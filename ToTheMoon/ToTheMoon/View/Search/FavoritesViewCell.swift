@@ -128,7 +128,7 @@ class FavoritesViewCell: UITableViewCell {
         marketNameLabel.text = nil
         priceLabel.text = nil
         priceChangeLabel.text = nil
-        updateAddButton(isSaved: isSaved) 
+        updateAddButton(isSaved: isSaved)
     }
     
     func configure(with item: MarketPrice, isSaved: Bool) {

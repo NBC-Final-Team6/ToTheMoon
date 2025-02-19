@@ -76,7 +76,7 @@ extension Ticker {
 extension CoinOneCandle {
     func toCandle(symbol: String) -> Candle {
         return Candle(
-            symbol: symbol, 
+            symbol: symbol,
             open: Double(self.open) ?? 0.0,
             close: Double(self.close) ?? 0.0,
             high: Double(self.high) ?? 0.0,
