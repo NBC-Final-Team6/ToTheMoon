@@ -200,7 +200,9 @@ final class FavoriteListViewController: UIViewController {
     private func navigateToSearch() {
         let searchVC = SearchViewController(viewModel: SearchViewModel(
             getMarketPricesUseCase: GetMarketPricesUseCase(
+
                 services: [ BithumbService(), CoinOneService(), KorbitService(), UpbitService()],
+
                 symbolService: SymbolService()
             ),
             manageFavoritesUseCase: ManageFavoritesUseCase()
@@ -213,7 +215,7 @@ final class FavoriteListViewController: UIViewController {
         let exchange = Exchange(rawValue: marketPrice.exchange) ?? nil
         let chartViewModel = ChartViewModel(exchange: exchange, selectedCoins: [marketPrice])
         let coinPriceViewModel = CoinPriceViewModel()
-        let chartVC = ChartViewController(viewModel: chartViewModel, coinPriceViewModel: coinPriceViewModel)
+        let chartVC = ChartViewController(viewModel: chartViewModel)
         navigationController?.pushViewController(chartVC, animated: true)
     }
 }

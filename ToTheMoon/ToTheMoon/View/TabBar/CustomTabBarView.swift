@@ -12,8 +12,8 @@ import RxCocoa
 
 class CustomTabBarView: UIView {
     private var buttons: [UIButton] = []
-    private let titles = ["관심 목록", "코인 시세", "앱 설정"]
-    private let icons = ["cart.fill", "chart.line.uptrend.xyaxis", "gearshape.fill"]
+    private let titles = ["코인 시세", "관심 목록", "앱 설정"]
+    private let icons = ["chart.line.uptrend.xyaxis", "cart.fill", "gearshape.fill"]
 
     let selectedTab = PublishRelay<Int>()
     private let disposeBag = DisposeBag()

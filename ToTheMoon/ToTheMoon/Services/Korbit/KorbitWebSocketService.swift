@@ -48,10 +48,11 @@ final class KorbitWebSocketService: WebSocketServiceProtocol {
     // **특정 코인들의 WebSocket 구독**
     func fetchKrwTicker(for symbols: [String]) -> Observable<[MarketPrice]> {
         if symbols.isEmpty {
+            print("⚠️ [DEBUG] 요청된 심볼이 없음 → WebSocket 연결 해제")
             KorbitWebSocketManager.shared.disconnectAll()
             return Observable.just([])
         }
-        let formattedSymbols = symbols.map { formatSymbol($0) }
+        let formattedSymbols = symbols.map { formatSymbol($0) } // ✅ 심볼 변환 적용
         
         return KorbitWebSocketManager.shared.connect(
             symbols: formattedSymbols, // 변환된 심볼 전달

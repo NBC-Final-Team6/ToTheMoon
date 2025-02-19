@@ -150,5 +150,6 @@ final class KorbitWebSocketManager: BaseWebSocketManager {
          backupSocket?.disconnect()
          backupSocket = nil
          subscribedSymbols.removeAll()
+         print("❌ 코빗 모든 WebSocket 연결 해제 완료")
      }
  }

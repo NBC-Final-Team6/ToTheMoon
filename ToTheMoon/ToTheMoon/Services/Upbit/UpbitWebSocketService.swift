@@ -47,6 +47,7 @@ final class UpbitWebSocketService: WebSocketServiceProtocol {
     func fetchKrwTicker(for symbols: [String]) -> Observable<[MarketPrice]> {
         
         if symbols.isEmpty {
+            print("⚠️ [DEBUG] 요청된 심볼이 없음 → WebSocket 연결 해제")
             UpbitWebSocketManager.shared.disconnectAll()
             return Observable.just([])
         }
