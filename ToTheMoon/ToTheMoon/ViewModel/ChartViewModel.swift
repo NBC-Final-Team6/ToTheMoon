@@ -36,6 +36,7 @@ final class ChartViewModel {
     // MARK: - Private Properties
     private let disposeBag = DisposeBag()
     private let chartUseCase: ChartUseCase
+    private let manageFavoritesUseCase: ManageFavoritesUseCase
     
     // 내부 Relay
     private let chartDataRelay = BehaviorRelay<(dates: [String], entries: [CandleChartDataEntry], highest: String, lowest: String, xAxisFormatter: AxisValueFormatter)>(
@@ -48,12 +49,13 @@ final class ChartViewModel {
     private let lowestPriceRelay = BehaviorRelay<String>(value: "0")
     private let imageSubject = PublishSubject<(String, UIImage?)>()
     
-    init(exchange: Exchange?, selectedCoins: [MarketPrice]) {
+    init(exchange: Exchange?, selectedCoins: [MarketPrice], manageFavoritesUseCase: ManageFavoritesUseCase = ManageFavoritesUseCase()) {
         let selectedCoinsRelay = BehaviorRelay<[MarketPrice]>(value: selectedCoins)
         let candleIntervalRelay = BehaviorRelay<CandleInterval>(value: .day)
         self.input = Input(selectedCoins: selectedCoinsRelay, candleInterval: candleIntervalRelay)
         
         self.chartUseCase = ChartUseCase(exchange: exchange)
+        self.manageFavoritesUseCase = manageFavoritesUseCase
         
         self.output = Output(
             chartData: chartDataRelay.asDriver(onErrorDriveWith: .empty()),
@@ -105,7 +107,7 @@ final class ChartViewModel {
     }
     
     // ✅ **실시간 캔들 업데이트 (WebSocket)**
-    private func subscribeToRealTimeUpdates(for coin: MarketPrice) {
+    func subscribeToRealTimeUpdates(for coin: MarketPrice) {
         chartUseCase.subscribeToRealTimeCandleData(for: coin)
             .observe(on: MainScheduler.instance)
             .subscribe(onNext: { [weak self] livePrice in
@@ -223,37 +225,18 @@ final class ChartViewModel {
     
     // 즐겨찾기 관련 기능 (Core Data 연동)
     func toggleFavorite(for coin: MarketPrice) {
-        isFavorite(coin)
-            .take(1)
-            .subscribe(onNext: { [weak self] isFav in
-                guard let self = self else { return }
-                if isFav {
-                    // 즐겨찾기에서 삭제
-                    CoreDataManager.shared.deleteCoin(symbol: coin.symbol, exchange: coin.exchange)
-                        .subscribe(onCompleted: {
-                            print("Removed \(coin.symbol) from favorites")
-                            NotificationCenter.default.post(name: NSNotification.Name("FavoriteListUpdated"), object: nil)
-                        })
-                        .disposed(by: self.disposeBag)
-                } else {
-                    // ✅ 즐겨찾기에 추가 (파라미터 수정됨)
-                    CoreDataManager.shared.createCoin(marketPrice: coin)
-                        .subscribe(onCompleted: {
-                            print("Added \(coin.symbol) to favorites")
-                            NotificationCenter.default.post(name: NSNotification.Name("FavoriteListUpdated"), object: nil)
-                        })
-                        .disposed(by: self.disposeBag)
-                }
+        manageFavoritesUseCase.toggleFavorite(coin)
+            .subscribe(onError: { error in
+                print("❌ 즐겨찾기 토글 실패: \(error)")
+            }, onCompleted: {
+                print("✅ 즐겨찾기 토글 완료: \(coin.symbol)")
+                NotificationCenter.default.post(name: NSNotification.Name("FavoriteListUpdated"), object: nil)
             })
             .disposed(by: disposeBag)
     }
 
     func isFavorite(_ coin: MarketPrice) -> Observable<Bool> {
-        return CoreDataManager.shared.fetchCoins()
-            .map { coins in
-                // ✅ 타입 추론 문제 해결 (contains(where:) 사용)
-                coins.contains(where: { $0.symbol == coin.symbol && $0.exchange == coin.exchange })
-            }
-            .distinctUntilChanged()
-    }
+           return manageFavoritesUseCase.isCoinSaved(coin.symbol, exchange: coin.exchange)
+               .distinctUntilChanged()
+       }
 }
