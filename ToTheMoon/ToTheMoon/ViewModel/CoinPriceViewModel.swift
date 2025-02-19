@@ -240,13 +240,13 @@ class CoinPriceViewModel: CoinPriceViewModelInput, CoinPriceViewModelOutput, Coi
         
         switch currentExchangeRelay.value {
         case .upbit:
-            service = upbitService.fetchCandles(symbol: symbol, interval: .minute, count: 180)
+            service = upbitService.fetchCandles(symbol: symbol, interval: .hour, count: 24)
         case .bithumb:
-            service = bithumbService.fetchCandles(symbol: symbol, interval: .minute, count: 180)
+            service = bithumbService.fetchCandles(symbol: symbol, interval: .hour, count: 24)
         case .coinone:
-            service = coinoneService.fetchCandles(symbol: symbol, interval: .minute, count: 180)
+            service = coinoneService.fetchCandles(symbol: symbol, interval: .hour, count: 24)
         case .korbit:
-            service = korbitService.fetchCandles(symbol: symbol, interval: .minute, count: 180)
+            service = korbitService.fetchCandles(symbol: symbol, interval: .hour, count: 24)
         }
         
         service

@@ -34,6 +34,7 @@ class CoinPriceViewController: UIViewController {
         super.viewDidLoad()
         setupSwipeGestures()
         setupBinding()
+        setupSearchButton()
         coinPriceView.coinPriceTableView.rx.setDelegate(self).disposed(by: disposeBag)
     }
     
@@ -82,6 +83,24 @@ class CoinPriceViewController: UIViewController {
         if nextIndex < marketViews.count {
             marketViews[nextIndex].handleTap()
         }
+    }
+    
+    // 검색 버튼 설정
+    private func setupSearchButton() {
+        coinPriceView.searchButton.rx.tap
+            .bind(onNext: navigateToSearchViewController)
+            .disposed(by: disposeBag)
+    }
+    
+    private func navigateToSearchViewController() {
+        let searchVC = SearchViewController(viewModel: SearchViewModel(
+            getMarketPricesUseCase: GetMarketPricesUseCase(
+                services: [BithumbService(), CoinOneService(), KorbitService(), UpbitService()],
+                symbolService: SymbolService()
+            ),
+            manageFavoritesUseCase: ManageFavoritesUseCase()
+        ))
+        navigationController?.pushViewController(searchVC, animated: true)
     }
     
     private func setupBinding() {
