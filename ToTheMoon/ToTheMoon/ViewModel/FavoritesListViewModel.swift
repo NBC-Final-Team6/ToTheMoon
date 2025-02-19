@@ -100,7 +100,7 @@ final class FavoritesListViewModel {
             }
             .observe(on: MainScheduler.instance)
             .subscribe(onNext: { [weak self] in
-                print("✅ 모든 관심 코인 삭제 완료")
+                print("모든 관심 코인 삭제 완료")
                 self?.fetchFavoriteCoins() // 삭제 후 UI 업데이트
             })
             .disposed(by: disposeBag)

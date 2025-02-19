@@ -415,7 +415,11 @@ final class ImageRepository {
         "SGB": "songbird",
         "VTHO": "vethor-token",
         "ANIME": "a-new-internet-money-era",
-        "SBD": "steem-dollars"
+        "SBD": "steem-dollars",
+        "UPBIT": "upbit",
+        "BITHUMB": "bithumb",
+        "COINONE": "coinone",
+        "KORBIT": "korbit"
         
         // 나머지 매핑 추가 가능
     ]
