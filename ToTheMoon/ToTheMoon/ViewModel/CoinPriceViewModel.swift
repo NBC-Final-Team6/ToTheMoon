@@ -12,6 +12,7 @@ import RxCocoa
 protocol CoinPriceViewModelInput {
     func selectExchange(_ exchange: Exchange)
     func selectCoinPrice(at index: Int)
+    func selectCoinPrice(_ coin: MarketPrice?)
 }
 
 protocol CoinPriceViewModelOutput {
@@ -42,7 +43,7 @@ class CoinPriceViewModel: CoinPriceViewModelInput, CoinPriceViewModelOutput, Coi
     private let symbolService = SymbolService()
     
     private var loadingSymbols = Set<String>()
-    private let currentExchangeRelay = BehaviorRelay<Exchange>(value: .bithumb)
+    private let currentExchangeRelay = BehaviorRelay<Exchange>(value: .upbit)
     private var priceTimer: Disposable?
     private var candleTimer: Disposable?
     private var coinImages: [String: UIImage] = [:]
@@ -67,6 +68,7 @@ class CoinPriceViewModel: CoinPriceViewModelInput, CoinPriceViewModelOutput, Coi
     var candlesDict: Observable<[String: [Candle]]> { return candlesDictRelay.asObservable() }
     
     init() {
+        currentExchangeRelay.accept(.bithumb)
         setupBindings()
         setupPriceTimer()
         setupCandleTimer()
@@ -85,12 +87,21 @@ class CoinPriceViewModel: CoinPriceViewModelInput, CoinPriceViewModelOutput, Coi
         currentExchangeRelay.accept(exchange)
         fetchCoinPrices()
         fetchAllCandlesOnce()
+        selectedCoinPriceSubject.onNext(nil)
     }
     
     // 코인 선택
     func selectCoinPrice(at index: Int) {
-        guard index < coinPricesRelay.value.count else { return }
-        selectedCoinPriceSubject.onNext(coinPricesRelay.value[index])
+        let coins = coinPricesRelay.value
+        guard index >= 0, index < coins.count else {
+            selectedCoinPriceSubject.onNext(nil)
+            return
+        }
+        selectedCoinPriceSubject.onNext(coins[index])
+    }
+    
+    func selectCoinPrice(_ coin: MarketPrice?) {
+        selectedCoinPriceSubject.onNext(coin)
     }
     
     private func setupBindings() {
@@ -229,13 +240,13 @@ class CoinPriceViewModel: CoinPriceViewModelInput, CoinPriceViewModelOutput, Coi
         
         switch currentExchangeRelay.value {
         case .upbit:
-            service = upbitService.fetchCandles(symbol: symbol, interval: .hour, count: 24)
+            service = upbitService.fetchCandles(symbol: symbol, interval: .minute, count: 180)
         case .bithumb:
-            service = bithumbService.fetchCandles(symbol: symbol, interval: .hour, count: 24)
+            service = bithumbService.fetchCandles(symbol: symbol, interval: .minute, count: 180)
         case .coinone:
-            service = coinoneService.fetchCandles(symbol: symbol, interval: .hour, count: 24)
+            service = coinoneService.fetchCandles(symbol: symbol, interval: .minute, count: 180)
         case .korbit:
-            service = korbitService.fetchCandles(symbol: symbol, interval: .hour, count: 24)
+            service = korbitService.fetchCandles(symbol: symbol, interval: .minute, count: 180)
         }
         
         service

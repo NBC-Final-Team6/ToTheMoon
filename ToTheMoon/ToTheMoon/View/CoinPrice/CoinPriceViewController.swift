@@ -34,7 +34,6 @@ class CoinPriceViewController: UIViewController {
         super.viewDidLoad()
         setupSwipeGestures()
         setupBinding()
-        setupSearchButton()
         coinPriceView.coinPriceTableView.rx.setDelegate(self).disposed(by: disposeBag)
     }
     
@@ -85,24 +84,6 @@ class CoinPriceViewController: UIViewController {
         }
     }
     
-    // 검색 버튼 설정
-    private func setupSearchButton() {
-        coinPriceView.searchButton.rx.tap
-            .bind(onNext: navigateToSearchViewController)
-            .disposed(by: disposeBag)
-    }
-    
-    private func navigateToSearchViewController() {
-        let searchVC = SearchViewController(viewModel: SearchViewModel(
-            getMarketPricesUseCase: GetMarketPricesUseCase(
-                services: [BithumbService(), CoinOneService(), KorbitService(), UpbitService()],
-                symbolService: SymbolService()
-            ),
-            manageFavoritesUseCase: ManageFavoritesUseCase()
-        ))
-        navigationController?.pushViewController(searchVC, animated: true)
-    }
-    
     private func setupBinding() {
         // 테이블뷰 데이터 바인딩과 candles 데이터를 결합
         Observable
@@ -135,29 +116,36 @@ class CoinPriceViewController: UIViewController {
             .disposed(by: disposeBag)
         
         // 선택된 코인의 차트 화면으로 네비게이션
-        //        Observable.combineLatest(
-        //            viewModel.outputs.selectedCoinPrice,
-        //            viewModel.outputs.currentExchange
-        //        )
-        //        .compactMap { coinPrice, exchange in
-        //            guard let coinPrice = coinPrice else { return nil }
-        //            return (coinPrice, exchange)
-        //        }
-        //        .subscribe(onNext: { [weak self] (coinPrice: MarketPrice, exchange: Exchange) in
-        //            guard let self = self else { return }
-        //            let chartViewModel = ChartViewModel(exchange: exchange, selectedCoins: [coinPrice])
-        //            let chartVC = ChartViewController(viewModel: chartViewModel, coinPriceViewModel: self.viewModel)
-        //            self.navigationController?.pushViewController(chartVC, animated: true)
-        //        })
-        //        .disposed(by: disposeBag)
+       Observable.combineLatest(
+           viewModel.outputs.selectedCoinPrice,
+           viewModel.outputs.currentExchange
+       )
+       .compactMap { coinPrice, exchange in
+           // ✅ 선택된 코인이 `nil`이 아닐 때만 차트로 이동
+           guard let coinPrice = coinPrice else {
+               print("⚠️ 거래소 변경 시 차트 이동 방지: 선택된 코인 없음")
+               return nil
+           }
+           return (coinPrice, exchange)
+       }
+       .subscribe(onNext: { [weak self] (coinPrice: MarketPrice, exchange: Exchange) in
+           guard let self = self else { return }
+           let chartViewModel = ChartViewModel(exchange: exchange, selectedCoins: [coinPrice])
+           let chartVC = ChartViewController(viewModel: chartViewModel)
+           self.navigationController?.pushViewController(chartVC, animated: true)
+       })
+       .disposed(by: disposeBag)
         
         // 거래소 선택 이벤트 처리
         for subview in coinPriceView.getMarketViews() {
             subview.selectedExchange
                 .subscribe(onNext: { [weak self] exchange in
-                    self?.coinPriceView.resetMarketViews()
-                    self?.coinPriceView.scrollToTop()
-                    self?.viewModel.inputs.selectExchange(exchange)
+                    guard let self = self else { return }
+                    
+                    self.coinPriceView.resetMarketViews()
+                    self.coinPriceView.scrollToTop()
+                    self.viewModel.inputs.selectCoinPrice(nil)
+                    self.viewModel.inputs.selectExchange(exchange)
                 })
                 .disposed(by: disposeBag)
         }

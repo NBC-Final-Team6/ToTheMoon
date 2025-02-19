@@ -60,7 +60,7 @@ final class SearchViewController: UIViewController {
     }
     
     @objc private func dismissSearch() {
-        navigationController?.popViewController(animated: true) 
+        navigationController?.popViewController(animated: true)
     }
     
     private func setupBindings() {

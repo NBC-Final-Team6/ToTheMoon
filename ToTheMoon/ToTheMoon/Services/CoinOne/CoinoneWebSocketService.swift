@@ -44,6 +44,7 @@ final class CoinoneWebSocketService: WebSocketServiceProtocol {
     // **특정 코인들의 WebSocket 구독 요청**
     func fetchKrwTicker(for symbols: [String]) -> Observable<[MarketPrice]> {
         if symbols.isEmpty {
+            print("⚠️ [DEBUG] 요청된 심볼이 없음 → WebSocket 연결 해제")
             CoinoneWebSocketManager.shared.disconnectAll()
             return Observable.just([])
         }

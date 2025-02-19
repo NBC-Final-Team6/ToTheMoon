@@ -91,7 +91,9 @@ class CoinPriceView: UIView {
             stackView.addArrangedSubview(marketView)
             
             if index == 0 {
-                marketView.handleTap()
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                    marketView.handleTap()
+                }
             }
         }
     }
