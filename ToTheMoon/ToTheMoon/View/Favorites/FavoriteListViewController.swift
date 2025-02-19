@@ -200,7 +200,9 @@ final class FavoriteListViewController: UIViewController {
     private func navigateToSearch() {
         let searchVC = SearchViewController(viewModel: SearchViewModel(
             getMarketPricesUseCase: GetMarketPricesUseCase(
-                services: [CoinOneService(), KorbitService(), UpbitService()],
+
+                services: [ BithumbService(), CoinOneService(), KorbitService(), UpbitService()],
+
                 symbolService: SymbolService()
             ),
             manageFavoritesUseCase: ManageFavoritesUseCase()

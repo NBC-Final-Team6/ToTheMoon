@@ -22,7 +22,7 @@ final class SearchViewController: UIViewController {
     
     private var searchMode: SearchMode = .recent
     private var searchResults: [(MarketPrice, Bool)] = [] // 검색 결과 저장
-    private var recentSearches: [(String, String, String)] = [] // (심볼, 거래소, 날짜)
+    private var recentSearches: [(String, String)] = [] // (심볼 or 거래소, 날짜)
     
     // ViewModel 의존성 주입
     init(viewModel: SearchViewModel) {
@@ -56,7 +56,18 @@ final class SearchViewController: UIViewController {
                 action: #selector(dismissSearch)
             )
         navigationItem.leftBarButtonItem?.tintColor = .text
-        searchView.tableView.reloadData()
+        
+        viewModel.recentSearches
+                .observe(on: MainScheduler.instance)
+                .take(1) // viewWillAppear가 여러 번 호출될 경우 한 번만 실행
+                .subscribe(onNext: { [weak self] searches in
+                    guard let self = self else { return }
+                    self.recentSearches = searches
+                    self.searchMode = .recent // 검색 화면에 들어갈 때 항상 최근 검색 모드 유지
+                    self.searchView.tableView.reloadData()
+                })
+                .disposed(by: disposeBag)
+        
     }
     
     @objc private func dismissSearch() {
@@ -135,13 +146,13 @@ extension SearchViewController: UITableViewDelegate, UITableViewDataSource {
             guard let cell = tableView.dequeueReusableCell(withIdentifier: CustomSearchCell.identifier, for: indexPath) as? CustomSearchCell else {
                 return UITableViewCell()
             }
-            let search = recentSearches[indexPath.row]
-            let symbol = search.0.uppercased()
-            let exchange = search.1
-            let date = search.2
-            let image = CoinImageCache.shared.getImage(for: symbol) ?? ImageRepository.getImage(for: symbol)
             
-            cell.configure(with: "\(symbol) \(exchange)", date: date, image: image)
+            let search = recentSearches[indexPath.row]
+            let primaryText = search.0 // 심볼 또는 거래소
+            let date = search.1 // 날짜
+            let image = CoinImageCache.shared.getImage(for: primaryText) ?? ImageRepository.getImage(for: primaryText)
+            
+            cell.configure(with: primaryText, date: date, image: image)
             return cell
         } else {
             guard let cell = tableView.dequeueReusableCell(withIdentifier: FavoritesViewCell.identifier, for: indexPath) as? FavoritesViewCell else {
