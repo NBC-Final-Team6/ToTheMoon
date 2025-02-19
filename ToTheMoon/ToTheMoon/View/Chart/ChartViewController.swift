@@ -12,21 +12,19 @@ import RxCocoa
 import DGCharts
 import SnapKit
 
-class ChartViewController: UIViewController {
+class ChartViewController: UIViewController, UIGestureRecognizerDelegate {
     
     private let chartView = ChartView()
     private let viewModel: ChartViewModel
     private let disposeBag = DisposeBag()
     private var uiDisposeBag = DisposeBag()
-    private let coinPriceViewModel: CoinPriceViewModel
     
     // 현재 선택된 시간 간격 (초기값 .day)
     private var selectedTimeFrame: CandleInterval = .day
     
-    init(viewModel: ChartViewModel, coinPriceViewModel: CoinPriceViewModel) {
+    init(viewModel: ChartViewModel) {
         print("DEBUG: Initializing ChartViewController with viewModel: \(viewModel)")
         self.viewModel = viewModel
-        self.coinPriceViewModel = coinPriceViewModel
         super.init(nibName: nil, bundle: nil)
     }
     
@@ -59,6 +57,10 @@ class ChartViewController: UIViewController {
             action: #selector(backButtonTapped)
         )
         navigationItem.leftBarButtonItem = backButton
+        
+        // ✅ 스와이프 제스처 활성화 (뒤로 가기 허용)
+        navigationController?.interactivePopGestureRecognizer?.delegate = self
+        navigationController?.interactivePopGestureRecognizer?.isEnabled = true
     }
     
     @objc private func backButtonTapped() {
@@ -214,14 +216,14 @@ class ChartViewController: UIViewController {
         switch newInterval {
         case .minute:
             chartView.minuteButton.backgroundColor = .blue.withAlphaComponent(0.3)
-        case .hour:
-            chartView.minuteButton.backgroundColor = .blue.withAlphaComponent(0.3)
         case .day:
             chartView.dayButton.backgroundColor = .blue.withAlphaComponent(0.3)
         case .week:
             chartView.weekButton.backgroundColor = .blue.withAlphaComponent(0.3)
         case .month:
             chartView.monthButton.backgroundColor = .blue.withAlphaComponent(0.3)
+        default:
+            break
         }
     }
     

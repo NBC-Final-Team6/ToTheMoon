@@ -164,5 +164,6 @@ final class UpbitWebSocketManager: BaseWebSocketManager {
         backupSocket?.disconnect()
         backupSocket = nil
         subscribedSymbols.removeAll()
+        print("❌ 업비트 모든 WebSocket 연결 해제 완료")
     }
 }

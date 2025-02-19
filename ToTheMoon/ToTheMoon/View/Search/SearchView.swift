@@ -25,7 +25,7 @@ final class SearchView: UIView {
             .foregroundColor: UIColor.text,
             .font: UIFont.medium.regular()
         ]
-        searchBar.searchTextField.attributedPlaceholder = NSAttributedString(string: "검색어를 입력해 주세요.", attributes: placeholderAttributes)
+        searchBar.searchTextField.attributedPlaceholder = NSAttributedString(string: "검색어를 입력해 주세요. (심볼 or 거래소)", attributes: placeholderAttributes)
         
         if let glassIconView = searchBar.searchTextField.leftView as? UIImageView {
             glassIconView.tintColor = .text
