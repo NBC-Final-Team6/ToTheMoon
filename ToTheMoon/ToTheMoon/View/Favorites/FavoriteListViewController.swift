@@ -120,9 +120,12 @@ final class FavoriteListViewController: UIViewController {
         
         // 관심 목록 개수 업데이트
         output.favoriteCoins
-            .map { "(\($0.count))" }
+            .map { $0.count }
             .distinctUntilChanged()
-            .drive(topFavoritesView.countLabel.rx.text)
+            .drive(onNext: { [weak self] count in
+                self?.topFavoritesView.countLabel.text = "(\(count))"
+                self?.topFavoritesView.deleteButton.isHidden = (count == 0)
+            })
             .disposed(by: disposeBag)
         
         contentView.tableView.rx.modelSelected(MarketPriceWithCandles.self)
@@ -169,6 +172,7 @@ final class FavoriteListViewController: UIViewController {
         noFavoritesView.isHidden = hasFavorites || isLoading
     }
     
+    // MARK: Alert 창
     private func showDeleteConfirmationAlert() {
         let alert = UIAlertController(title: "경고", message: "정말로 삭제하시겠습니까?", preferredStyle: .alert)
         
