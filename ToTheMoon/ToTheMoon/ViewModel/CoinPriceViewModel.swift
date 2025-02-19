@@ -43,7 +43,7 @@ class CoinPriceViewModel: CoinPriceViewModelInput, CoinPriceViewModelOutput, Coi
     private let symbolService = SymbolService()
     
     private var loadingSymbols = Set<String>()
-    private let currentExchangeRelay = BehaviorRelay<Exchange>(value: .upbit)
+    private let currentExchangeRelay = BehaviorRelay<Exchange>(value: .bithumb)
     private var priceTimer: Disposable?
     private var candleTimer: Disposable?
     private var coinImages: [String: UIImage] = [:]
