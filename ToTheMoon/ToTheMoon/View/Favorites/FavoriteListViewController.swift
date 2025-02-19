@@ -23,18 +23,6 @@ final class FavoriteListViewController: UIViewController {
     private let viewModel: FavoritesListViewModel
     private let disposeBag = DisposeBag()
     
-    private let isWebSocketConnectedRelay = BehaviorRelay<Bool>(value: true)
-    
-    private lazy var dataSource = RxTableViewSectionedAnimatedDataSource<AnimatableSectionModel<String, MarketPriceWithCandles>>(
-        animationConfiguration: AnimationConfiguration(insertAnimation: .none, reloadAnimation: .none, deleteAnimation: .none), configureCell: { _, tableView, indexPath, item in
-            let cell = tableView.dequeueReusableCell(withIdentifier: CoinPriceTableViewCell.identifier, for: indexPath) as! CoinPriceTableViewCell
-            cell.configure(with: item.marketPrice, candles: item.candles)
-            return cell
-        })
-//        ,
-//        canEditRowAtIndexPath: { _, _ in return true } // 개별 삭제
-//    )
-    
     // MARK: - Init
     init(viewModel: FavoritesListViewModel) {
         self.viewModel = viewModel
@@ -55,7 +43,6 @@ final class FavoriteListViewController: UIViewController {
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
         navigationController?.navigationBar.isHidden = true
-        viewModel.fetchFavoriteCoinsChartData()
     }
     
     override func viewWillDisappear(_ animated: Bool) {
@@ -120,59 +107,93 @@ final class FavoriteListViewController: UIViewController {
         
         // 관심 목록 개수 업데이트
         output.favoriteCoins
-            .map { "(\($0.count))" }
+            .map { $0.count }
             .distinctUntilChanged()
-            .drive(topFavoritesView.countLabel.rx.text)
-            .disposed(by: disposeBag)
-        
-        contentView.tableView.rx.modelSelected(MarketPriceWithCandles.self)
-            .subscribe(onNext: { [weak self] selectedItem in
-                guard let self = self else { return }
-                self.navigateToChartView(for: selectedItem.marketPrice)
+            .drive(onNext: { [weak self] count in
+                self?.topFavoritesView.countLabel.text = "(\(count))"
+                self?.topFavoritesView.deleteButton.isHidden = (count == 0)
             })
             .disposed(by: disposeBag)
         
-        // 테이블 뷰 데이터 바인딩
-        Driver.combineLatest(output.favoriteCoins, output.favoriteCoinsChartData)
-            .map { (coins: [MarketPrice], candles: [Candle]) -> [AnimatableSectionModel<String, MarketPriceWithCandles>] in
-                let items = coins.map { coin in
-                    let relatedCandles = candles.filter { $0.symbol == coin.symbol }
-                    return MarketPriceWithCandles(marketPrice: coin, candles: relatedCandles)
-                }
-                return [AnimatableSectionModel(model: "Favorites", items: items)]
-            }
-            .drive(contentView.tableView.rx.items(dataSource: dataSource))
+        contentView.tableView.rx.modelSelected((MarketPrice, [Candle]).self)
+            .subscribe(onNext: { [weak self] selectedItem in
+                guard let self = self else { return }
+                let (marketPrice, _) = selectedItem
+                self.navigateToChartView(for: marketPrice)
+            })
             .disposed(by: disposeBag)
+        
+        Driver.combineLatest(output.favoriteCoins, output.favoriteCoinsChartData)
+                   .map { (coins: [MarketPrice], candles: [Candle]) -> [(MarketPrice, [Candle])] in
+                       return coins.compactMap { coin in
+                           let relatedCandles = candles.filter {
+                               $0.symbol == coin.symbol || $0.symbol == "KRW-\(coin.symbol)"
+                           }
+                           return (coin, relatedCandles)
+                       }
+                   }
+                   .drive(contentView.tableView.rx.items(
+                       cellIdentifier: CoinPriceTableViewCell.identifier,
+                       cellType: CoinPriceTableViewCell.self)
+                   ) { index, item, cell in
+                       let (coin, relatedCandles) = item
+                       cell.configure(with: coin, candles: relatedCandles)
+                   }
+                   .disposed(by: disposeBag)
         
         // 테이블 뷰 델리게이트 설정
         contentView.tableView.rx.setDelegate(self)
             .disposed(by: disposeBag)
         
         // 스와이프 삭제 이벤트 추가
-        contentView.tableView.rx.modelDeleted((MarketPrice, [Candle]).self)
-            .map { $0.0 }
-            .bind(to: viewModel.input.removeFavorite)
-            .disposed(by: disposeBag)
+//        contentView.tableView.rx.modelDeleted((MarketPrice, [Candle]).self)
+//            .map { $0.0 }
+//            .bind(to: viewModel.input.removeFavorite)
+//            .disposed(by: disposeBag)
         
         // 전체 삭제 버튼 클릭 시 모두 삭제
         topFavoritesView.deleteButton.rx.tap
             .subscribe(onNext: { [weak self] in
-                guard let self = self else { return }
-                    self.viewModel.fetchFavoriteCoinsUseCase.cancelSubscriptions()
-                    self.viewModel.input.removeAllFavorites.accept(())
-                    
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-                        self.viewModel.fetchFavoriteCoins()
-                    }
+                self?.showDeleteConfirmationAlert()
             })
             .disposed(by: disposeBag)
     }
     
     // MARK: - UI 업데이트 (뷰 삭제 없이 상태만 변경)
     private func updateUI(isLoading: Bool, hasFavorites: Bool, coins: [MarketPrice]) {
-        loadingView.isHidden = !isLoading
-        contentView.isHidden = !(hasFavorites && !isLoading)
-        noFavoritesView.isHidden = hasFavorites || isLoading
+        if isLoading {
+            // 데이터를 불러오는 중이면 로딩 화면을 보이게 하고 나머지는 숨김
+            loadingView.isHidden = false
+            contentView.isHidden = true
+            noFavoritesView.isHidden = true
+        } else {
+            // 데이터 로딩이 끝났을 때 UI 업데이트
+            loadingView.isHidden = true
+            contentView.isHidden = !hasFavorites
+            noFavoritesView.isHidden = hasFavorites
+        }
+    }
+    
+    // MARK: Alert 창
+    private func showDeleteConfirmationAlert() {
+        let alert = UIAlertController(title: "경고", message: "정말로 삭제하시겠습니까?", preferredStyle: .alert)
+        
+        let confirmAction = UIAlertAction(title: "삭제", style: .destructive) { [weak self] _ in
+            guard let self = self else { return }
+            self.viewModel.fetchFavoriteCoinsUseCase.cancelSubscriptions()
+            self.viewModel.input.removeAllFavorites.accept(())
+            
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                self.viewModel.fetchFavoriteCoins()
+            }
+        }
+        
+        let cancelAction = UIAlertAction(title: "취소", style: .cancel, handler: nil)
+        
+        alert.addAction(confirmAction)
+        alert.addAction(cancelAction)
+        
+        self.present(alert, animated: true, completion: nil)
     }
     
     // MARK: - 검색 화면 이동
