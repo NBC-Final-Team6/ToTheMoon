@@ -16,17 +16,20 @@ class ChartViewController: UIViewController, UIGestureRecognizerDelegate {
     
     private let chartView = ChartView()
     private let viewModel: ChartViewModel
+    private let manageFavoritesUseCase: ManageFavoritesUseCase
     private let disposeBag = DisposeBag()
     private var uiDisposeBag = DisposeBag()
     
     // 현재 선택된 시간 간격 (초기값 .day)
     private var selectedTimeFrame: CandleInterval = .day
     
-    init(viewModel: ChartViewModel) {
+    init(viewModel: ChartViewModel, manageFavoritesUseCase: ManageFavoritesUseCase = ManageFavoritesUseCase()) {
         print("DEBUG: Initializing ChartViewController with viewModel: \(viewModel)")
         self.viewModel = viewModel
+        self.manageFavoritesUseCase = manageFavoritesUseCase
         super.init(nibName: nil, bundle: nil)
     }
+    
     
     required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
@@ -43,6 +46,14 @@ class ChartViewController: UIViewController, UIGestureRecognizerDelegate {
         
         // 기본 시간 간격 설정 (.day)
         updateSelectedTimeFrame(.day)
+    }
+    
+    override func viewDidAppear(_ animated: Bool) {
+        super.viewDidAppear(animated)
+        
+        // 웹소켓 연결 실행 (이전 화면이 닫힌 후 실행)
+        guard let firstCoin = viewModel.input.selectedCoins.value.first else { return }
+        viewModel.subscribeToRealTimeUpdates(for: firstCoin)
     }
     
     // MARK: - Navigation Bar 설정
@@ -125,9 +136,20 @@ class ChartViewController: UIViewController, UIGestureRecognizerDelegate {
         )
     }
     
+    private func toggleFavorite(for coin: MarketPrice) {
+        manageFavoritesUseCase.toggleFavorite(coin)
+            .subscribe(onError: { error in
+                print("❌ 즐겨찾기 토글 실패: \(error)")
+            }, onCompleted: {
+                print("✅ 즐겨찾기 토글 완료: \(coin.symbol)")
+                NotificationCenter.default.post(name: NSNotification.Name("FavoriteListUpdated"), object: nil)
+            })
+            .disposed(by: disposeBag)
+    }
+
     @objc private func updateFavoriteButtonState() {
         guard let firstCoin = viewModel.input.selectedCoins.value.first else { return }
-        viewModel.isFavorite(firstCoin)
+        manageFavoritesUseCase.isCoinSaved(firstCoin.symbol, exchange: firstCoin.exchange)
             .observe(on: MainScheduler.instance)
             .subscribe(onNext: { [weak self] isFavorite in
                 self?.updateFavoriteButtonUI(isFavorite: isFavorite)
