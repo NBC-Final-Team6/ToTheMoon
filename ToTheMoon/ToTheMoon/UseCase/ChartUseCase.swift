@@ -42,17 +42,29 @@ final class ChartUseCase {
         guard let exchange = exchange, let service = services[exchange] else {
             return Observable.just(([], [], "0", "0", IndexAxisValueFormatter(values: [])))
         }
-        
+
         return service.fetchCandles(symbol: coin.symbol, interval: interval, count: 50)
             .asObservable()
             .map { candles in
                 let timestamps = candles.map { TimeInterval($0.timestamp / 1000) }
                 let formatter = DateFormatter()
-                formatter.dateFormat = interval == .minute ? "HH:mm" : "M월 d일"
-                let dates = timestamps.map { formatter.string(from: Date(timeIntervalSince1970: $0)) }.reversed()
                 
+                // ✅ 단위별 날짜 포맷 통일
+                switch interval {
+                case .minute:
+                    formatter.dateFormat = "HH:mm"
+                case .day:
+                    formatter.dateFormat = "yyyy-MM-dd"
+                case .week:
+                    formatter.dateFormat = "yyyy-MM-dd"
+                case .month:
+                    formatter.dateFormat = "yyyy년 MM월"
+                @unknown default:
+                    formatter.dateFormat = "yyyy-MM-dd"
+                }
+
+                let dates = timestamps.map { formatter.string(from: Date(timeIntervalSince1970: $0)) }.reversed()
                 let entries = candles.enumerated().map { index, candle in
-                    
                     CandleChartDataEntry(
                         x: Double(index),
                         shadowH: candle.high,
@@ -61,10 +73,10 @@ final class ChartUseCase {
                         close: candle.close
                     )
                 }
-                
+
                 let highest = candles.max(by: { $0.high < $1.high })?.high ?? 0
                 let lowest = candles.min(by: { $0.low < $1.low })?.low ?? 0
-                
+
                 return (Array(dates), entries, "\(highest)", "\(lowest)", IndexAxisValueFormatter(values: Array(dates)))
             }
     }

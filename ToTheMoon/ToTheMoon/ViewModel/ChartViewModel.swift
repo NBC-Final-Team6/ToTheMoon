@@ -112,40 +112,45 @@ final class ChartViewModel {
             .observe(on: MainScheduler.instance)
             .subscribe(onNext: { [weak self] livePrice in
                 guard let self = self else { return }
-                
+
                 print("✅ 실시간 업데이트: \(coin.symbol) - \(livePrice.price)")
                 
+                // ✅ 실시간 가격 및 변동률 업데이트
+                var updatedPrices = self.currentPricesRelay.value
+                updatedPrices[coin.symbol] = "\(livePrice.price)"
+                self.currentPricesRelay.accept(updatedPrices)
+
+                var updatedRates = self.priceChangeRatesRelay.value
+                updatedRates[coin.symbol] = "\(String(format: "%.2f", livePrice.changeRate))%"
+                self.priceChangeRatesRelay.accept(updatedRates)
+
                 let currentTime = Date()
                 let calendar = Calendar.current
                 
-                // 마지막 캔들의 시간 계산 (UTC 기준)
-                let timestamps = self.chartDataRelay.value.dates.compactMap { dateString -> Date? in
-                    let formatter = DateFormatter()
-                    
-                    switch self.input.candleInterval.value {
-                    case .minute:
-                        formatter.dateFormat = "HH:mm"
-                    case .day:
-                        formatter.dateFormat = "yyyy-MM-dd"
-                    case .week:
-                        formatter.dateFormat = "yyyy-'W'ww"
-                    case .month:
-                        formatter.dateFormat = "yyyy-MM"
-                    default:
-                        formatter.dateFormat = "yyyy-MM-dd"
-                    }
-                    
-                    return formatter.date(from: dateString)
+                let formatter = DateFormatter()
+                switch self.input.candleInterval.value {
+                case .minute:
+                    formatter.dateFormat = "HH:mm"
+                case .day:
+                    formatter.dateFormat = "yyyy-MM-dd"
+                case .week:
+                    formatter.dateFormat = "yyyy-MM-dd"
+                case .month:
+                    formatter.dateFormat = "yyyy년 MM월"
+                default:
+                    formatter.dateFormat = "yyyy-MM-dd"
+                }
+
+                let newDateLabel = formatter.string(from: currentTime)
+
+                let timestamps = self.chartDataRelay.value.dates.compactMap {
+                    formatter.date(from: $0)
                 }
                 
                 let lastCandleTime = timestamps.last ?? Date.distantPast
                 
-                self.currentPricesRelay.accept([coin.symbol: "\(livePrice.price)"])
-                self.priceChangeRatesRelay.accept([coin.symbol: "\(livePrice.changeRate)"])
-                
                 var updatedEntries = self.chartDataRelay.value.entries
-                
-                // ✅ 새로운 캔들 생성 기준 (시간 단위별)
+
                 var shouldCreateNewCandle = false
                 switch self.input.candleInterval.value {
                 case .minute:
@@ -159,10 +164,9 @@ final class ChartViewModel {
                 @unknown default:
                     shouldCreateNewCandle = false
                 }
-                
+
                 if shouldCreateNewCandle {
-                    print("✅ 새로운 캔들 생성됨: \(currentTime)")
-                    
+                    print("✅ 새로운 캔들 생성됨: \(newDateLabel)")
                     let newCandle = CandleChartDataEntry(
                         x: Double(updatedEntries.count),
                         shadowH: Double(livePrice.price),
@@ -171,23 +175,7 @@ final class ChartViewModel {
                         close: Double(livePrice.price)
                     )
                     updatedEntries.append(newCandle)
-                    
-                    let formatter = DateFormatter()
-                    switch self.input.candleInterval.value {
-                    case .minute:
-                        formatter.dateFormat = "HH:mm"
-                    case .day:
-                        formatter.dateFormat = "yyyy-MM-dd"
-                    case .week:
-                        formatter.dateFormat = "yyyy-'W'ww"
-                    case .month:
-                        formatter.dateFormat = "yyyy-MM"
-                    default:
-                        formatter.dateFormat = "yyyy-MM-dd"
-                    }
-                    
-                    let newDateLabel = formatter.string(from: currentTime)
-                    
+
                     self.chartDataRelay.accept((
                         self.chartDataRelay.value.dates + [newDateLabel],
                         updatedEntries,
@@ -195,8 +183,9 @@ final class ChartViewModel {
                         self.lowestPriceRelay.value,
                         IndexAxisValueFormatter(values: self.chartDataRelay.value.dates + [newDateLabel])
                     ))
+
                 } else {
-                    // ✅ 기존 마지막 캔들 업데이트 (실시간 반영)
+                    // ✅ 기존 캔들 업데이트 (형식 일치 유지)
                     if var lastEntry = updatedEntries.last {
                         lastEntry = CandleChartDataEntry(
                             x: lastEntry.x,
@@ -207,7 +196,7 @@ final class ChartViewModel {
                         )
                         updatedEntries[updatedEntries.count - 1] = lastEntry
                     }
-                    
+
                     self.chartDataRelay.accept((
                         self.chartDataRelay.value.dates,
                         updatedEntries,
@@ -216,7 +205,7 @@ final class ChartViewModel {
                         IndexAxisValueFormatter(values: self.chartDataRelay.value.dates)
                     ))
                 }
-                
+
             }, onError: { error in
                 print("❌ 실시간 데이터 업데이트 실패: \(error)")
             })
