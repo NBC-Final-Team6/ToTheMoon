@@ -9,7 +9,7 @@ import UIKit
 
 final class ImageRepository {
     // 코인 심볼 -> 번들 이미지 매핑
-    private static let defaultSymbolImages: [String: String] = [
+    static let defaultSymbolImages: [String: String] = [
         "AAVE": "aave",
         "ACH": "alchemy-pay",
         "ACS": "access-protocol",

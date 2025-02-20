@@ -13,14 +13,6 @@ final class SymbolService {
     private let networkManager = NetworkManager.shared
     private let baseURL = APIEndpoint.coinGecko.baseURL
     
-    /// 기존에 있던 fetchCoinData
-    /// struct SymbolData: Decodable {
-    ///    let id: String
-    ///    let symbol: String
-    ///    let name: String
-    ///    let image: SymbolImage?
-    ///    let description: Description
-    /// }
     func fetchCoinDataAll(coinSymbol: String) -> Single<SymbolData> {
            let endpoint = "\(baseURL)/\(coinSymbol)"
            guard let url = URL(string: endpoint) else {
@@ -63,7 +55,7 @@ final class SymbolService {
     }
     
     // 코인 ID를 사용하여 데이터 가져오기
-    private func fetchCoinDataByID(_ coinID: String) -> Single<SymbolData> {
+    func fetchCoinDataByID(_ coinID: String) -> Single<SymbolData> {
         let endpoint = "\(baseURL)/\(coinID)"
         guard let url = URL(string: endpoint) else {
             return Single.error(NetworkError.invalidUrl)

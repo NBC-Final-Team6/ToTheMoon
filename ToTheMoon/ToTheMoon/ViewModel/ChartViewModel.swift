@@ -37,6 +37,7 @@ final class ChartViewModel {
     private let disposeBag = DisposeBag()
     private let chartUseCase: ChartUseCase
     private let manageFavoritesUseCase: ManageFavoritesUseCase
+    private var descriptionDisposeBag = DisposeBag()
     
     // 내부 Relay
     private let chartDataRelay = BehaviorRelay<(dates: [String], entries: [CandleChartDataEntry], highest: String, lowest: String, xAxisFormatter: AxisValueFormatter)>(
@@ -70,15 +71,29 @@ final class ChartViewModel {
         setupBindings()
     }
     
+    // ✅ 선택된 코인에 대해서만 설명 데이터 불러오기
     private func setupBindings() {
-        input.selectedCoins.asObservable()
-            .subscribe(onNext: { [weak self] coins in
-                guard let self = self, let firstCoin = coins.first else { return }
+        input.selectedCoins
+            .map { $0.first }
+            .distinctUntilChanged { $0?.symbol == $1?.symbol }
+            .compactMap { $0 }
+            .throttle(.milliseconds(500), scheduler: MainScheduler.instance) // ✅ 500ms 대기
+            .flatMapLatest { [weak self] firstCoin -> Observable<String> in
+                guard let self = self else { return .just("❌ 설명 데이터를 가져올 수 없습니다.") }
                 self.fetchAndUpdateChartData(for: firstCoin)
-                self.subscribeToRealTimeUpdates(for: firstCoin) // ✅ 여기 수정
+                self.subscribeToRealTimeUpdates(for: firstCoin)
+                return self.chartUseCase.fetchCoinDescriptionByImageRepository(for: firstCoin.symbol)
+            }
+            .observe(on: MainScheduler.instance)
+            .subscribe(onNext: { [weak self] description in
+                guard let symbol = self?.input.selectedCoins.value.first?.symbol else { return }
+                self?.coinInfoRelay.accept([symbol.uppercased(): description])
+                print("✅ [INFO] 설명 데이터 업데이트 완료: \\(symbol)")
+            }, onError: { error in
+                print("❌ [ERROR] 설명 데이터 업데이트 실패: \\(error.localizedDescription)")
             })
             .disposed(by: disposeBag)
-        
+
         input.candleInterval
             .distinctUntilChanged()
             .subscribe(onNext: { [weak self] _ in
@@ -89,7 +104,30 @@ final class ChartViewModel {
             .disposed(by: disposeBag)
     }
     
-    // ✅ **차트 데이터 가져오기 (REST API)**
+    // 코인 설명 데이터 가져오기
+    func fetchAndUpdateCoinDescription(for symbol: String) {
+        descriptionDisposeBag = DisposeBag() // ✅ 기존 요청 취소
+        coinInfoRelay.accept([symbol.uppercased(): "📡 설명 데이터를 불러오는 중입니다..."])
+
+        chartUseCase.fetchCoinDescriptionByImageRepository(for: symbol)
+            .observe(on: MainScheduler.instance)
+            .retryWhen { (errorObservable: Observable<Error>) in
+                errorObservable.enumerated().flatMap { (attempt, error) -> Observable<Int> in
+                    let delay = pow(2.0, Double(attempt)) // 2, 4, 8초 대기
+                    print("⚡ 재요청 대기: \(delay)초 후 재시도")
+                    return Observable<Int>.timer(RxTimeInterval.seconds(Int(delay)), scheduler: MainScheduler.instance)
+                }
+            }
+            .subscribe(onNext: { [weak self] description in
+                self?.coinInfoRelay.accept([symbol.uppercased(): description])
+                print("✅ [INFO] 설명 데이터 업데이트 완료: \(symbol)")
+            }, onError: { error in
+                print("❌ [ERROR] 설명 데이터 업데이트 실패: \(error.localizedDescription)")
+            })
+            .disposed(by: descriptionDisposeBag)
+    }
+    
+    // 차트 데이터 가져오기 (REST API)
     private func fetchAndUpdateChartData(for coin: MarketPrice) {
         chartUseCase.fetchChartData(for: coin, interval: input.candleInterval.value)
             .observe(on: MainScheduler.instance)
@@ -106,7 +144,7 @@ final class ChartViewModel {
             .disposed(by: disposeBag)
     }
     
-    // ✅ **실시간 캔들 업데이트 (WebSocket)**
+    // 실시간 캔들 업데이트 (WebSocket)
     func subscribeToRealTimeUpdates(for coin: MarketPrice) {
         chartUseCase.subscribeToRealTimeCandleData(for: coin)
             .observe(on: MainScheduler.instance)

@@ -18,6 +18,9 @@ final class ChartUseCase {
     private let exchange: Exchange?
     private let services: [Exchange: CandleServiceType]
     private let webSocketServices: [Exchange: WebSocketServiceProtocol]
+    private let symbolService = SymbolService()
+    private var coinDescriptionCache: [String: String] = [:]
+    
     
     init(exchange: Exchange?) {
         self.exchange = exchange
@@ -95,6 +98,43 @@ final class ChartUseCase {
             }
             .observe(on: MainScheduler.instance)
     }
+    
+    func fetchCoinDescriptionByImageRepository(for symbol: String) -> Observable<String> {
+        if let cachedDescription = coinDescriptionCache[symbol.uppercased()] {
+            print("✅ 캐시에서 설명 데이터 반환: \(symbol)")
+            return Observable.just(cachedDescription)
+        }
+
+        if let coinID = ImageRepository.defaultSymbolImages[symbol.uppercased()] {
+            return symbolService.fetchCoinDataByID(coinID)
+                .asObservable()
+                .do(onNext: { [weak self] data in
+                    let description = data.description.ko?.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty == false ? data.description.ko! : "설명 데이터가 제공되지 않습니다."
+                    self?.coinDescriptionCache[symbol.uppercased()] = description
+                })
+                .map { $0.description.ko ?? "설명 데이터가 제공되지 않습니다." }
+                .catchAndReturn("설명 데이터를 가져올 수 없습니다.")
+        } else {
+            return Observable.just("❌ 설명 데이터를 찾을 수 없습니다.")
+        }
+    }
+    
+    // ✅ 코인 설명 데이터 가져오기
+    func fetchCoinDescription(for symbol: String) -> Observable<String> {
+        if let cachedDescription = coinDescriptionCache[symbol.uppercased()] {
+            return Observable.just(cachedDescription)
+        }
+
+        return symbolService.fetchCoinData(coinSymbol: symbol)
+            .asObservable()
+            .map { [weak self] data in
+                let description = data.description.ko?.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty == false ? data.description.ko! : "설명 데이터가 제공되지 않습니다."
+                self?.coinDescriptionCache[symbol.uppercased()] = description
+                return description
+            }
+            .catchAndReturn("설명 데이터를 가져올 수 없습니다.")
+    }
+    
 }
 
 // MARK: - CandleServiceType Conformance

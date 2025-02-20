@@ -11,6 +11,7 @@ import UIKit
 struct SymbolID: Decodable {
     let id: String
     let symbol: String
+    let name: String
 }
 
 struct SymbolData: Decodable {
@@ -26,5 +27,5 @@ struct SymbolImage: Decodable {
 }
 
 struct Description: Decodable {
-    let ko: String
+    let ko: String?
 }
