@@ -106,6 +106,7 @@ class CustomTabBarViewController: UIViewController {
         case 1:
             selectedViewController = favoritesNavVC
         case 2:
+            settingsNavVC.setViewControllers([SettingViewController()], animated: false)
             selectedViewController = settingsNavVC
         default:
             break
