@@ -25,7 +25,6 @@ class SettingView: UIView {
         let tableView = UITableView()
         tableView.backgroundColor = UIColor(named: "BackgroundColor")
         tableView.separatorStyle = .singleLine
-        tableView.separatorColor = UIColor(red: 30/255, green: 30/255, blue: 30/255, alpha: 1)
         tableView.register(UITableViewCell.self, forCellReuseIdentifier: "SettingCell")
         return tableView
     }()
