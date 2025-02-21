@@ -89,8 +89,24 @@ class AlarmEditView: UIView {
         textField.font = .systemFont(ofSize: 19, weight: .bold)
         textField.keyboardType = .numberPad
         textField.borderStyle = .none
+        textField.returnKeyType = .done
+        
+        // 키보드에 툴바 추가 (numberPad에는 return 키가 없으므로)
+        let toolbar = UIToolbar()
+        toolbar.sizeToFit()
+        
+        let flexSpace = UIBarButtonItem(barButtonSystemItem: .flexibleSpace, target: nil, action: nil)
+        let doneButton = UIBarButtonItem(title: "완료", style: .done, target: self, action: #selector(doneButtonTapped))
+        
+        toolbar.items = [flexSpace, doneButton]
+        textField.inputAccessoryView = toolbar
+        
         return textField
     }()
+    
+    @objc private func doneButtonTapped() {
+        priceTextField.resignFirstResponder()
+    }
     
     private let decreaseButton: UIButton = {
         let button = UIButton()
@@ -133,6 +149,15 @@ class AlarmEditView: UIView {
         let view = UIView()
         view.backgroundColor = .clear
         return view
+    }()
+    
+    // 퍼센티지 +,- 설정
+    private let percentageSignSegment: UISegmentedControl = {
+        let segment = UISegmentedControl(items: ["+", "-"])
+        segment.selectedSegmentIndex = 0
+        segment.tintColor = .text
+        segment.backgroundColor = .container
+        return segment
     }()
     
     private let percentageValueLabel: UILabel = {
@@ -240,6 +265,7 @@ class AlarmEditView: UIView {
         backgroundColor = .background
         setupUI()
         setupActions()
+        setupTextFieldDelegates()
         setupAlertHistoryItems()
     }
     
@@ -281,7 +307,11 @@ class AlarmEditView: UIView {
     
     // 선택된 퍼센트 업데이트
     private func selectPercentage(_ percentage: Int) {
-        percentageValueLabel.text = "\(percentage)%"
+        let sign = percentageSignSegment.selectedSegmentIndex == 0 ? "+" : "-"
+        let percentageText = "\(sign)\(percentage)%"
+        
+        percentageValueLabel.text = percentageText
+        calculatePriceByPercentage(percentageText)
         togglePercentageDropdown()
     }
     
@@ -289,6 +319,35 @@ class AlarmEditView: UIView {
     func dismissDropdownIfNeeded() {
         if isDropdownVisible {
             togglePercentageDropdown()
+        }
+    }
+    
+    // 현재가 기준으로 퍼센트 계산하여 priceTextField 업데이트
+    private func calculatePriceByPercentage(_ percentageText: String) {
+        // 현재가에서 콤마 제거하고 숫자로 변환
+        let currentPriceText = currentPriceLabel.text?.replacingOccurrences(of: " 원", with: "") ?? "0"
+        let currentPriceDigits = currentPriceText.components(separatedBy: CharacterSet.decimalDigits.inverted).joined()
+        
+        if let currentPrice = Double(currentPriceDigits) {
+            // 퍼센트 텍스트에서 숫자와 부호 추출
+            var percentValue = 0.0
+            if percentageText.contains("+") {
+                let digits = percentageText.replacingOccurrences(of: "+", with: "").replacingOccurrences(of: "%", with: "")
+                percentValue = Double(digits) ?? 0.0
+            } else if percentageText.contains("-") {
+                let digits = percentageText.replacingOccurrences(of: "-", with: "").replacingOccurrences(of: "%", with: "")
+                percentValue = -(Double(digits) ?? 0.0)
+            }
+            
+            // 퍼센트에 따른 가격 계산
+            let targetPrice = currentPrice * (1 + percentValue / 100)
+            let formatter = NumberFormatter()
+            formatter.numberStyle = .decimal
+            formatter.maximumFractionDigits = 0
+            
+            if let formattedPrice = formatter.string(from: NSNumber(value: targetPrice)) {
+                priceTextField.text = formattedPrice
+            }
         }
     }
     
@@ -371,7 +430,7 @@ class AlarmEditView: UIView {
         [currentPriceTitleLabel, currentPriceLabel, priceChangeTitleLabel, priceChangeLabel, dayRangeTitleLabel, dayRangeLabel]
             .forEach { coinInfoView.addSubview($0) }
         
-        [percentageValueLabel, percentageToggleButton]
+        [percentageSignSegment, percentageValueLabel, percentageToggleButton]
             .forEach { percentageContainerView.addSubview($0) }
         
         percentageDropdownView.addSubview(percentageTableView)
@@ -459,10 +518,17 @@ class AlarmEditView: UIView {
             make.horizontalEdges.equalToSuperview().inset(16)
             make.height.equalTo(30)
         }
-        
-        percentageValueLabel.snp.makeConstraints { make in
+
+        percentageSignSegment.snp.makeConstraints { make in
             make.centerY.equalToSuperview()
             make.leading.equalToSuperview()
+            make.width.equalTo(60)
+            make.height.equalTo(24)
+        }
+
+        percentageValueLabel.snp.makeConstraints { make in
+            make.centerY.equalToSuperview()
+            make.leading.equalTo(percentageSignSegment.snp.trailing).offset(8)
         }
         
         percentageToggleButton.snp.makeConstraints { make in
@@ -543,5 +609,32 @@ extension AlarmEditView: UITableViewDataSource, UITableViewDelegate {
         tableView.deselectRow(at: indexPath, animated: true)
         let percentage = percentages[indexPath.row]
         selectPercentage(percentage)
+    }
+}
+
+extension AlarmEditView: UITextFieldDelegate {
+    
+    private func setupTextFieldDelegates() {
+        priceTextField.delegate = self
+    }
+    
+    func textFieldShouldReturn(_ textField: UITextField) -> Bool {
+        textField.resignFirstResponder()
+        return true
+    }
+    
+    func textFieldDidEndEditing(_ textField: UITextField) {
+        if textField == priceTextField, let text = textField.text {
+            let digits = text.components(separatedBy: CharacterSet.decimalDigits.inverted).joined()
+            
+            if let amount = Int(digits) {
+                // 천 단위 콤마 포맷팅
+                let formatter = NumberFormatter()
+                formatter.numberStyle = .decimal
+                if let formattedString = formatter.string(from: NSNumber(value: amount)) {
+                    textField.text = formattedString
+                }
+            }
+        }
     }
 }
