@@ -512,7 +512,7 @@ class AlarmEditView: UIView {
         
         // MARK: - 알림 추가 버튼 레이아웃
         addAlertButton.snp.makeConstraints { make in
-            make.bottom.equalTo(safeAreaLayoutGuide).offset(-24)
+            make.bottom.equalTo(safeAreaLayoutGuide).offset(-20)
             make.horizontalEdges.equalToSuperview().inset(16)
             make.height.equalTo(50)
         }
