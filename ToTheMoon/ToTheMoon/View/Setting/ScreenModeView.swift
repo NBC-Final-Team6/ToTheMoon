@@ -35,7 +35,6 @@ class ScreenModeView: UIView {
         tableView.separatorInset = .zero
         tableView.layoutMargins = .zero
         tableView.layer.cornerRadius = 20
-        tableView.separatorColor = UIColor(red: 30/255, green: 30/255, blue: 30/255, alpha: 1)
         tableView.isScrollEnabled = false
         tableView.register(UITableViewCell.self, forCellReuseIdentifier: "ScreenModeCell")
         return tableView
