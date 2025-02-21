@@ -212,9 +212,8 @@ final class FavoriteListViewController: UIViewController {
     
     // MARK: - 차트 화면 이동
     private func navigateToChartView(for marketPrice: MarketPrice) {
-        let exchange = Exchange(rawValue: marketPrice.exchange) ?? nil
+        guard let exchange = Exchange(rawValue: marketPrice.exchange) else { return }
         let chartViewModel = ChartViewModel(exchange: exchange, selectedCoins: [marketPrice])
-        let coinPriceViewModel = CoinPriceViewModel()
         let chartVC = ChartViewController(viewModel: chartViewModel)
         navigationController?.pushViewController(chartVC, animated: true)
     }

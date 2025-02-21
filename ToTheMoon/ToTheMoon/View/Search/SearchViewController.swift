@@ -223,12 +223,25 @@ extension SearchViewController: UITableViewDelegate, UITableViewDataSource {
     
     // MARK: - 최근 검색 기록을 클릭하면 해당 검색어로 검색 수행
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
-        guard searchMode == .recent else { return }
-        let selectedSearch = recentSearches[indexPath.row]
-        let searchQuery = selectedSearch.0
-        searchView.searchBar.text = searchQuery
-        viewModel.search(query: searchQuery)
-        searchView.searchBar.resignFirstResponder()
+        tableView.deselectRow(at: indexPath, animated: true)
+        
+        if searchMode == .recent {
+            // 최근 검색 기록 선택 시, 해당 검색어로 검색 실행
+            let selectedSearch = recentSearches[indexPath.row]
+            let searchQuery = selectedSearch.0
+            searchView.searchBar.text = searchQuery
+            viewModel.search(query: searchQuery)
+            searchView.searchBar.resignFirstResponder()
+        } else {
+            // 검색 결과에서 코인 선택 시 차트 화면으로 이동
+            let (marketPrice, _) = searchResults[indexPath.row]
+            
+            guard let exchange = Exchange(rawValue: marketPrice.exchange) else { return }
+            let chartViewModel = ChartViewModel(exchange: exchange, selectedCoins: [marketPrice])
+            let chartVC = ChartViewController(viewModel: chartViewModel)
+            
+            navigationController?.pushViewController(chartVC, animated: true)
+        }
     }
 }
 

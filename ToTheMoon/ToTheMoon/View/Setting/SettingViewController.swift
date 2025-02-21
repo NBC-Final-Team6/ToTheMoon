@@ -79,4 +79,3 @@ class SettingViewController: UIViewController {
     }
 }
 
-
