@@ -7,6 +7,8 @@
 
 import UIKit
 import RxSwift
+import FirebaseCore
+
 @main
 class AppDelegate: UIResponder, UIApplicationDelegate {
     
@@ -14,13 +16,11 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
 
-        //let coinoneService = BithumbWebSocketService()
-        
-//        coinoneService.fetchAllKrwTickers()
-//            .subscribe(onNext: { marketPrice in
+//        let coinoneService = SymbolService()
+//        
+//        coinoneService.fetchCoinData(coinSymbol: "etc")
+//            .subscribe({ marketPrice in
 //                print("📈  실시간 가격 업데이트: \(marketPrice)")
-//            }, onError: { error in
-//                print("❌ WebSocket BTC 에러: \(error)")
 //            })
 //        
 //        let btcSubscription = coinoneService.fetchKrwTicker(for: ["BTC", "WBTC"])
@@ -65,6 +65,8 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
 //            }, onError: { error in
 //                print("❌ WebSocket XRP 에러: \(error)")
 //            })
+        
+        FirebaseApp.configure() // Firebase 초기화
         
         return true
     }
