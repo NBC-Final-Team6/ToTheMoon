@@ -7,67 +7,33 @@
 
 import UIKit
 import RxSwift
+import Firebase
+import UserNotifications
+
 @main
 class AppDelegate: UIResponder, UIApplicationDelegate {
     
-   // let disposeBag = DisposeBag()
-    
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
-
         Thread.sleep(forTimeInterval: 1.0)
-        //let coinoneService = BithumbWebSocketService()
         
-//        coinoneService.fetchAllKrwTickers()
-//            .subscribe(onNext: { marketPrice in
-//                print("📈  실시간 가격 업데이트: \(marketPrice)")
-//            }, onError: { error in
-//                print("❌ WebSocket BTC 에러: \(error)")
-//            })
-//        
-//        let btcSubscription = coinoneService.fetchKrwTicker(for: ["BTC", "WBTC"])
-//            .subscribe(onNext: { marketPrice in
-//                print("📈 BTC 실시간 가격 업데이트: \(marketPrice)")
-//            }, onError: { error in
-//                print("❌ WebSocket BTC 에러: \(error)")
-//            })
-//        
-//        DispatchQueue.main.asyncAfter(deadline: .now() + 10) {
-//            coinoneService.fetchKrwTicker(for: ["XRP", "DOGE"])
-//                .subscribe(onNext: { marketPrice in
-//                    print("📈 BTC 실시간 가격 업데이트: \(marketPrice)")
-//                }, onError: { error in
-//                    print("❌ WebSocket BTC 에러: \(error)")
-//                })
-//        }
-//        
-//        DispatchQueue.main.asyncAfter(deadline: .now() + 15) {
-//            coinoneService.disconnectWebSocket()
-//        }
-//
-//        coinoneService.fetchKrwTicker(for: ["XRP", "DOGE"])
-//            .subscribe(onNext: { marketPrice in
-//                print("📈 BTC 실시간 가격 업데이트: \(marketPrice)")
-//            }, onError: { error in
-//                print("❌ WebSocket BTC 에러: \(error)")
-//            })
-        
-//       let bb = CoinoneWebSocketService()
-//
-//        let btcSubscription = bb.fetchAllKrwTickers()
-//            .subscribe(onNext: { marketPrice in
-//                print("📈 BTC 실시간 가격 업데이트: \(marketPrice)")
-//            }, onError: { error in
-//                print("❌ WebSocket BTC 에러: \(error)")
-//            })
-//
-//        let xrpSubscription = bb.fetchKrwTicker(for: ["xrp", "btc"])
-//            .subscribe(onNext: { marketPrice in
-//                print("📈 XRP 실시간 가격 업데이트: \(marketPrice)")
-//            }, onError: { error in
-//                print("❌ WebSocket XRP 에러: \(error)")
-//            })
+        FirebaseApp.configure()
+        Messaging.messaging().delegate = self
+        requestNotificationPermission()
         
         return true
+    }
+    
+    // 알림 권한 요청
+    private func requestNotificationPermission() {
+        UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .badge, .sound]) { granted, error in
+            if granted {
+                DispatchQueue.main.async {
+                    UIApplication.shared.registerForRemoteNotifications()
+                }
+            } else {
+                print("알림 권한 거부됨")
+            }
+        }
     }
     
     // MARK: UISceneSession Lifecycle
@@ -83,7 +49,25 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         // If any sessions were discarded while the application was not running, this will be called shortly after application:didFinishLaunchingWithOptions.
         // Use this method to release any resources that were specific to the discarded scenes, as they will not return.
     }
+}
+
+// FCM 토큰 받기
+extension AppDelegate: MessagingDelegate {
+    func messaging(_ messaging: Messaging, didReceiveRegistrationToken fcmToken: String?) {
+        guard let fcmToken = fcmToken else { return }
+        print(" FCM 토큰: \(fcmToken)")
+        UserDefaults.standard.set(fcmToken, forKey: "fcmToken") // 저장
+    }
+}
+
+extension AppDelegate: UNUserNotificationCenterDelegate {
+    func application(_ application: UIApplication, didRegisterForRemoteNotificationsWithDeviceToken deviceToken: Data) {
+        Messaging.messaging().apnsToken = deviceToken
+    }
     
-    
+    // 푸시 알림 수신 처리
+    func userNotificationCenter(_ center: UNUserNotificationCenter, willPresent notification: UNNotification, withCompletionHandler completionHandler: @escaping (UNNotificationPresentationOptions) -> Void) {
+        completionHandler([.banner, .sound, .badge])
+    }
 }
 
