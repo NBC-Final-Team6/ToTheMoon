@@ -6,10 +6,12 @@
 //
 
 import UIKit
+import RxSwift
 
 class AlarmEditViewController: UIViewController {
     
     private let alarmEditView = AlarmEditView()
+    private let disposeBag = DisposeBag()
     
     override func loadView() {
         view = alarmEditView
