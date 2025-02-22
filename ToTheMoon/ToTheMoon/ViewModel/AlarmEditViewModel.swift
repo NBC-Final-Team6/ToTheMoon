@@ -8,34 +8,48 @@
 import Foundation
 import RxSwift
 import RxCocoa
+import UIKit
 
 final class AlarmEditViewModel {
     
+    private let disposeBag = DisposeBag()
+    
     // Input
     struct Input {
-        let exchange = BehaviorRelay<String>(value: "")
-        let coin = BehaviorRelay<String>(value: "")
-        let price = BehaviorRelay<Double>(value: 0.0)
-        let condition = BehaviorRelay<String>(value: "above") // 기본값 "above"
-        let submitTrigger = PublishRelay<Void>() // 비동기 트리거 (이벤트 발생)
+        let marketPrice: BehaviorRelay<MarketPrice?>
+        let condition: BehaviorRelay<String>
+        let submitTrigger: PublishRelay<Void>
+        
+        init(selectedCoin: MarketPrice) {
+            self.marketPrice = BehaviorRelay(value: selectedCoin)
+            self.condition = BehaviorRelay(value: "above") // 기본값 "above"
+            self.submitTrigger = PublishRelay()
+        }
     }
     
     // Output
     struct Output {
-        let alertRegistrationResult = PublishRelay<Result<String, Error>>() // 에러가 없는 PublishRelay
+        let alertRegistrationResult: PublishRelay<Result<String, Error>>
+        let selectedCoinRelay: BehaviorRelay<MarketPrice>
+        
+        init(selectedCoin: MarketPrice) {
+            self.alertRegistrationResult = PublishRelay()
+            self.selectedCoinRelay = BehaviorRelay(value: selectedCoin)
+        }
     }
     
     // Input/Output 인스턴스
-    let input = Input()
-    let output = Output()
+    let input: Input
+    let output: Output
     
-    private let disposeBag = DisposeBag()
-    
-    init() {
+    init(selectedCoin: MarketPrice) {
+        self.input = Input(selectedCoin: selectedCoin)
+        self.output = Output(selectedCoin: selectedCoin)
+        
         // submitTrigger가 발생하면 네트워크 요청 실행
         input.submitTrigger
-            .withLatestFrom(Observable.combineLatest(input.exchange, input.coin, input.price, input.condition))
-            .flatMapLatest { [weak self] exchange, coin, price, condition -> Observable<Result<String, Error>> in
+            .withLatestFrom(Observable.combineLatest(input.marketPrice.compactMap { $0 }, input.condition))
+            .flatMapLatest { [weak self] marketPrice, condition -> Observable<Result<String, Error>> in
                 guard let self = self else {
                     return Observable.just(.failure(NSError(domain: "ViewModel Error", code: 0, userInfo: nil)))
                 }
@@ -44,7 +58,13 @@ final class AlarmEditViewModel {
                     return Observable.just(.failure(NSError(domain: "FCM Error", code: 0, userInfo: [NSLocalizedDescriptionKey: "❌ FCM 토큰 없음"])))
                 }
                 
-                let alert = PriceAlert(exchange: exchange, coin: coin, price: price, condition: condition, fcmToken: fcmToken)
+                let alert = PriceAlert(
+                    exchange: marketPrice.exchange,
+                    coin: marketPrice.symbol,
+                    price: marketPrice.price,
+                    condition: condition,
+                    fcmToken: fcmToken
+                )
                 
                 return PriceAlertManager.shared.registerPriceAlert(alert: alert)
             }

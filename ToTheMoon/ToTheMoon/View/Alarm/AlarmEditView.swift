@@ -10,7 +10,7 @@ import SnapKit
 
 class AlarmEditView: UIView {
     // MARK: - 코인 정보
-    private let coinNameLabel: UILabel = {
+    let coinNameLabel: UILabel = {
         let label = UILabel()
         label.text = "노시스 (GNO/KRW)"
         label.font = .systemFont(ofSize: 18, weight: .medium)
@@ -49,7 +49,7 @@ class AlarmEditView: UIView {
         return label
     }()
     
-    private let priceChangeLabel: UILabel = {
+   let priceChangeLabel: UILabel = {
         let label = UILabel()
         label.text = "-1.66%"
         label.font = .medium.bold()
@@ -66,7 +66,7 @@ class AlarmEditView: UIView {
         return label
     }()
     
-    private let dayRangeLabel: UILabel = {
+    let dayRangeLabel: UILabel = {
         let label = UILabel()
         label.text = "290,800 / 266,500"
         label.font = .medium.regular()

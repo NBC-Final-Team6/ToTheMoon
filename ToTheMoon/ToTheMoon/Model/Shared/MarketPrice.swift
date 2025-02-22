@@ -10,7 +10,7 @@ import UIKit
 
 struct MarketPrice: Hashable {
     var symbol: String       // 심볼(종목) 이름, 예: "BTC" (비트코인), "ETH" (이더리움)
-    let price: Double        // 현재 시장 가격
+    var price: Double        // 현재 시장 가격
     let exchange: String     // 거래소 이름, 예: "Upbit", "Bithumb"
     let change: String       // 가격 변화 방향, 예: "RISE" (상승), "FALL" (하락), "EVEN" (변화 없음)
     let changeRate: Double   // 가격 변화율 (소수점 비율, 예: 0.05는 5% 상승)

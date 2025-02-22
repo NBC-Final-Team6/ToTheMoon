@@ -34,36 +34,73 @@ class AlarmEditViewController: UIViewController {
         setupBindings()
     }
     
-    func setupBindings() {
-        // Input 바인딩 (UI 값 → ViewModel)
+    private func setupBindings() {
+        // `selectedCoinRelay`의 변경을 감지하고 UI 업데이트
+        viewModel.output.selectedCoinRelay
+            .observe(on: MainScheduler.instance)
+            .subscribe(onNext: { [weak self] marketPrice in
+                self?.updateUI(with: marketPrice)
+            })
+            .disposed(by: disposeBag)
+        
+        // `priceTextField` 값 변경을 `marketPrice.price`로 반영
         alarmEditView.priceTextField.rx.text.orEmpty
             .map { $0.replacingOccurrences(of: ",", with: "") }
             .compactMap(Double.init)
-            .bind(to: viewModel.input.price)
+            .subscribe(onNext: { [weak self] price in
+                guard let self = self else { return }
+                var updatedMarketPrice = self.viewModel.input.marketPrice.value
+                updatedMarketPrice?.price = price
+                self.viewModel.input.marketPrice.accept(updatedMarketPrice)
+            })
             .disposed(by: disposeBag)
         
+        // `percentageSignSegment` 값 변경을 `condition`에 반영
         alarmEditView.percentageSignSegment.rx.selectedSegmentIndex
             .map { $0 == 0 ? "above" : "below" }
             .bind(to: viewModel.input.condition)
             .disposed(by: disposeBag)
         
+        // `addAlertButton` 클릭 시 서버에 알림 요청
         alarmEditView.addAlertButton.rx.tap
             .bind(to: viewModel.input.submitTrigger)
             .disposed(by: disposeBag)
         
-        // Output 구독 (서버 응답 → UI 업데이트)
+        // 서버 응답 UI 처리
         viewModel.output.alertRegistrationResult
             .observe(on: MainScheduler.instance)
             .subscribe(onNext: { result in
                 switch result {
                 case .success(let message):
-                    print(message)
-                    // 성공 알림 표시
+                    print("\(message)")
+                    // 성공 알림 UI 업데이트 가능
                 case .failure(let error):
                     print("오류 발생: \(error.localizedDescription)")
                 }
             })
             .disposed(by: disposeBag)
+    }
+    
+    ///  UI 업데이트 메서드
+    private func updateUI(with marketPrice: MarketPrice) {
+        alarmEditView.coinNameLabel.text = "\(marketPrice.symbol) (\(marketPrice.exchange))"
+        alarmEditView.currentPriceLabel.text = "\(Int(marketPrice.price)) 원"
+        
+        let formattedHighLow = "\(Int(marketPrice.highPrice)) / \(Int(marketPrice.lowPrice))"
+        alarmEditView.dayRangeLabel.text = formattedHighLow
+        
+        // 가격 변화율 표시
+        let changeText = "\(marketPrice.changeRate)%"
+        alarmEditView.priceChangeLabel.text = changeText
+        alarmEditView.priceChangeLabel.textColor = marketPrice.change == "RISE" ? .numbersGreen : .numbersRed
+        
+        // 가격 입력 필드 기본값 설정
+        alarmEditView.priceTextField.text = "\(Int(marketPrice.price))"
+        
+        // 코인 이미지 설정
+//        if let image = marketPrice.image {
+//            alarmEditView.coinImageView.image = image
+//        }
     }
     
     private func setupNavigationBar() {
