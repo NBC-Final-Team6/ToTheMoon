@@ -13,16 +13,16 @@ final class AlarmEditViewModel {
     
     // Input
     struct Input {
-        let exchange = BehaviorSubject<String>(value: "")
-        let coin = BehaviorSubject<String>(value: "")
-        let price = BehaviorSubject<Double>(value: 0.0)
-        let condition = BehaviorSubject<String>(value: "above") // 기본값 "above"
-        let submitTrigger = PublishSubject<Void>()
+        let exchange = BehaviorRelay<String>(value: "")
+        let coin = BehaviorRelay<String>(value: "")
+        let price = BehaviorRelay<Double>(value: 0.0)
+        let condition = BehaviorRelay<String>(value: "above") // 기본값 "above"
+        let submitTrigger = PublishRelay<Void>() // 비동기 트리거 (이벤트 발생)
     }
     
     // Output
     struct Output {
-        let alertRegistrationResult = PublishSubject<Result<String, Error>>()
+        let alertRegistrationResult = PublishRelay<Result<String, Error>>() // 에러가 없는 PublishRelay
     }
     
     // Input/Output 인스턴스
@@ -36,13 +36,17 @@ final class AlarmEditViewModel {
         input.submitTrigger
             .withLatestFrom(Observable.combineLatest(input.exchange, input.coin, input.price, input.condition))
             .flatMapLatest { [weak self] exchange, coin, price, condition -> Observable<Result<String, Error>> in
-                guard let self = self else { return Observable.just(.failure(NSError(domain: "ViewModel Error", code: 0, userInfo: nil))) }
+                guard let self = self else {
+                    return Observable.just(.failure(NSError(domain: "ViewModel Error", code: 0, userInfo: nil)))
+                }
                 
                 guard let fcmToken = UserDefaults.standard.string(forKey: "fcmToken") else {
                     return Observable.just(.failure(NSError(domain: "FCM Error", code: 0, userInfo: [NSLocalizedDescriptionKey: "❌ FCM 토큰 없음"])))
                 }
                 
-                return PriceAlertManager.shared.registerPriceAlert(exchange: exchange, coin: coin, price: price, condition: condition, fcmToken: fcmToken)
+                let alert = PriceAlert(exchange: exchange, coin: coin, price: price, condition: condition, fcmToken: fcmToken)
+                
+                return PriceAlertManager.shared.registerPriceAlert(alert: alert)
             }
             .bind(to: output.alertRegistrationResult)
             .disposed(by: disposeBag)
