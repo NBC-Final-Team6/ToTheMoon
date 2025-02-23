@@ -63,6 +63,7 @@ class AlarmEditViewController: UIViewController {
         
         // `addAlertButton` 클릭 시 서버에 알림 요청
         alarmEditView.addAlertButton.rx.tap
+            .do(onNext: { print("addAlertButton tapped!") }) // 로그 추가
             .bind(to: viewModel.input.submitTrigger)
             .disposed(by: disposeBag)
         
