@@ -20,6 +20,13 @@ struct SymbolData: Decodable {
     let name: String
     let image: SymbolImage?
     let description: Description
+    let market_data: MarketData?
+}
+
+struct MarketData: Decodable {
+    let market_cap: [String: Double]?
+    let circulating_supply: Double?
+    let max_supply: Double?
 }
 
 struct SymbolImage: Decodable {

@@ -79,8 +79,19 @@ class ChartViewController: UIViewController, UIGestureRecognizerDelegate {
         bindSelectedCoin()
         bindChartData()
         bindCoinDescription()
+        bindCoinDetails()
         bindTimeFrameButtons()
         bindGoogleSearch()
+    }
+    
+    private func bindCoinDetails() {
+        viewModel.output.coinDetails
+            .drive(onNext: { [weak self] totalSupply, circulatingSupply, marketCap in
+                self?.chartView.totalSupplyValueLabel.text = totalSupply
+                self?.chartView.circulatingSupplyValueLabel.text = circulatingSupply
+                self?.chartView.marketCapValueLabel.text = marketCap
+            })
+            .disposed(by: disposeBag)
     }
 
     private func bindSymbolImage() {
@@ -107,11 +118,14 @@ class ChartViewController: UIViewController, UIGestureRecognizerDelegate {
     private func bindSelectedCoin() {
         viewModel.input.selectedCoins
             .map { $0.first }
-            .distinctUntilChanged { $0?.symbol == $1?.symbol } // 🔥 심볼이 바뀔 때만 업데이트
+            .distinctUntilChanged { $0?.symbol == $1?.symbol }
             .compactMap { $0 }
             .subscribe(onNext: { [weak self] firstCoin in
                 self?.updateUI(with: firstCoin)
                 self?.updateNavigationBarTitle(with: firstCoin)
+                self?.viewModel.fetchAndUpdateAllCoinData(for: firstCoin.symbol) // ✅ 추가된 부분
+                    .subscribe()
+                    .disposed(by: self!.disposeBag)
             })
             .disposed(by: disposeBag)
     }

@@ -20,6 +20,7 @@ final class ChartUseCase {
     private let webSocketServices: [Exchange: WebSocketServiceProtocol]
     private let symbolService = SymbolService()
     private var coinDescriptionCache: [String: String] = [:]
+    private var coinDataCache: [String: SymbolData] = [:]
     
     
     init(exchange: Exchange?) {
@@ -99,23 +100,22 @@ final class ChartUseCase {
             .observe(on: MainScheduler.instance)
     }
     
-    func fetchCoinDescriptionByImageRepository(for symbol: String) -> Observable<String> {
-        if let cachedDescription = coinDescriptionCache[symbol.uppercased()] {
-            print("✅ 캐시에서 설명 데이터 반환: \(symbol)")
-            return Observable.just(cachedDescription)
+    // ✅ 이미지 레포지토리를 통한 데이터 가져오기 (설명 + 시가총액 등)
+    func fetchCoinFullDataByImageRepository(for symbol: String) -> Observable<SymbolData> {
+        if let cachedData = coinDataCache[symbol.uppercased()] {
+            print("✅ 캐시에서 코인 데이터 반환: \(symbol)")
+            return Observable.just(cachedData)
         }
 
         if let coinID = ImageRepository.defaultSymbolImages[symbol.uppercased()] {
             return symbolService.fetchCoinDataByID(coinID)
                 .asObservable()
                 .do(onNext: { [weak self] data in
-                    let description = data.description.ko?.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty == false ? data.description.ko! : "설명 데이터가 제공되지 않습니다."
-                    self?.coinDescriptionCache[symbol.uppercased()] = description
+                    self?.coinDataCache[symbol.uppercased()] = data
                 })
-                .map { $0.description.ko ?? "설명 데이터가 제공되지 않습니다." }
-                .catchAndReturn("설명 데이터를 가져올 수 없습니다.")
+                .catchAndReturn(SymbolData(id: "", symbol: "", name: "", image: nil, description: Description(ko: "설명 데이터를 가져올 수 없습니다."), market_data: nil))
         } else {
-            return Observable.just("❌ 설명 데이터를 찾을 수 없습니다.")
+            return Observable.just(SymbolData(id: "", symbol: "", name: "", image: nil, description: Description(ko: "❌ 데이터 매핑 실패"), market_data: nil))
         }
     }
     
@@ -135,6 +135,18 @@ final class ChartUseCase {
             .catchAndReturn("설명 데이터를 가져올 수 없습니다.")
     }
     
+}
+
+extension ChartUseCase {
+    func fetchCoinDescriptionByImageRepository(for symbol: String) -> Observable<String> {
+        guard let coinID = ImageRepository.defaultSymbolImages[symbol.uppercased()] else {
+            return Observable.just("❌ 설명 데이터를 찾을 수 없습니다.")
+        }
+        return symbolService.fetchCoinDataByID(coinID)
+            .asObservable()
+            .map { $0.description.ko ?? "설명 데이터가 제공되지 않습니다." }
+            .catchAndReturn("설명 데이터를 가져올 수 없습니다.")
+    }
 }
 
 // MARK: - CandleServiceType Conformance

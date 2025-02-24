@@ -5,7 +5,6 @@
 //  Created by 황석범 on 1/21/25.
 //
 
-
 import RxSwift
 import RxCocoa
 import DGCharts
@@ -28,6 +27,7 @@ final class ChartViewModel {
         let highestPrice: Driver<String>
         let lowestPrice: Driver<String>
         let image: Driver<(String, UIImage?)>
+        let coinDetails: Driver<(totalSupply: String, circulatingSupply: String, marketCap: String)>
     }
     
     let input: Input
@@ -49,6 +49,7 @@ final class ChartViewModel {
     private let highestPriceRelay = BehaviorRelay<String>(value: "0")
     private let lowestPriceRelay = BehaviorRelay<String>(value: "0")
     private let imageSubject = PublishSubject<(String, UIImage?)>()
+    private let coinDetailsRelay = BehaviorRelay<(totalSupply: String, circulatingSupply: String, marketCap: String)>(value: ("0", "0", "0"))
     
     init(exchange: Exchange?, selectedCoins: [MarketPrice], manageFavoritesUseCase: ManageFavoritesUseCase = ManageFavoritesUseCase()) {
         let selectedCoinsRelay = BehaviorRelay<[MarketPrice]>(value: selectedCoins)
@@ -65,7 +66,8 @@ final class ChartViewModel {
             coinInfo: coinInfoRelay.asDriver(),
             highestPrice: highestPriceRelay.asDriver(),
             lowestPrice: lowestPriceRelay.asDriver(),
-            image: imageSubject.asDriver(onErrorDriveWith: .empty())
+            image: imageSubject.asDriver(onErrorDriveWith: .empty()),
+            coinDetails: coinDetailsRelay.asDriver()
         )
         
         setupBindings()
@@ -73,35 +75,66 @@ final class ChartViewModel {
     
     // ✅ 선택된 코인에 대해서만 설명 데이터 불러오기
     private func setupBindings() {
-        input.selectedCoins
-            .map { $0.first }
-            .distinctUntilChanged { $0?.symbol == $1?.symbol }
-            .compactMap { $0 }
-            .throttle(.milliseconds(500), scheduler: MainScheduler.instance) // ✅ 500ms 대기
-            .flatMapLatest { [weak self] firstCoin -> Observable<String> in
-                guard let self = self else { return .just("❌ 설명 데이터를 가져올 수 없습니다.") }
+        input.selectedCoins.asObservable()
+            .subscribe(onNext: { [weak self] coins in
+                guard let self = self, let firstCoin = coins.first else { return }
                 self.fetchAndUpdateChartData(for: firstCoin)
                 self.subscribeToRealTimeUpdates(for: firstCoin)
-                return self.chartUseCase.fetchCoinDescriptionByImageRepository(for: firstCoin.symbol)
-            }
-            .observe(on: MainScheduler.instance)
-            .subscribe(onNext: { [weak self] description in
-                guard let symbol = self?.input.selectedCoins.value.first?.symbol else { return }
-                self?.coinInfoRelay.accept([symbol.uppercased(): description])
-                print("✅ [INFO] 설명 데이터 업데이트 완료: \\(symbol)")
-            }, onError: { error in
-                print("❌ [ERROR] 설명 데이터 업데이트 실패: \\(error.localizedDescription)")
             })
             .disposed(by: disposeBag)
-
+        
         input.candleInterval
             .distinctUntilChanged()
             .subscribe(onNext: { [weak self] _ in
                 guard let self = self, let firstCoin = self.input.selectedCoins.value.first else { return }
-                print("✅ 차트 업데이트 - 새로운 시간 간격 적용")
+                // 차트 데이터만 초기화합니다. (설명 데이터 등은 유지)
+                self.chartDataRelay.accept(([], [], "0", "0", IndexAxisValueFormatter(values: [])))
                 self.fetchAndUpdateChartData(for: firstCoin)
+                self.subscribeToRealTimeUpdates(for: firstCoin)
             })
             .disposed(by: disposeBag)
+    }
+    
+    // ✅ 숫자에 콤마 추가 (100,000,000)
+    private func formatNumber(_ number: Double) -> String {
+        let formatter = NumberFormatter()
+        formatter.numberStyle = .decimal
+        formatter.maximumFractionDigits = 2
+        return formatter.string(from: NSNumber(value: number)) ?? "\(number)"
+    }
+
+    // ✅ 시가총액 한국식 단위로 변환 (1억, 1조 등)
+    private func formatMarketCap(_ value: Double) -> String {
+        let trillion = 1_000_000_000_000.0
+        let billion = 100_000_000.0
+        let million = 1_000_000.0
+        
+        if value >= trillion {
+            return "\(String(format: "%.2f", value / trillion))조"
+        } else if value >= billion {
+            return "\(String(format: "%.2f", value / billion))억"
+        } else if value >= million {
+            return "\(String(format: "%.2f", value / million))백만"
+        } else {
+            return formatNumber(value)
+        }
+    }
+    
+    func fetchAndUpdateAllCoinData(for symbol: String) -> Observable<Void> {
+        return Observable.zip(
+            chartUseCase.fetchCoinDescriptionByImageRepository(for: symbol),
+            chartUseCase.fetchCoinFullDataByImageRepository(for: symbol)
+        )
+        .observe(on: MainScheduler.instance)
+        .do(onNext: { [weak self] description, data in
+            self?.coinInfoRelay.accept([symbol.uppercased(): description])
+            let totalSupply = self?.formatNumber(data.market_data?.max_supply ?? 0.0) ?? "0"
+            let circulatingSupply = self?.formatNumber(data.market_data?.circulating_supply ?? 0.0) ?? "0"
+            let marketCapValue = data.market_data?.market_cap?["krw"] ?? 0.0
+            let marketCap = self?.formatMarketCap(marketCapValue) ?? "0"
+            self?.coinDetailsRelay.accept((totalSupply, circulatingSupply, marketCap))
+        })
+        .map { _ in }
     }
     
     // 코인 설명 데이터 가져오기
@@ -133,13 +166,24 @@ final class ChartViewModel {
             .observe(on: MainScheduler.instance)
             .subscribe(onNext: { [weak self] newData in
                 guard let self = self else { return }
-                
-                self.chartDataRelay.accept(newData)
-                self.highestPriceRelay.accept(newData.highest) // ✅ 최고가 업데이트
-                self.lowestPriceRelay.accept(newData.lowest)   // ✅ 최저가 업데이트
-                
-            }, onError: { error in
-                print("❌ 차트 데이터 가져오기 실패: \(error)")
+
+                // ✅ 기존 데이터와 새로운 데이터 병합
+                let existingDates = self.chartDataRelay.value.dates
+                let existingEntries = self.chartDataRelay.value.entries
+
+                let mergedDates = existingDates + newData.dates.filter { !existingDates.contains($0) }
+                let mergedEntries = existingEntries + newData.entries
+
+                self.chartDataRelay.accept((
+                    mergedDates,
+                    mergedEntries,
+                    newData.highest,
+                    newData.lowest,
+                    IndexAxisValueFormatter(values: mergedDates)
+                ))
+
+                self.highestPriceRelay.accept(newData.highest)
+                self.lowestPriceRelay.accept(newData.lowest)
             })
             .disposed(by: disposeBag)
     }
@@ -150,18 +194,18 @@ final class ChartViewModel {
             .observe(on: MainScheduler.instance)
             .subscribe(onNext: { [weak self] livePrice in
                 guard let self = self else { return }
-
+                
                 print("✅ 실시간 업데이트: \(coin.symbol) - \(livePrice.price)")
                 
-                // ✅ 실시간 가격 및 변동률 업데이트
+                // 실시간 가격 및 변동률 업데이트
                 var updatedPrices = self.currentPricesRelay.value
                 updatedPrices[coin.symbol] = "\(livePrice.price)"
                 self.currentPricesRelay.accept(updatedPrices)
-
+                
                 var updatedRates = self.priceChangeRatesRelay.value
                 updatedRates[coin.symbol] = "\(String(format: "%.2f", livePrice.changeRate))%"
                 self.priceChangeRatesRelay.accept(updatedRates)
-
+                
                 let currentTime = Date()
                 let calendar = Calendar.current
                 
@@ -178,72 +222,65 @@ final class ChartViewModel {
                 default:
                     formatter.dateFormat = "yyyy-MM-dd"
                 }
-
-                let newDateLabel = formatter.string(from: currentTime)
-
-                let timestamps = self.chartDataRelay.value.dates.compactMap {
-                    formatter.date(from: $0)
-                }
                 
-                let lastCandleTime = timestamps.last ?? Date.distantPast
+                let newDateLabel = formatter.string(from: currentTime)
                 
                 var updatedEntries = self.chartDataRelay.value.entries
-
+                var updatedDates = self.chartDataRelay.value.dates
+                
                 var shouldCreateNewCandle = false
-                switch self.input.candleInterval.value {
-                case .minute:
-                    shouldCreateNewCandle = calendar.component(.minute, from: currentTime) != calendar.component(.minute, from: lastCandleTime)
-                case .day:
-                    shouldCreateNewCandle = !calendar.isDate(currentTime, inSameDayAs: lastCandleTime)
-                case .week:
-                    shouldCreateNewCandle = calendar.component(.weekOfYear, from: currentTime) != calendar.component(.weekOfYear, from: lastCandleTime)
-                case .month:
-                    shouldCreateNewCandle = calendar.component(.month, from: currentTime) != calendar.component(.month, from: lastCandleTime)
-                @unknown default:
-                    shouldCreateNewCandle = false
+                if let lastDateString = updatedDates.last,
+                   let lastCandleDate = formatter.date(from: lastDateString) {
+                    switch self.input.candleInterval.value {
+                    case .minute:
+                        shouldCreateNewCandle = calendar.component(.minute, from: currentTime) != calendar.component(.minute, from: lastCandleDate)
+                    case .day:
+                        shouldCreateNewCandle = !calendar.isDate(currentTime, inSameDayAs: lastCandleDate)
+                    case .week:
+                        shouldCreateNewCandle = calendar.component(.weekOfYear, from: currentTime) != calendar.component(.weekOfYear, from: lastCandleDate)
+                    case .month:
+                        shouldCreateNewCandle = calendar.component(.month, from: currentTime) != calendar.component(.month, from: lastCandleDate)
+                    @unknown default:
+                        shouldCreateNewCandle = false
+                    }
+                } else {
+                    shouldCreateNewCandle = true
                 }
-
+                
                 if shouldCreateNewCandle {
                     print("✅ 새로운 캔들 생성됨: \(newDateLabel)")
                     let newCandle = CandleChartDataEntry(
                         x: Double(updatedEntries.count),
-                        shadowH: Double(livePrice.price),
-                        shadowL: Double(livePrice.price),
-                        open: Double(livePrice.price),
-                        close: Double(livePrice.price)
+                        shadowH: livePrice.price,
+                        shadowL: livePrice.price,
+                        open: livePrice.price,
+                        close: livePrice.price
                     )
                     updatedEntries.append(newCandle)
-
-                    self.chartDataRelay.accept((
-                        self.chartDataRelay.value.dates + [newDateLabel],
-                        updatedEntries,
-                        self.highestPriceRelay.value,
-                        self.lowestPriceRelay.value,
-                        IndexAxisValueFormatter(values: self.chartDataRelay.value.dates + [newDateLabel])
-                    ))
-
+                    updatedDates.append(newDateLabel)
                 } else {
-                    // ✅ 기존 캔들 업데이트 (형식 일치 유지)
-                    if var lastEntry = updatedEntries.last {
-                        lastEntry = CandleChartDataEntry(
+                    // 기존 캔들 업데이트 (한 번 생성된 캔들은 계속 업데이트)
+                    if let lastEntry = updatedEntries.last {
+                        let updatedLastEntry = CandleChartDataEntry(
                             x: lastEntry.x,
                             shadowH: max(lastEntry.high, livePrice.price),
                             shadowL: min(lastEntry.low, livePrice.price),
                             open: lastEntry.open,
                             close: livePrice.price
                         )
-                        updatedEntries[updatedEntries.count - 1] = lastEntry
+                        updatedEntries[updatedEntries.count - 1] = updatedLastEntry
                     }
-
-                    self.chartDataRelay.accept((
-                        self.chartDataRelay.value.dates,
-                        updatedEntries,
-                        self.highestPriceRelay.value,
-                        self.lowestPriceRelay.value,
-                        IndexAxisValueFormatter(values: self.chartDataRelay.value.dates)
-                    ))
                 }
-
+                
+                // 업데이트된 데이터를 차트에 반영
+                self.chartDataRelay.accept((
+                    updatedDates,
+                    updatedEntries,
+                    self.highestPriceRelay.value,
+                    self.lowestPriceRelay.value,
+                    IndexAxisValueFormatter(values: updatedDates)
+                ))
+                
             }, onError: { error in
                 print("❌ 실시간 데이터 업데이트 실패: \(error)")
             })
