@@ -26,7 +26,7 @@ class CustomTabBarViewController: UIViewController {
         selectTab(at: 0)
         navigationController?.navigationBar.isHidden = true
     }
-
+  
     private lazy var favoritesListViewController: FavoriteListViewController = {
         let manageFavoritesUseCase = ManageFavoritesUseCase(coreDataManager: CoreDataManager.shared)
         let webSocketServices: [WebSocketServiceProtocol] = [
@@ -70,7 +70,6 @@ class CustomTabBarViewController: UIViewController {
             make.leading.trailing.bottom.equalToSuperview()
             make.height.equalTo(120)
         }
-
 
         view.addSubview(customTabBar)
         customTabBar.snp.makeConstraints { make in

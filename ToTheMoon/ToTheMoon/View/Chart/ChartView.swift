@@ -87,10 +87,6 @@ class ChartView: UIView {
         stackView.spacing = 5
         return stackView
     }()
-
-    let totalSupplyLabel = ChartView.createInfoLabel(title: "총 발행 수량", value: "준비중")
-    let marketCapLabel = ChartView.createInfoLabel(title: "시가 총액", value: "준비중")
-    let circulatingSupplyLabel = ChartView.createInfoLabel(title: "현재 유통량", value: "준비중")
     
     // 디지털 자산 소개 컨테이너
     private let digitalAssetContainerView: UIView = {
@@ -123,11 +119,6 @@ class ChartView: UIView {
     """
         return textView
     }()
-
-    let minuteButton = ChartView.createTimeButton(title: "분")
-    let dayButton = ChartView.createTimeButton(title: "일")
-    let weekButton = ChartView.createTimeButton(title: "주")
-    let monthButton = ChartView.createTimeButton(title: "월")
 
     // 차트 뷰
     private let candleStickChartView: CandleStickChartView = {
@@ -196,9 +187,33 @@ class ChartView: UIView {
     let lowestPriceValueLabel = ChartView.createPriceValueLabel(textColor: .numbersRed)
     let changeRateLabel = ChartView.createPriceLabel(text: "변동률")
     let changeRateValueLabel = ChartView.createPriceValueLabel(textColor: .text)
+    
+    let minuteButton = ChartView.createTimeButton(title: "분")
+    let dayButton = ChartView.createTimeButton(title: "일")
+    let weekButton = ChartView.createTimeButton(title: "주")
+    let monthButton = ChartView.createTimeButton(title: "월")
+    
+    private let totalSupplySection: (containerView: UIView, valueLabel: UILabel)
+    private let marketCapSection: (containerView: UIView, valueLabel: UILabel)
+    private let circulatingSupplySection: (containerView: UIView, valueLabel: UILabel)
+
+    let totalSupplyValueLabel: UILabel
+    let marketCapValueLabel: UILabel
+    let circulatingSupplyValueLabel: UILabel
 
     // MARK: - 초기화
     override init(frame: CGRect) {
+        
+        totalSupplySection = ChartView.createInfoLabel(title: "총 발행 수량", value: "준비중")
+        totalSupplyValueLabel = totalSupplySection.valueLabel
+
+        marketCapSection = ChartView.createInfoLabel(title: "시가 총액", value: "준비중")
+        marketCapValueLabel = marketCapSection.valueLabel
+
+        circulatingSupplySection = ChartView.createInfoLabel(title: "현재 유통량", value: "준비중")
+        circulatingSupplyValueLabel = circulatingSupplySection.valueLabel
+        
+        
         super.init(frame: frame)
         setupUI()
     }
@@ -249,9 +264,9 @@ class ChartView: UIView {
 
         // 공급 정보
         coinInfoContainerView.addSubview(supplyInfoStackView)
-        supplyInfoStackView.addArrangedSubview(totalSupplyLabel)
-        supplyInfoStackView.addArrangedSubview(marketCapLabel)
-        supplyInfoStackView.addArrangedSubview(circulatingSupplyLabel)
+        supplyInfoStackView.addArrangedSubview(totalSupplySection.containerView)
+        supplyInfoStackView.addArrangedSubview(marketCapSection.containerView)
+        supplyInfoStackView.addArrangedSubview(circulatingSupplySection.containerView)
 
         // 디지털 자산 소개
         digitalAssetContainerView.addSubview(digitalAssetIntroLabel)
@@ -369,7 +384,7 @@ class ChartView: UIView {
         return stackView
     }
     
-    private static func createInfoLabel(title: String, value: String) -> UIView {
+    private static func createInfoLabel(title: String, value: String) -> (containerView: UIView, valueLabel: UILabel) {
         let containerView = UIView()
 
         let titleLabel = UILabel()
@@ -387,12 +402,11 @@ class ChartView: UIView {
         stackView.distribution = .equalSpacing
 
         containerView.addSubview(stackView)
-
         stackView.snp.makeConstraints { make in
             make.edges.equalToSuperview().inset(10)
         }
 
-        return containerView
+        return (containerView, valueLabel)  // ✅ 함께 반환
     }
     
     private static func createPriceLabel(text: String) -> UILabel {
