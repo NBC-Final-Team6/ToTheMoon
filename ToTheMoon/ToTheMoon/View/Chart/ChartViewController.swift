@@ -116,6 +116,12 @@ class ChartViewController: UIViewController, UIGestureRecognizerDelegate {
             })
             .disposed(by: disposeBag)
         
+        chartView.alarmButton.rx.tap
+            .subscribe(onNext: { [weak self] in
+                self?.navigateToAlarmEdit()
+            })
+            .disposed(by: disposeBag)
+        
         viewModel.input.selectedCoins
             .map { $0.first }
             .compactMap { $0 }
@@ -134,6 +140,14 @@ class ChartViewController: UIViewController, UIGestureRecognizerDelegate {
             name: NSNotification.Name("FavoriteListUpdated"),
             object: nil
         )
+    }
+    
+    private func navigateToAlarmEdit() {
+        guard let firstCoin = viewModel.input.selectedCoins.value.first else { return }
+        let alarmViewModel = AlarmEditViewModel(selectedCoin: firstCoin)
+        print(firstCoin)
+        let alarmViewController = AlarmEditViewController(viewModel: alarmViewModel)
+        navigationController?.pushViewController(alarmViewController, animated: true)
     }
     
     private func toggleFavorite(for coin: MarketPrice) {

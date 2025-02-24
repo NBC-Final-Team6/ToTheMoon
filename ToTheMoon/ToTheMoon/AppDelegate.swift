@@ -90,16 +90,18 @@ extension AppDelegate: MessagingDelegate {
 
 // 푸시 알림 처리
 extension AppDelegate {
-    // 🔹 앱이 실행 중일 때도 푸시 알림 표시
-    func userNotificationCenter(_ center: UNUserNotificationCenter,
-                                willPresent notification: UNNotification,
-                                withCompletionHandler completionHandler: @escaping (UNNotificationPresentationOptions) -> Void) {
-        print("[푸시 알림 수신] 앱이 실행 중일 때도 알림 표시됨")
-        if #available(iOS 14.0, *) {
-            completionHandler([.banner, .sound, .badge]) // iOS 14 이상 대응 (banner)
-        } else {
-            completionHandler([.alert, .sound, .badge]) // iOS 14 미만 대응
+    // 앱이 실행 중일 때도 푸시 알림 표시
+    func userNotificationCenter(
+        _ center: UNUserNotificationCenter,
+        willPresent notification: UNNotification,
+        withCompletionHandler completionHandler: @escaping (UNNotificationPresentationOptions) -> Void
+    ) {
+        let userInfo = notification.request.content.userInfo
+        if let alertID = userInfo["id"] as? String {
+            print("📌 푸시 알림 도착 - ID:", alertID)
+            NotificationCenter.default.post(name: .didReceivePriceAlert, object: alertID)
         }
+        completionHandler([.banner, .sound, .badge])
     }
 
     // 푸시 알림 클릭 시 이벤트 처리
@@ -110,4 +112,8 @@ extension AppDelegate {
         print("[푸시 알림 클릭] \(userInfo)")
         completionHandler()
     }
+}
+
+extension Notification.Name {
+    static let didReceivePriceAlert = Notification.Name("didReceivePriceAlert")
 }
