@@ -7,6 +7,7 @@
 
 import UIKit
 import SnapKit
+import RxSwift
 
 class AlarmEditView: UIView {
     // MARK: - 코인 정보
@@ -241,13 +242,7 @@ class AlarmEditView: UIView {
     }()
     
     // 테스트용 더미 데이터
-    private var alertItems: [String] = [
-        "273,200",
-        "275,000",
-        "268,000",
-        "280,000",
-        "265,000"
-    ]
+    private var alertItems: [String] = []
     
     // MARK: - 알림 추가 버튼
     let addAlertButton: UIButton = {
@@ -374,7 +369,6 @@ class AlarmEditView: UIView {
             previousItem = itemView
         }
         
-        // 마지막 아이템이 있을 경우 bottom constraint 설정
         if let lastItem = previousItem {
             lastItem.snp.makeConstraints { make in
                 make.bottom.equalToSuperview()
@@ -382,11 +376,11 @@ class AlarmEditView: UIView {
         }
     }
     
-    private func createAlertHistoryItem(price: String, index: Int) -> UIView {
+    private func createAlertHistoryItem(alert: PriceAlertWithID, index: Int) -> UIView {
         let itemView = UIView()
         
         let priceLabel = UILabel()
-        priceLabel.text = "지정가: \(price) 원"
+        priceLabel.text = "지정가: \(alert.price)원 (\(alert.condition == "above" ? "이상" : "이하"))"
         priceLabel.font = .systemFont(ofSize: 15, weight: .regular)
         
         let deleteButton = UIButton()

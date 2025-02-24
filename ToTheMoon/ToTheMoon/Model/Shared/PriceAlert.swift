@@ -11,6 +11,24 @@ struct PriceAlert: Codable {
     let exchange: String
     let coin: String
     let price: Double
-    let condition: String // "above" or "below"
+    let condition: String
     let fcmToken: String
+}
+
+struct PriceAlertWithID: Codable {
+    let id: String
+    let exchange: String
+    let coin: String
+    let price: Double
+    let condition: String
+    let fcmToken: String
+}
+
+struct RegisterResponse: Codable {
+    let message: String
+    let alert: PriceAlertWithID
+}
+
+struct AlertsResponse: Codable {
+    let alerts: [PriceAlertWithID]
 }
