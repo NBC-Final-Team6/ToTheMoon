@@ -12,7 +12,6 @@ class AlarmEditView: UIView {
     // MARK: - 코인 정보
     let coinNameLabel: UILabel = {
         let label = UILabel()
-        label.text = "노시스 (GNO/KRW)"
         label.font = .systemFont(ofSize: 18, weight: .medium)
         return label
     }()
@@ -34,7 +33,6 @@ class AlarmEditView: UIView {
     
     let currentPriceLabel: UILabel = {
         let label = UILabel()
-        label.text = "272,500 원"
         label.font = .medium.bold()
         label.textColor = .text
         label.textAlignment = .right
@@ -51,7 +49,6 @@ class AlarmEditView: UIView {
     
    let priceChangeLabel: UILabel = {
         let label = UILabel()
-        label.text = "-1.66%"
         label.font = .medium.bold()
         label.textColor = .numbersRed
         label.textAlignment = .right
@@ -68,7 +65,6 @@ class AlarmEditView: UIView {
     
     let dayRangeLabel: UILabel = {
         let label = UILabel()
-        label.text = "290,800 / 266,500"
         label.font = .medium.regular()
         label.textAlignment = .right
         return label
@@ -85,7 +81,6 @@ class AlarmEditView: UIView {
     
     let priceTextField: UITextField = {
         let textField = UITextField()
-        textField.text = "272,500"
         textField.font = .systemFont(ofSize: 19, weight: .bold)
         textField.keyboardType = .numberPad
         textField.borderStyle = .none
@@ -108,7 +103,7 @@ class AlarmEditView: UIView {
         priceTextField.resignFirstResponder()
     }
     
-    private let decreaseButton: UIButton = {
+    let decreaseButton: UIButton = {
         let button = UIButton()
         button.setImage(UIImage(systemName: "minus"), for: .normal)
         button.tintColor = .text
@@ -119,7 +114,7 @@ class AlarmEditView: UIView {
         return button
     }()
     
-    private let increaseButton: UIButton = {
+    let increaseButton: UIButton = {
         let button = UIButton()
         button.setImage(UIImage(systemName: "plus"), for: .normal)
         button.tintColor = .text

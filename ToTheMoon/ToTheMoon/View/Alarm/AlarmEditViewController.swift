@@ -55,6 +55,55 @@ class AlarmEditViewController: UIViewController {
             })
             .disposed(by: disposeBag)
         
+        // 가격 지정 + 버튼
+        alarmEditView.increaseButton.rx.tap
+            .withLatestFrom(viewModel.output.selectedCoinRelay)
+            .withLatestFrom(alarmEditView.priceTextField.rx.text.orEmpty) { (marketPrice, priceText) -> (Double, String) in
+                return (marketPrice.price, priceText)
+            }
+            .subscribe(onNext: { [weak self] marketPrice, priceText in
+                guard let self = self else { return }
+                let priceDigits = priceText.replacingOccurrences(of: ",", with: "")
+                if let currentPrice = Double(priceDigits) {
+                    let onePercent = marketPrice * 0.01
+                    let newPrice = currentPrice + onePercent
+                    
+                    let formatter = NumberFormatter()
+                    formatter.numberStyle = .decimal
+                    formatter.maximumFractionDigits = 0
+                    
+                    if let formattedPrice = formatter.string(from: NSNumber(value: newPrice)) {
+                        self.alarmEditView.priceTextField.text = formattedPrice
+                    }
+                }
+            })
+            .disposed(by: disposeBag)
+
+        // 가격 지정 - 버튼
+        alarmEditView.decreaseButton.rx.tap
+            .withLatestFrom(viewModel.output.selectedCoinRelay)
+            .withLatestFrom(alarmEditView.priceTextField.rx.text.orEmpty) { (marketPrice, priceText) -> (Double, String) in
+                return (marketPrice.price, priceText)
+            }
+            .subscribe(onNext: { [weak self] marketPrice, priceText in
+                guard let self = self else { return }
+                let priceDigits = priceText.replacingOccurrences(of: ",", with: "")
+                if let currentPrice = Double(priceDigits) {
+                    let onePercent = marketPrice * 0.01
+                    let newPrice = currentPrice - onePercent
+                    
+                    let formatter = NumberFormatter()
+                    formatter.numberStyle = .decimal
+                    formatter.maximumFractionDigits = 0
+                    
+                    if let formattedPrice = formatter.string(from: NSNumber(value: newPrice)) {
+                        self.alarmEditView.priceTextField.text = formattedPrice
+                    }
+                }
+            })
+            .disposed(by: disposeBag)
+
+        
         // `percentageSignSegment` 값 변경을 `condition`에 반영
         alarmEditView.percentageSignSegment.rx.selectedSegmentIndex
             .map { $0 == 0 ? "above" : "below" }
@@ -85,9 +134,20 @@ class AlarmEditViewController: UIViewController {
     ///  UI 업데이트 메서드
     private func updateUI(with marketPrice: MarketPrice) {
         alarmEditView.coinNameLabel.text = "\(marketPrice.symbol) (\(marketPrice.exchange))"
-        alarmEditView.currentPriceLabel.text = "\(Int(marketPrice.price)) 원"
         
-        let formattedHighLow = "\(Int(marketPrice.highPrice)) / \(Int(marketPrice.lowPrice))"
+        // 천 단위 구분자를 위한 NumberFormatter 생성
+        let formatter = NumberFormatter()
+        formatter.numberStyle = .decimal
+        formatter.maximumFractionDigits = 0
+        
+        // 현재가에 천 단위 구분자 추가
+        let priceString = formatter.string(from: NSNumber(value: marketPrice.price)) ?? "0"
+        alarmEditView.currentPriceLabel.text = "\(priceString) 원"
+        
+        // 24시 최고/최저에 천 단위 구분자 추가
+        let highPriceString = formatter.string(from: NSNumber(value: marketPrice.highPrice)) ?? "0"
+        let lowPriceString = formatter.string(from: NSNumber(value: marketPrice.lowPrice)) ?? "0"
+        let formattedHighLow = "\(highPriceString) / \(lowPriceString)"
         alarmEditView.dayRangeLabel.text = formattedHighLow
         
         // 가격 변화율 표시
@@ -95,8 +155,9 @@ class AlarmEditViewController: UIViewController {
         alarmEditView.priceChangeLabel.text = changeText
         alarmEditView.priceChangeLabel.textColor = marketPrice.change == "RISE" ? .numbersGreen : .numbersRed
         
-        // 가격 입력 필드 기본값 설정
-        alarmEditView.priceTextField.text = "\(Int(marketPrice.price))"
+        // 가격 지정 필드에 천 단위 구분자 추가
+        let initialPriceString = formatter.string(from: NSNumber(value: Int(marketPrice.price))) ?? "0"
+        alarmEditView.priceTextField.text = initialPriceString
         
         // 코인 이미지 설정
 //        if let image = marketPrice.image {
