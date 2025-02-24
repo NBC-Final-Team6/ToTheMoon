@@ -11,8 +11,8 @@ import RxSwift
 final class PriceAlertManager {
     static let shared = PriceAlertManager()
     
-    private let serverURL = "https://tothemoonserver-production.up.railway.app/alerts" // 서버 주소를 입력하세요
-    
+    //private let serverURL = "https://tothemoonserver-production.up.railway.app/alerts" // 서버 주소를 입력하세요
+    private let serverURL = "https://d05e-222-111-120-108.ngrok-free.app/alerts" // 서버 주소를 입력하세요
     /// 지정가 알림 요청
     func registerPriceAlert(alert: PriceAlert) -> Observable<Result<String, Error>> {
         guard let jsonData = try? JSONEncoder().encode(alert) else {
