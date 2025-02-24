@@ -3,9 +3,7 @@ import RxSwift
 import RxCocoa
 import DGCharts
 import SnapKit
-
 class ChartViewController: UIViewController, UIGestureRecognizerDelegate {
-
     private let chartView = ChartView()
     private let viewModel: ChartViewModel
     private let manageFavoritesUseCase: ManageFavoritesUseCase
@@ -14,17 +12,14 @@ class ChartViewController: UIViewController, UIGestureRecognizerDelegate {
     
     // 현재 선택된 시간 간격 (초기값 .day)
     private var selectedTimeFrame: CandleInterval = .day
-
     init(viewModel: ChartViewModel, manageFavoritesUseCase: ManageFavoritesUseCase = ManageFavoritesUseCase()) {
         self.viewModel = viewModel
         self.manageFavoritesUseCase = manageFavoritesUseCase
         super.init(nibName: nil, bundle: nil)
     }
-
     required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }
-
     override func viewDidLoad() {
         super.viewDidLoad()
         setupViews()
@@ -33,21 +28,17 @@ class ChartViewController: UIViewController, UIGestureRecognizerDelegate {
         navigationController?.navigationBar.isHidden = false
         updateSelectedTimeFrame(.day)
     }
-
     override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
         guard let firstCoin = viewModel.input.selectedCoins.value.first else { return }
         viewModel.subscribeToRealTimeUpdates(for: firstCoin)
     }
-
     // MARK: - View 및 Navigation 설정
-
     private func setupViews() {
         view.backgroundColor = .clear
         view.addSubview(chartView)
         chartView.snp.makeConstraints { $0.edges.equalToSuperview() }
     }
-
     private func setupNavigationBar() {
         navigationController?.navigationBar.prefersLargeTitles = false
         navigationController?.navigationBar.tintColor = .text
@@ -62,17 +53,13 @@ class ChartViewController: UIViewController, UIGestureRecognizerDelegate {
         navigationController?.interactivePopGestureRecognizer?.delegate = self
         navigationController?.interactivePopGestureRecognizer?.isEnabled = true
     }
-
     @objc private func backButtonTapped() {
         navigationController?.popViewController(animated: true)
     }
-
     private func updateNavigationBarTitle(with coin: MarketPrice) {
         title = "\(coin.symbol.uppercased()) / \(coin.exchange)"
     }
-
     // MARK: - Binding 설정
-
     private func setupBindings() {
         bindSymbolImage()
         bindFavoriteButton()
@@ -93,7 +80,6 @@ class ChartViewController: UIViewController, UIGestureRecognizerDelegate {
             })
             .disposed(by: disposeBag)
     }
-
     private func bindSymbolImage() {
         viewModel.input.selectedCoins
             .asObservable()
@@ -105,7 +91,6 @@ class ChartViewController: UIViewController, UIGestureRecognizerDelegate {
             })
             .disposed(by: disposeBag)
     }
-
     private func bindFavoriteButton() {
         chartView.favoriteButton.rx.tap
             .subscribe(onNext: { [weak self] in
@@ -148,6 +133,25 @@ class ChartViewController: UIViewController, UIGestureRecognizerDelegate {
         navigationController?.pushViewController(alarmViewController, animated: true)
     }
     
+    private func updateFavoriteButtonUI(isFavorite: Bool) {
+        let imageName = isFavorite ? "star.fill" : "star"
+        let imageColor = isFavorite ? UIColor.systemYellow : UIColor.gray
+        
+        chartView.favoriteButton.setImage(UIImage(systemName: imageName), for: .normal)
+        chartView.favoriteButton.tintColor = imageColor
+    }
+    
+    @objc private func updateFavoriteButtonState() {
+        guard let firstCoin = viewModel.input.selectedCoins.value.first else { return }
+        
+        viewModel.isFavorite(firstCoin)
+            .observe(on: MainScheduler.instance)
+            .subscribe(onNext: { [weak self] isFavorite in
+                self?.updateFavoriteButtonUI(isFavorite: isFavorite)
+            })
+            .disposed(by: disposeBag)
+    }
+    
     private func toggleFavorite(for coin: MarketPrice) {
         manageFavoritesUseCase.toggleFavorite(coin)
             .subscribe(onError: { error in
@@ -157,9 +161,7 @@ class ChartViewController: UIViewController, UIGestureRecognizerDelegate {
                 NotificationCenter.default.post(name: NSNotification.Name("FavoriteListUpdated"), object: nil)
             })
             .disposed(by: disposeBag)
-
     }
-
     private func bindSelectedCoin() {
         viewModel.input.selectedCoins
             .map { $0.first }
@@ -174,23 +176,19 @@ class ChartViewController: UIViewController, UIGestureRecognizerDelegate {
             })
             .disposed(by: disposeBag)
     }
-
     private func bindChartData() {
         viewModel.output.chartData
             .drive(onNext: { [weak self] chartData in
                 self?.chartView.configureChart(dates: chartData.dates, dataEntries: chartData.entries)
             })
             .disposed(by: disposeBag)
-
         viewModel.output.highestPrice
             .drive(chartView.highestPriceValueLabel.rx.text)
             .disposed(by: disposeBag)
-
         viewModel.output.lowestPrice
             .drive(chartView.lowestPriceValueLabel.rx.text)
             .disposed(by: disposeBag)
     }
-
     private func bindCoinDescription() {
         viewModel.output.coinInfo
             .drive(onNext: { [weak self] info in
@@ -199,7 +197,6 @@ class ChartViewController: UIViewController, UIGestureRecognizerDelegate {
             })
             .disposed(by: disposeBag)
     }
-
     private func bindTimeFrameButtons() {
         let timeButtons: [(UIButton, CandleInterval)] = [
             (chartView.minuteButton, .minute),
@@ -207,7 +204,6 @@ class ChartViewController: UIViewController, UIGestureRecognizerDelegate {
             (chartView.weekButton, .week),
             (chartView.monthButton, .month)
         ]
-
         for (button, interval) in timeButtons {
             button.rx.tap
                 .subscribe(onNext: { [weak self] in
@@ -216,7 +212,6 @@ class ChartViewController: UIViewController, UIGestureRecognizerDelegate {
                 .disposed(by: disposeBag)
         }
     }
-
     private func bindGoogleSearch() {
         chartView.googleSearchButton.rx.tap
             .subscribe(onNext: { [weak self] in
@@ -224,19 +219,15 @@ class ChartViewController: UIViewController, UIGestureRecognizerDelegate {
             })
             .disposed(by: disposeBag)
     }
-
     // MARK: - 업데이트 메서드
-
     private func updateSelectedTimeFrame(_ newInterval: CandleInterval) {
         selectedTimeFrame = newInterval
         viewModel.input.candleInterval.accept(newInterval)
-
         let allButtons = [chartView.minuteButton, chartView.dayButton, chartView.weekButton, chartView.monthButton]
         allButtons.forEach {
             $0.backgroundColor = .container
             $0.setTitleColor(.text, for: .normal)
         }
-
         switch newInterval {
         case .minute: chartView.minuteButton.backgroundColor = .blue.withAlphaComponent(0.3)
         case .day: chartView.dayButton.backgroundColor = .blue.withAlphaComponent(0.3)
@@ -245,7 +236,6 @@ class ChartViewController: UIViewController, UIGestureRecognizerDelegate {
         default: break
         }
     }
-
     private func searchCoinOnGoogle() {
         guard let firstCoin = viewModel.input.selectedCoins.value.first else { return }
         let searchQuery = "https://www.google.com/search?q=\(firstCoin.symbol.uppercased())+코인"
@@ -253,24 +243,20 @@ class ChartViewController: UIViewController, UIGestureRecognizerDelegate {
             UIApplication.shared.open(url)
         }
     }
-
     private func updateUI(with firstCoin: MarketPrice) {
         uiDisposeBag = DisposeBag()
         chartView.coinNameLabel.text = "\(firstCoin.symbol.uppercased()) (\(firstCoin.exchange))"
-
         viewModel.output.currentPrices
             .map { $0[firstCoin.symbol] ?? "0" }
             .distinctUntilChanged()
             .drive(chartView.currentPriceLabel.rx.text)
             .disposed(by: uiDisposeBag)
-
         viewModel.output.priceChangeRates
             .map { $0[firstCoin.symbol] ?? "0%" }
             .distinctUntilChanged()
             .drive(chartView.changeRateValueLabel.rx.text)
             .disposed(by: uiDisposeBag)
     }
-
     private func updateCoinDescription(_ info: [String: String]) {
         DispatchQueue.main.async {
             if let description = info.values.first {
@@ -282,3 +268,4 @@ class ChartViewController: UIViewController, UIGestureRecognizerDelegate {
         }
     }
 }
+
