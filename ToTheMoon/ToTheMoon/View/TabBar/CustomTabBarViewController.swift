@@ -26,7 +26,7 @@ class CustomTabBarViewController: UIViewController {
         selectTab(at: 0)
         navigationController?.navigationBar.isHidden = true
     }
-    
+  
     private lazy var favoritesListViewController: FavoriteListViewController = {
         let manageFavoritesUseCase = ManageFavoritesUseCase(coreDataManager: CoreDataManager.shared)
         let webSocketServices: [WebSocketServiceProtocol] = [
@@ -35,24 +35,24 @@ class CustomTabBarViewController: UIViewController {
             KorbitWebSocketService(),
             UpbitWebSocketService()
         ]
-        
+
         let exchangeServices: [ServiceProtocol] = [
             BithumbService(),
             CoinOneService(),
             KorbitService(),
             UpbitService()
         ]
-        
+
         let fetchFavoriteCoinsUseCase = FetchFavoriteCoinsUseCase(
             manageFavoritesUseCase: manageFavoritesUseCase,
             webSocketServices: webSocketServices
         )
-        
+
         let fetchFavoriteCoinsChartUseCase = FetchFavoriteCoinsChartUseCase(
             manageFavoritesUseCase: manageFavoritesUseCase,
             exchangeServices: exchangeServices
         )
-        
+
         return FavoriteListViewController(
             viewModel: FavoritesListViewModel(
                 manageFavoritesUseCase: manageFavoritesUseCase,
@@ -71,7 +71,6 @@ class CustomTabBarViewController: UIViewController {
             make.height.equalTo(120)
         }
 
-        
         view.addSubview(customTabBar)
         customTabBar.snp.makeConstraints { make in
             make.leading.trailing.bottom.equalToSuperview()
@@ -92,7 +91,7 @@ class CustomTabBarViewController: UIViewController {
         customTabBar.updateButtonSelection(selectedIndex: selectedIndex)
         selectTab(at: selectedIndex)
     }
-    
+
     private func selectTab(at index: Int) {
         currentViewController?.view.removeFromSuperview()
         currentViewController?.removeFromParent()
@@ -122,3 +121,4 @@ class CustomTabBarViewController: UIViewController {
         }
     }
 }
+

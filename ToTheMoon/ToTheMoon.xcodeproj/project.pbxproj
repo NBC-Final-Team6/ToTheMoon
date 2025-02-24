@@ -7,6 +7,10 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		990ADD282D69FB7E00359E93 /* FirebaseCore in Frameworks */ = {isa = PBXBuildFile; productRef = 990ADD272D69FB7E00359E93 /* FirebaseCore */; };
+		990ADD2A2D69FB7E00359E93 /* FirebaseInstallations in Frameworks */ = {isa = PBXBuildFile; productRef = 990ADD292D69FB7E00359E93 /* FirebaseInstallations */; };
+		990ADD2C2D69FB7E00359E93 /* FirebaseMessaging in Frameworks */ = {isa = PBXBuildFile; productRef = 990ADD2B2D69FB7E00359E93 /* FirebaseMessaging */; };
+		990ADD342D6A154600359E93 /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = 990ADD332D6A154600359E93 /* GoogleService-Info.plist */; };
 		9935C76C2D3FDD4500722D84 /* SnapKit in Frameworks */ = {isa = PBXBuildFile; productRef = 9935C76B2D3FDD4500722D84 /* SnapKit */; };
 		9935C76F2D3FDD6000722D84 /* RxCocoa in Frameworks */ = {isa = PBXBuildFile; productRef = 9935C76E2D3FDD6000722D84 /* RxCocoa */; };
 		9935C7712D3FDD6000722D84 /* RxRelay in Frameworks */ = {isa = PBXBuildFile; productRef = 9935C7702D3FDD6000722D84 /* RxRelay */; };
@@ -18,6 +22,7 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		990ADD332D6A154600359E93 /* GoogleService-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "GoogleService-Info.plist"; sourceTree = "<group>"; };
 		9935C6D02D3FDC5E00722D84 /* ToTheMoon.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = ToTheMoon.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
@@ -59,7 +64,10 @@
 				9935C7732D3FDD6000722D84 /* RxSwift in Frameworks */,
 				99F3510F2D64A09F00B3CEA1 /* RxDataSources in Frameworks */,
 				9935C76C2D3FDD4500722D84 /* SnapKit in Frameworks */,
+				990ADD282D69FB7E00359E93 /* FirebaseCore in Frameworks */,
 				99F345932D57780200B3CEA1 /* Starscream in Frameworks */,
+				990ADD2C2D69FB7E00359E93 /* FirebaseMessaging in Frameworks */,
+				990ADD2A2D69FB7E00359E93 /* FirebaseInstallations in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -72,6 +80,7 @@
 				9935C6D22D3FDC5E00722D84 /* ToTheMoon */,
 				99F34D0A2D5ECF6300B3CEA1 /* ToTheMoonTests */,
 				9935C6D12D3FDC5E00722D84 /* Products */,
+				990ADD332D6A154600359E93 /* GoogleService-Info.plist */,
 			);
 			sourceTree = "<group>";
 		};
@@ -111,6 +120,9 @@
 				99F345922D57780200B3CEA1 /* Starscream */,
 				99F3510C2D64A09F00B3CEA1 /* Differentiator */,
 				99F3510E2D64A09F00B3CEA1 /* RxDataSources */,
+				990ADD272D69FB7E00359E93 /* FirebaseCore */,
+				990ADD292D69FB7E00359E93 /* FirebaseInstallations */,
+				990ADD2B2D69FB7E00359E93 /* FirebaseMessaging */,
 			);
 			productName = ToTheMoon;
 			productReference = 9935C6D02D3FDC5E00722D84 /* ToTheMoon.app */;
@@ -146,6 +158,7 @@
 				CC0C7F872D41E0DE005F2AA4 /* XCRemoteSwiftPackageReference "Charts" */,
 				99F345912D57780200B3CEA1 /* XCRemoteSwiftPackageReference "Starscream" */,
 				99F3510B2D64A09F00B3CEA1 /* XCRemoteSwiftPackageReference "RxDataSources" */,
+				990ADD262D69FB7E00359E93 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 9935C6D12D3FDC5E00722D84 /* Products */;
@@ -162,6 +175,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				990ADD342D6A154600359E93 /* GoogleService-Info.plist in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -183,6 +197,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = ToTheMoon/ToTheMoon.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = XWFRD8RGGG;
@@ -215,6 +230,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = ToTheMoon/ToTheMoon.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = XWFRD8RGGG;
@@ -385,6 +401,14 @@
 /* End XCConfigurationList section */
 
 /* Begin XCRemoteSwiftPackageReference section */
+		990ADD262D69FB7E00359E93 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/firebase/firebase-ios-sdk";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 11.8.1;
+			};
+		};
 		9935C76A2D3FDD4500722D84 /* XCRemoteSwiftPackageReference "SnapKit" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/SnapKit/SnapKit.git";
@@ -428,6 +452,21 @@
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
+		990ADD272D69FB7E00359E93 /* FirebaseCore */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 990ADD262D69FB7E00359E93 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseCore;
+		};
+		990ADD292D69FB7E00359E93 /* FirebaseInstallations */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 990ADD262D69FB7E00359E93 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseInstallations;
+		};
+		990ADD2B2D69FB7E00359E93 /* FirebaseMessaging */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 990ADD262D69FB7E00359E93 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseMessaging;
+		};
 		9935C76B2D3FDD4500722D84 /* SnapKit */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = 9935C76A2D3FDD4500722D84 /* XCRemoteSwiftPackageReference "SnapKit" */;

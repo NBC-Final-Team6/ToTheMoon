@@ -10,6 +10,28 @@ import UIKit
 class SceneDelegate: UIResponder, UIWindowSceneDelegate {
 
     var window: UIWindow?
+    
+    let dummyMarketPrice = MarketPrice(
+        symbol: "BTC",
+        price: 50000.0,
+        exchange: "Upbit",
+        change: "RISE",
+        changeRate: 0.05,
+        quoteVolume: 120000000.0,
+        highPrice: 52000.0,
+        lowPrice: 48000.0,
+        image: nil
+    )
+    
+    lazy var dummyViewModel: AlarmEditViewModel = {
+        return AlarmEditViewModel(selectedCoin: dummyMarketPrice)
+    }()
+
+    // Controller 생성
+    lazy var alarmEditVC: AlarmEditViewController = {
+        return AlarmEditViewController(viewModel: dummyViewModel)
+    }()
+    
 
     func scene(_ scene: UIScene, willConnectTo session: UISceneSession, options connectionOptions: UIScene.ConnectionOptions) {
         guard let windowScene = (scene as? UIWindowScene) else { return }

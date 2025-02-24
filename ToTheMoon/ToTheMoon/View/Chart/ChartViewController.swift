@@ -113,6 +113,51 @@ class ChartViewController: UIViewController, UIGestureRecognizerDelegate {
                 self.viewModel.toggleFavorite(for: firstCoin)
             })
             .disposed(by: disposeBag)
+        
+        chartView.alarmButton.rx.tap
+            .subscribe(onNext: { [weak self] in
+                self?.navigateToAlarmEdit()
+            })
+            .disposed(by: disposeBag)
+        
+        viewModel.input.selectedCoins
+            .map { $0.first }
+            .compactMap { $0 }
+            .flatMap { [weak self] coin in
+                self?.viewModel.isFavorite(coin) ?? Observable.just(false)
+            }
+            .observe(on: MainScheduler.instance)
+            .subscribe(onNext: { [weak self] isFavorite in
+                self?.updateFavoriteButtonUI(isFavorite: isFavorite)
+            })
+            .disposed(by: disposeBag)
+        
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(updateFavoriteButtonState),
+            name: NSNotification.Name("FavoriteListUpdated"),
+            object: nil
+        )
+    }
+    
+    private func navigateToAlarmEdit() {
+        guard let firstCoin = viewModel.input.selectedCoins.value.first else { return }
+        let alarmViewModel = AlarmEditViewModel(selectedCoin: firstCoin)
+        print(firstCoin)
+        let alarmViewController = AlarmEditViewController(viewModel: alarmViewModel)
+        navigationController?.pushViewController(alarmViewController, animated: true)
+    }
+    
+    private func toggleFavorite(for coin: MarketPrice) {
+        manageFavoritesUseCase.toggleFavorite(coin)
+            .subscribe(onError: { error in
+                print("❌ 즐겨찾기 토글 실패: \(error)")
+            }, onCompleted: {
+                print("✅ 즐겨찾기 토글 완료: \(coin.symbol)")
+                NotificationCenter.default.post(name: NSNotification.Name("FavoriteListUpdated"), object: nil)
+            })
+            .disposed(by: disposeBag)
+
     }
 
     private func bindSelectedCoin() {

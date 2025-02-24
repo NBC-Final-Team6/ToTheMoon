@@ -172,6 +172,14 @@ class ChartView: UIView {
         button.tintColor = .gray
         return button
     }()
+    
+    let alarmButton: UIButton = {
+        let button = UIButton(type: .system)
+        let bellImage = UIImage(systemName: "bell") // 알림 아이콘
+        button.setImage(bellImage, for: .normal)
+        button.tintColor = .gray
+        return button
+    }()
 
     let highestPriceLabel = ChartView.createPriceLabel(text: "최고가")
     let highestPriceValueLabel = ChartView.createPriceValueLabel(textColor: .numbersGreen)
@@ -221,6 +229,7 @@ class ChartView: UIView {
         addSubview(currentPriceLabel)
         addSubview(timeSelectorView)
         addSubview(favoriteButton)
+        addSubview(alarmButton)
 
         // ✅ 스크롤뷰 추가
         addSubview(scrollView)
@@ -337,6 +346,12 @@ class ChartView: UIView {
         digitalAssetDescriptionTextView.snp.makeConstraints { make in
             make.top.equalTo(digitalAssetIntroLabel.snp.bottom).offset(5)
             make.leading.trailing.bottom.equalToSuperview().inset(10)
+        }
+        
+        alarmButton.snp.makeConstraints { make in
+            make.trailing.equalTo(favoriteButton.snp.leading).offset(-10) // favoriteButton 왼쪽에 배치
+            make.centerY.equalTo(currentPriceLabel) // 현재가 레이블과 정렬
+            make.width.height.equalTo(24) // 아이콘 크기
         }
     }
     
