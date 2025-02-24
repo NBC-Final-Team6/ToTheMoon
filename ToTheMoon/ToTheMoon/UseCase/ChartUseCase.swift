@@ -18,6 +18,10 @@ final class ChartUseCase {
     private let exchange: Exchange?
     private let services: [Exchange: CandleServiceType]
     private let webSocketServices: [Exchange: WebSocketServiceProtocol]
+    private let symbolService = SymbolService()
+    private var coinDescriptionCache: [String: String] = [:]
+    private var coinDataCache: [String: SymbolData] = [:]
+    
     
     init(exchange: Exchange?) {
         self.exchange = exchange
@@ -42,17 +46,29 @@ final class ChartUseCase {
         guard let exchange = exchange, let service = services[exchange] else {
             return Observable.just(([], [], "0", "0", IndexAxisValueFormatter(values: [])))
         }
-        
+
         return service.fetchCandles(symbol: coin.symbol, interval: interval, count: 50)
             .asObservable()
             .map { candles in
                 let timestamps = candles.map { TimeInterval($0.timestamp / 1000) }
                 let formatter = DateFormatter()
-                formatter.dateFormat = interval == .minute ? "HH:mm" : "M월 d일"
-                let dates = timestamps.map { formatter.string(from: Date(timeIntervalSince1970: $0)) }.reversed()
                 
+                // ✅ 단위별 날짜 포맷 통일
+                switch interval {
+                case .minute:
+                    formatter.dateFormat = "HH:mm"
+                case .day:
+                    formatter.dateFormat = "yyyy-MM-dd"
+                case .week:
+                    formatter.dateFormat = "yyyy-MM-dd"
+                case .month:
+                    formatter.dateFormat = "yyyy년 MM월"
+                @unknown default:
+                    formatter.dateFormat = "yyyy-MM-dd"
+                }
+
+                let dates = timestamps.map { formatter.string(from: Date(timeIntervalSince1970: $0)) }.reversed()
                 let entries = candles.enumerated().map { index, candle in
-                    
                     CandleChartDataEntry(
                         x: Double(index),
                         shadowH: candle.high,
@@ -61,10 +77,10 @@ final class ChartUseCase {
                         close: candle.close
                     )
                 }
-                
+
                 let highest = candles.max(by: { $0.high < $1.high })?.high ?? 0
                 let lowest = candles.min(by: { $0.low < $1.low })?.low ?? 0
-                
+
                 return (Array(dates), entries, "\(highest)", "\(lowest)", IndexAxisValueFormatter(values: Array(dates)))
             }
     }
@@ -82,6 +98,54 @@ final class ChartUseCase {
                 return firstPrice
             }
             .observe(on: MainScheduler.instance)
+    }
+    
+    // ✅ 이미지 레포지토리를 통한 데이터 가져오기 (설명 + 시가총액 등)
+    func fetchCoinFullDataByImageRepository(for symbol: String) -> Observable<SymbolData> {
+        if let cachedData = coinDataCache[symbol.uppercased()] {
+            print("✅ 캐시에서 코인 데이터 반환: \(symbol)")
+            return Observable.just(cachedData)
+        }
+
+        if let coinID = ImageRepository.defaultSymbolImages[symbol.uppercased()] {
+            return symbolService.fetchCoinDataByID(coinID)
+                .asObservable()
+                .do(onNext: { [weak self] data in
+                    self?.coinDataCache[symbol.uppercased()] = data
+                })
+                .catchAndReturn(SymbolData(id: "", symbol: "", name: "", image: nil, description: Description(ko: "설명 데이터를 가져올 수 없습니다."), market_data: nil))
+        } else {
+            return Observable.just(SymbolData(id: "", symbol: "", name: "", image: nil, description: Description(ko: "❌ 데이터 매핑 실패"), market_data: nil))
+        }
+    }
+    
+    // ✅ 코인 설명 데이터 가져오기
+    func fetchCoinDescription(for symbol: String) -> Observable<String> {
+        if let cachedDescription = coinDescriptionCache[symbol.uppercased()] {
+            return Observable.just(cachedDescription)
+        }
+
+        return symbolService.fetchCoinData(coinSymbol: symbol)
+            .asObservable()
+            .map { [weak self] data in
+                let description = data.description.ko?.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty == false ? data.description.ko! : "설명 데이터가 제공되지 않습니다."
+                self?.coinDescriptionCache[symbol.uppercased()] = description
+                return description
+            }
+            .catchAndReturn("설명 데이터를 가져올 수 없습니다.")
+    }
+    
+}
+
+extension ChartUseCase {
+    func fetchCoinDescriptionByImageRepository(for symbol: String) -> Observable<String> {
+        guard let coinID = ImageRepository.defaultSymbolImages[symbol.uppercased()] else {
+            return Observable.just("❌ 설명 데이터를 찾을 수 없습니다.")
+        }
+        return symbolService.fetchCoinDataByID(coinID)
+            .asObservable()
+            .map { $0.description.ko ?? "설명 데이터가 제공되지 않습니다." }
+            .catchAndReturn("설명 데이터를 가져올 수 없습니다.")
     }
 }
 
