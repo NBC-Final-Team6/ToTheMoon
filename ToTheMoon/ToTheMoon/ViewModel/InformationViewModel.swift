@@ -9,5 +9,5 @@ import RxSwift
 import RxCocoa
 
 class InformationViewModel {
-    let data = BehaviorRelay<[String]>(value: ["현재 버전: 1.0", "최신 버전: 1.0"])
+    let data = BehaviorRelay<[String]>(value: ["현재 버전: 1.1.1", "최신 버전: 1.1.1"])
 }
